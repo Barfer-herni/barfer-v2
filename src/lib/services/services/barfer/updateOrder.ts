@@ -7,7 +7,6 @@ export async function updateOrder(id: string, data: any) {
         const result = await apiClient.patch(`/orders/${id}`, data);
         return result;
     } catch (error) {
-        console.error('Error updating order:', error);
         throw new Error('Order not found or update failed');
     }
 }

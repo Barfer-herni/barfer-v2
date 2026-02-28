@@ -26,7 +26,6 @@ async function setCookie(name: string, value: string, options?: Partial<Response
             ...options,
         });
     } catch (error) {
-        console.error('Error al establecer cookie:', error);
     }
 }
 
@@ -76,7 +75,6 @@ export async function signIn({ email, password }: { email: string; password: str
             }
         };
     } catch (error) {
-        console.error('Error al iniciar sesión:', error);
         return { success: false, message: 'Error al iniciar sesión' };
     }
 }
@@ -121,7 +119,6 @@ export async function signUp(data: {
             }
         };
     } catch (error) {
-        console.error('Error al crear cuenta:', error);
         return {
             success: false,
             message: 'Error inesperado al crear la cuenta',
@@ -139,7 +136,6 @@ export async function signOut() {
         cookieStore.delete('auth-token');
         return { success: true };
     } catch (error) {
-        console.error('Error al eliminar cookie:', error);
         return { success: false, error: 'Error al cerrar sesión' };
     }
 }
@@ -199,11 +195,9 @@ export async function getCurrentUser() {
                 puntoEnvio: token.puntoEnvio,
             };
         } catch (parseError) {
-            console.error('Error al analizar el token:', parseError);
             return null;
         }
     } catch (error) {
-        console.error('Error al obtener usuario actual:', error);
         return null;
     }
 }
@@ -225,11 +219,9 @@ export async function getCurrentUserId(): Promise<string | null> {
             const token = JSON.parse(tokenCookie.value);
             return token.id || null;
         } catch (parseError) {
-            console.error('Error al analizar el token:', parseError);
             return null;
         }
     } catch (error) {
-        console.error('Error al obtener ID de usuario actual:', error);
         return null;
     }
 }

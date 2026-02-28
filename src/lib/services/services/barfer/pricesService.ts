@@ -65,7 +65,6 @@ export async function getAllPrices(): Promise<{
             total: prices.length
         };
     } catch (error) {
-        console.error('Error getting prices:', error);
         return {
             success: false,
             message: 'Error al obtener los precios',
@@ -119,7 +118,6 @@ export async function getPrices(query: PriceHistoryQuery): Promise<{
             total: prices.length
         };
     } catch (error) {
-        console.error('Error getting filtered prices:', error);
         return {
             success: false,
             message: 'Error al obtener los precios filtrados',
@@ -157,7 +155,6 @@ export async function getPriceHistory(
             history: result.history || result
         };
     } catch (error) {
-        console.error('Error getting price history:', error);
         return {
             success: false,
             message: 'Error al obtener el historial de precios',
@@ -186,7 +183,6 @@ export async function createPrice(data: CreatePriceData): Promise<{
             message: 'Precio creado exitosamente'
         };
     } catch (error) {
-        console.error('Error creating price:', error);
         return {
             success: false,
             message: 'Error al crear el precio',
@@ -215,7 +211,6 @@ export async function updatePrice(priceId: string, data: UpdatePriceData): Promi
             message: 'Precio actualizado exitosamente'
         };
     } catch (error) {
-        console.error('Error updating price:', error);
         return {
             success: false,
             message: 'Error al actualizar el precio',
@@ -242,7 +237,6 @@ export async function deletePrice(priceId: string): Promise<{
             message: 'Precio eliminado exitosamente'
         };
     } catch (error) {
-        console.error('Error deleting price:', error);
         return {
             success: false,
             message: 'Error al eliminar el precio',
@@ -274,7 +268,6 @@ export async function getAllUniqueProducts(): Promise<{
             products: result.products || result || []
         };
     } catch (error) {
-        console.error('Error getting unique products:', error);
         return {
             success: false,
             message: 'Error al obtener los productos unicos',
@@ -307,7 +300,6 @@ export async function getProductsForSelect(): Promise<{
             productsWithDetails: result.productsWithDetails || []
         };
     } catch (error) {
-        console.error('Error getting products for select:', error);
         return {
             success: false,
             message: 'Error al obtener los productos para el select',
@@ -343,7 +335,6 @@ export async function deleteProductPrices(section: PriceSection, product: string
             message: result.message || `Precios del producto ${product} eliminados`
         };
     } catch (error) {
-        console.error('Error deleting product prices:', error);
         return {
             success: false,
             message: 'Error al eliminar los precios del producto',
@@ -389,12 +380,6 @@ export async function updateProductPrices(
             ];
         }
 
-        console.log('🔧 FILTER DEBUG:', {
-            oldSection,
-            oldProduct,
-            oldWeight,
-            filter
-        });
 
         const updateData: any = {
             updatedAt: new Date().toISOString()
@@ -419,20 +404,9 @@ export async function updateProductPrices(
             };
         }
 
-        console.log('🔧 UPDATE PRODUCT PRICES DEBUG:', {
-            filter,
-            updateOperation,
-            oldWeight,
-            newWeight: newData.weight
-        });
 
         const result = await collection.updateMany(filter, updateOperation);
 
-        console.log('🔧 UPDATE RESULT:', {
-            matchedCount: result.matchedCount,
-            modifiedCount: result.modifiedCount,
-            acknowledged: result.acknowledged
-        });
 
         revalidatePath('/admin/prices');
 
@@ -442,7 +416,6 @@ export async function updateProductPrices(
             message: `Se actualizaron ${result.modifiedCount} precios del producto`
         };
     } catch (error) {
-        console.error('Error updating product prices:', error);
         return {
             success: false,
             message: 'Error al actualizar los precios del producto',
@@ -536,7 +509,6 @@ export async function updateProductPriceTypes(
             message: `Se agregaron ${addedCount} tipos de precio y se eliminaron ${removedCount} tipos de precio`
         };
     } catch (error) {
-        console.error('Error updating product price types:', error);
         return {
             success: false,
             message: 'Error al actualizar los tipos de precio del producto',
@@ -566,7 +538,6 @@ export async function getCurrentPrices(): Promise<{
             total: prices.length
         };
     } catch (error) {
-        console.error('Error getting current prices:', error);
         return {
             success: false,
             message: 'Error al obtener los precios actuales',
@@ -593,7 +564,6 @@ export async function getPriceStats(): Promise<{
             stats: result.stats || result
         };
     } catch (error) {
-        console.error('Error getting price stats:', error);
         return {
             success: false,
             message: 'Error al obtener las estadisticas de precios',
@@ -631,7 +601,6 @@ export async function getProductTemplate(): Promise<{
             template: templateProducts
         };
     } catch (error) {
-        console.error('Error getting product template:', error);
         return {
             success: false,
             message: 'Error al obtener el template de productos',
@@ -688,7 +657,6 @@ export async function addProductToTemplate(
             message: 'Producto agregado al template exitosamente'
         };
     } catch (error) {
-        console.error('Error adding product to template:', error);
         return {
             success: false,
             message: 'Error al agregar producto al template',
@@ -744,7 +712,6 @@ export async function updateTemplateProductPriceTypes(
             message: 'Tipos de precio actualizados en el template'
         };
     } catch (error) {
-        console.error('Error updating template product price types:', error);
         return {
             success: false,
             message: 'Error al actualizar tipos de precio en el template',
@@ -786,7 +753,6 @@ export async function removeProductFromTemplate(
             message: `Producto eliminado del template (${result.deletedCount} documentos)`
         };
     } catch (error) {
-        console.error('Error removing product from template:', error);
         return {
             success: false,
             message: 'Error al eliminar producto del template',
@@ -815,7 +781,6 @@ export async function initializePricesForPeriod(month: number, year: number): Pr
             created: result.created || 0
         };
     } catch (error) {
-        console.error('Error initializing prices for period:', error);
         return {
             success: false,
             message: 'Error al inicializar precios para el periodo',
@@ -951,7 +916,6 @@ export async function initializeBarferPrices(): Promise<{
                     skipped++;
                 }
             } catch (error) {
-                console.error(`Error creating price for ${priceData.product}:`, error);
                 skipped++;
             }
         }
@@ -964,7 +928,6 @@ export async function initializeBarferPrices(): Promise<{
             stats: { created, skipped }
         };
     } catch (error) {
-        console.error('Error initializing Barfer prices:', error);
         return {
             success: false,
             message: 'Error al inicializar los precios por defecto',

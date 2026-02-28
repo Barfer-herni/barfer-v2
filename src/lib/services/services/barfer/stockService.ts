@@ -16,7 +16,6 @@ export async function createStockMongo(
             message: 'Stock creado exitosamente',
         };
     } catch (error) {
-        console.error('Error al crear stock:', error);
         return {
             success: false,
             message: 'Error al crear el stock',
@@ -37,7 +36,6 @@ export async function getStockByPuntoEnvioMongo(
             stock: result.stock || result || [],
         };
     } catch (error) {
-        console.error('Error al obtener stock:', error);
         return {
             success: false,
             stock: [],
@@ -59,7 +57,6 @@ export async function getStockByIdMongo(
             stock: result.stock || result,
         };
     } catch (error) {
-        console.error('Error al obtener stock:', error);
         return {
             success: false,
             message: 'Error al obtener el stock',
@@ -82,7 +79,6 @@ export async function updateStockMongo(
             message: 'Stock actualizado exitosamente',
         };
     } catch (error) {
-        console.error('Error al actualizar stock:', error);
         return {
             success: false,
             message: 'Error al actualizar el stock',
@@ -103,7 +99,6 @@ export async function deleteStockMongo(
             message: 'Stock eliminado exitosamente',
         };
     } catch (error) {
-        console.error('Error al eliminar stock:', error);
         return {
             success: false,
             message: 'Error al eliminar el stock',

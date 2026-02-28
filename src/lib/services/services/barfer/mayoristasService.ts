@@ -104,7 +104,6 @@ export async function getMayoristas({
             pageCount: result.pageCount || 0,
         };
     } catch (error) {
-        console.error('Error al obtener mayoristas:', error);
         return {
             success: false,
             error: 'Error al obtener los mayoristas',
@@ -129,7 +128,6 @@ export async function getMayoristaById(
             mayorista: result.mayorista || result,
         };
     } catch (error) {
-        console.error('Error al obtener mayorista:', error);
         return {
             success: false,
             error: 'Error al obtener el mayorista',
@@ -154,7 +152,6 @@ export async function createMayorista(
             mayorista: result.mayorista || result,
         };
     } catch (error) {
-        console.error('Error al crear mayorista:', error);
         return {
             success: false,
             error: 'Error al crear el mayorista',
@@ -180,7 +177,6 @@ export async function updateMayorista(
             mayorista: result.mayorista || result,
         };
     } catch (error) {
-        console.error('Error al actualizar mayorista:', error);
         return {
             success: false,
             error: 'Error al actualizar el mayorista',
@@ -201,7 +197,6 @@ export async function deleteMayorista(
         await apiClient.delete(`/puntos-venta/${id}`);
         return { success: true };
     } catch (error) {
-        console.error('Error al eliminar mayorista:', error);
         return {
             success: false,
             error: 'Error al eliminar el mayorista',
@@ -263,7 +258,6 @@ export async function addKilosMes(
 
         return { success: true };
     } catch (error) {
-        console.error('Error al agregar kilos del mes:', error);
         return {
             success: false,
             error: 'Error al agregar los kilos del mes',
@@ -292,7 +286,6 @@ export async function searchPuntosVenta(
             puntosVenta: result.puntosVenta || result.data || result || [],
         };
     } catch (error) {
-        console.error('Error al buscar puntos de venta:', error);
         return {
             success: false,
             error: 'Error al buscar puntos de venta',
@@ -366,7 +359,6 @@ export async function getVentasPorZona(): Promise<{
             data: result as any,
         };
     } catch (error) {
-        console.error('Error al obtener ventas por zona:', error);
         return {
             success: false,
             error: 'Error al obtener las ventas por zona',

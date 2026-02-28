@@ -63,7 +63,6 @@ export async function getAllProveedoresMongo(): Promise<{
             total: result.total || (result.proveedores || result || []).length
         };
     } catch (error) {
-        console.error('Error in getAllProveedoresMongo:', error);
         return {
             success: false,
             message: 'Error al obtener los proveedores',
@@ -90,7 +89,6 @@ export async function getAllProveedoresIncludingInactiveMongo(): Promise<{
             total: result.total || (result.proveedores || result || []).length
         };
     } catch (error) {
-        console.error('Error in getAllProveedoresIncludingInactiveMongo:', error);
         return {
             success: false,
             message: 'Error al obtener los proveedores',
@@ -115,7 +113,6 @@ export async function getProveedorByIdMongo(id: string): Promise<{
             proveedor: result.proveedor || result
         };
     } catch (error) {
-        console.error('Error in getProveedorByIdMongo:', error);
         return {
             success: false,
             message: 'Error al obtener el proveedor',
@@ -141,7 +138,6 @@ export async function createProveedorMongo(data: CreateProveedorMongoInput): Pro
             message: 'Proveedor creado exitosamente'
         };
     } catch (error) {
-        console.error('Error in createProveedorMongo:', error);
         return {
             success: false,
             message: 'Error al crear el proveedor',
@@ -167,7 +163,6 @@ export async function updateProveedorMongo(id: string, data: UpdateProveedorMong
             message: 'Proveedor actualizado exitosamente'
         };
     } catch (error) {
-        console.error('Error in updateProveedorMongo:', error);
         return {
             success: false,
             message: 'Error al actualizar el proveedor',
@@ -191,7 +186,6 @@ export async function deleteProveedorMongo(id: string): Promise<{
             message: 'Proveedor eliminado exitosamente'
         };
     } catch (error) {
-        console.error('Error in deleteProveedorMongo:', error);
         return {
             success: false,
             message: 'Error al eliminar el proveedor',
@@ -218,7 +212,6 @@ export async function searchProveedoresMongo(searchTerm: string): Promise<{
             total: result.total || (result.proveedores || result || []).length
         };
     } catch (error) {
-        console.error('Error in searchProveedoresMongo:', error);
         return {
             success: false,
             message: 'Error al buscar proveedores',
@@ -242,7 +235,6 @@ export async function testSearchProveedoresMongo(searchTerm: string): Promise<{
             proveedores: result.proveedores || []
         };
     } catch (error) {
-        console.error('Error in testSearchProveedoresMongo:', error);
         return {
             success: false,
             message: 'Error al buscar proveedores'

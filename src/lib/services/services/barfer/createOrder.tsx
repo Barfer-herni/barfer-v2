@@ -15,7 +15,6 @@ export async function createOrder(data: any): Promise<{ success: boolean; order?
             order: result.order || result,
         };
     } catch (error) {
-        console.error('Error creating order:', error);
         if (error instanceof Error && error.message.includes('Validation error')) {
             return { success: false, error: error.message };
         }

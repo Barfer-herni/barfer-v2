@@ -11,7 +11,6 @@ export async function getRepartosData(): Promise<RepartosData> {
         const result = await apiClient.get<RepartosData>('/repartos');
         return result || {};
     } catch (error) {
-        console.error('Error getting repartos data:', error);
         return {};
     }
 }
@@ -24,7 +23,6 @@ export async function getRepartosByWeek(weekKey: string): Promise<WeekData | nul
         const result = await apiClient.get<WeekData>(`/repartos/${weekKey}`);
         return result || null;
     } catch (error) {
-        console.error('Error getting repartos by week:', error);
         return null;
     }
 }
@@ -37,7 +35,6 @@ export async function saveRepartosWeek(weekKey: string, weekData: WeekData): Pro
         await apiClient.post(`/repartos/${weekKey}`, weekData);
         return true;
     } catch (error) {
-        console.error('Error saving repartos week:', error);
         return false;
     }
 }
@@ -55,7 +52,6 @@ export async function updateRepartoEntry(
         await apiClient.put(`/repartos/${weekKey}/${dayKey}/${rowIndex}`, entry);
         return true;
     } catch (error) {
-        console.error('Error updating reparto entry:', error);
         return false;
     }
 }
@@ -72,7 +68,6 @@ export async function toggleRepartoCompletion(
         await apiClient.patch(`/repartos/toggle/${weekKey}/${dayKey}/${rowIndex}`);
         return true;
     } catch (error) {
-        console.error('Error toggling reparto completion:', error);
         return false;
     }
 }
@@ -85,7 +80,6 @@ export async function deleteRepartosWeek(weekKey: string): Promise<boolean> {
         await apiClient.delete(`/repartos/${weekKey}`);
         return true;
     } catch (error) {
-        console.error('Error deleting repartos week:', error);
         return false;
     }
 }
@@ -108,7 +102,6 @@ export async function getRepartosStats(): Promise<{
             completionRate: 0,
         };
     } catch (error) {
-        console.error('Error getting repartos stats:', error);
         return {
             totalWeeks: 0,
             completedEntries: 0,
@@ -126,7 +119,6 @@ export async function initializeWeek(weekKey: string): Promise<boolean> {
         await apiClient.post(`/repartos/initialize/${weekKey}`);
         return true;
     } catch (error) {
-        console.error('Error initializing week:', error);
         return false;
     }
 }
@@ -139,7 +131,6 @@ export async function addRowToDay(weekKey: string, dayKey: string): Promise<bool
         await apiClient.post(`/repartos/add-row/${weekKey}/${dayKey}`);
         return true;
     } catch (error) {
-        console.error('Error adding row to day:', error);
         return false;
     }
 }
@@ -152,7 +143,6 @@ export async function removeRowFromDay(weekKey: string, dayKey: string, rowIndex
         await apiClient.delete(`/repartos/remove-row/${weekKey}/${dayKey}/${rowIndex}`);
         return true;
     } catch (error) {
-        console.error('Error removing row from day:', error);
         return false;
     }
 }
@@ -173,10 +163,8 @@ export async function cleanupOldWeeks(): Promise<number> {
             }
         });
 
-        console.log(`Cleaned up ${result.deletedCount} old weeks`);
         return result.deletedCount;
     } catch (error) {
-        console.error('Error cleaning up old weeks:', error);
         return 0;
     }
 }
@@ -211,10 +199,8 @@ export async function cleanupDuplicateWeeks(): Promise<number> {
             _id: { $in: duplicatesToDelete }
         });
 
-        console.log(`Cleaned up ${result.deletedCount} duplicate weeks`);
         return result.deletedCount;
     } catch (error) {
-        console.error('Error cleaning up duplicate weeks:', error);
         return 0;
     }
 }
@@ -226,7 +212,6 @@ export async function apiGetRepartosData() {
         const data = await getRepartosData();
         return { success: true, data };
     } catch (error) {
-        console.error('Error getting repartos data:', error);
         return { success: false, error: 'Failed to get repartos data' };
     }
 }
@@ -244,7 +229,6 @@ export async function apiSaveRepartosWeek(weekKey: string, weekData: WeekData) {
             return { success: false, error: 'Failed to save week' };
         }
     } catch (error) {
-        console.error('Error saving repartos week:', error);
         return { success: false, error: 'Internal server error' };
     }
 }
@@ -262,7 +246,6 @@ export async function apiInitializeWeek(weekKey: string) {
             return { success: false, error: 'Failed to initialize week' };
         }
     } catch (error) {
-        console.error('Error initializing week:', error);
         return { success: false, error: 'Internal server error' };
     }
 }
@@ -286,7 +269,6 @@ export async function apiUpdateRepartoEntry(
             return { success: false, error: 'Failed to update entry' };
         }
     } catch (error) {
-        console.error('Error updating reparto entry:', error);
         return { success: false, error: 'Internal server error' };
     }
 }
@@ -309,7 +291,6 @@ export async function apiToggleRepartoCompletion(
             return { success: false, error: 'Failed to toggle completion status' };
         }
     } catch (error) {
-        console.error('Error toggling reparto completion:', error);
         return { success: false, error: 'Internal server error' };
     }
 }

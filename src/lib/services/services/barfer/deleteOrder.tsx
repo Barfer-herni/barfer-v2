@@ -6,7 +6,6 @@ export async function deleteOrder(id: string): Promise<{ success: boolean; error
         await apiClient.delete(`/orders/${id}`);
         return { success: true };
     } catch (error) {
-        console.error('Error deleting order:', error);
         return { success: false, error: 'Internal server error' };
     }
 }

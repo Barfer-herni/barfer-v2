@@ -75,7 +75,6 @@ export async function createUserGestor(data: UserGestorCreateInput): Promise<{
             },
         };
     } catch (error) {
-        console.error('Error al crear usuario:', error);
         return {
             success: false,
             message: error instanceof Error ? error.message : 'Error interno del servidor al crear el usuario',
@@ -106,7 +105,6 @@ export async function getUserGestorById(userId: string): Promise<UserGestor | nu
             updatedAt: user.updatedAt,
         };
     } catch (error) {
-        console.error('Error al obtener usuario por ID:', error);
         return null;
     }
 }
@@ -132,7 +130,6 @@ export async function getAllUsersGestor(excludeUserId?: string): Promise<UserGes
             updatedAt: user.updatedAt,
         }));
     } catch (error) {
-        console.error('Error al obtener usuarios:', error);
         return [];
     }
 }
@@ -162,7 +159,6 @@ export async function updateUserGestor(
             updatedAt: user.updatedAt,
         };
     } catch (error) {
-        console.error('Error al actualizar usuario:', error);
         return null;
     }
 }
@@ -178,7 +174,6 @@ export async function deleteUserGestor(userId: string): Promise<{
         const result = await apiClient.delete(`/users-gestor/${userId}`);
         return { success: result.success !== false };
     } catch (error) {
-        console.error('Error al eliminar usuario:', error);
         return {
             success: false,
             message: 'Error al eliminar el usuario',
@@ -208,7 +203,6 @@ export async function verifyUserGestorCredentials(
         const result = await apiClient.post('/users-gestor/verify', { email, password });
         return result;
     } catch (error) {
-        console.error('Error al verificar credenciales:', error);
         return {
             success: false,
             message: 'Error interno del servidor al verificar credenciales',
@@ -239,7 +233,6 @@ export async function changeUserGestorPassword(
             message: result.message || 'Contrasena actualizada exitosamente',
         };
     } catch (error) {
-        console.error('Error al cambiar contrasena:', error);
         return {
             success: false,
             message: 'Error interno del servidor',

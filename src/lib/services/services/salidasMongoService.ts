@@ -81,7 +81,6 @@ export async function getAllSalidasMongo(): Promise<{
             total: result.total || (result.salidas || result || []).length
         };
     } catch (error) {
-        console.error('Error in getAllSalidasMongo:', error);
         return {
             success: false,
             message: 'Error al obtener las salidas',
@@ -122,7 +121,6 @@ export async function getAllSalidasWithPermissionFilterMongo(): Promise<{
             total: filteredSalidas.length
         };
     } catch (error) {
-        console.error('Error in getAllSalidasWithPermissionFilterMongo:', error);
         return {
             success: false,
             message: 'Error al obtener las salidas',
@@ -158,7 +156,6 @@ export async function getSalidasByCategoryMongo(categoria: string): Promise<{
             total: filteredSalidas.length
         };
     } catch (error) {
-        console.error('Error in getSalidasByCategoryMongo:', error);
         return {
             success: false,
             message: 'Error al obtener salidas por categoria',
@@ -220,7 +217,6 @@ export async function getSalidasPaginatedMongo({
             pageCount: result.pageCount || 0
         };
     } catch (error) {
-        console.error('Error in getSalidasPaginatedMongo:', error);
         return {
             success: false,
             message: 'Error al obtener las salidas paginadas',
@@ -246,7 +242,6 @@ export async function createSalidaMongo(data: CreateSalidaMongoInput): Promise<{
             message: 'Salida creada exitosamente'
         };
     } catch (error) {
-        console.error('Error in createSalidaMongo:', error);
         return {
             success: false,
             message: 'Error al crear la salida',
@@ -272,7 +267,6 @@ export async function updateSalidaMongo(id: string, data: UpdateSalidaMongoInput
             message: 'Salida actualizada exitosamente'
         };
     } catch (error) {
-        console.error('Error in updateSalidaMongo:', error);
         return {
             success: false,
             message: 'Error al actualizar la salida',
@@ -296,7 +290,6 @@ export async function deleteSalidaMongo(id: string): Promise<{
             message: 'Salida eliminada exitosamente'
         };
     } catch (error) {
-        console.error('Error in deleteSalidaMongo:', error);
         return {
             success: false,
             message: 'Error al eliminar la salida',
@@ -327,7 +320,6 @@ export async function getSalidasByDateRangeMongo(startDate: Date, endDate: Date)
             total: result.total || (result.salidas || result || []).length
         };
     } catch (error) {
-        console.error('Error in getSalidasByDateRangeMongo:', error);
         return {
             success: false,
             message: 'Error al obtener salidas por rango de fechas',
@@ -367,7 +359,6 @@ export async function getSalidasStatsByMonthMongo(year: number, month: number): 
             stats: result.stats || result
         };
     } catch (error) {
-        console.error('Error in getSalidasStatsByMonthMongo:', error);
         return {
             success: false,
             message: 'Error al obtener estadisticas de salidas',
@@ -392,7 +383,6 @@ export async function getSalidaByIdMongo(id: string): Promise<{
             salida: result.salida || result
         };
     } catch (error) {
-        console.error('Error in getSalidaByIdMongo:', error);
         return {
             success: false,
             message: 'Error al obtener la salida',
