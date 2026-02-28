@@ -92,9 +92,9 @@ export async function getMayoristas({
         params.set('pageSize', String(pageSize));
         if (search) params.set('search', search);
         if (zona) params.set('zona', zona);
-        params.set('activo', String(activo));
+        if (!activo) params.set('activo', 'false');
         params.set('sortBy', sortBy);
-        params.set('sortDesc', String(sortDesc));
+        if (sortDesc) params.set('sortDesc', 'true');
 
         const result = await apiClient.get(`/puntos-venta?${params.toString()}`);
         return {
