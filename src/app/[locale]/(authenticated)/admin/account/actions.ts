@@ -6,11 +6,11 @@ import {
     createUser as createUserService,
     deleteUser as deleteUserService,
     updateUser as updateUserService,
-} from '@/lib/services/services/userService';
+} from '@/lib/services/services/barfer';
 import type { UserRole } from '@/lib/services';
 import { z } from 'zod';
 import { hasPermission } from '@/lib/auth/server-permissions';
-import { getCurrentUser } from '@/lib/services/services/authService';
+import { getCurrentUser } from '@/lib/services/services/barfer';
 
 // Esquema para la actualización del perfil
 const profileSchema = z.object({
@@ -96,7 +96,7 @@ export async function changePassword(userId: string, formData: FormData) {
 export async function createUser(formData: FormData) {
     try {
         console.log('🔵 createUser action llamado');
-        
+
         if (!await hasPermission('account:manage_users')) {
             console.log('❌ Sin permisos para crear usuarios');
             return { success: false, message: 'No tienes permisos para crear usuarios.' };
@@ -138,9 +138,9 @@ export async function createUser(formData: FormData) {
 
         console.log('🟢 Llamando a createUserService');
 
-        const result = await createUserService({ 
-            ...validated.data, 
-            role: validated.data.role as UserRole, 
+        const result = await createUserService({
+            ...validated.data,
+            role: validated.data.role as UserRole,
             password: validated.data.password,
             puntoEnvio: validated.data.puntoEnvio || undefined
         });
@@ -229,7 +229,7 @@ export async function updateUserCategoryPermissions(userId: string, permissions:
         }
 
         // Primero obtener el usuario actual
-        const user = await import('@/lib/services/services/userService').then(m => m.getUserById(userId));
+        const user = await import('@/lib/services/services/barfer').then(m => m.getUserById(userId));
         if (!user) {
             return { success: false, message: 'Usuario no encontrado' };
         }

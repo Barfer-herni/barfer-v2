@@ -2,7 +2,7 @@
 
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import { ImageFormData } from "../types/image";
+import { ImageFormData } from "../../../types/image";
 import { format } from 'date-fns';
 
 // Configuración para Cloudflare R2
@@ -161,4 +161,4 @@ function formatR2Url(key: string): string {
     const publicDomain = process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN;
 
     return `${publicDomain}/${key}`;
-} 
+}

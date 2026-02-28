@@ -1,29 +1,40 @@
 // BARFER SERVICES - Solo servicios que usan apiClient o son utilidades
 
 // ===== ORDERS =====
-export { getOrders } from './getOrders';
-export { deleteOrder } from './deleteOrder';
-export { createOrder } from './createOrder';
+export * from './orders/orders';
 
-// ===== STOCK =====
-export {
-    createStockMongo,
-    getStockByPuntoEnvioMongo,
-    getStockByIdMongo,
-    updateStockMongo,
-    deleteStockMongo
-} from './stockService';
+// ===== STOCK / EXPRESS =====
+export * from './express/express';
 
-// ===== DETALLE DE ENVÍO =====
-export {
-    createDetalleEnvioMongo,
-    getDetalleEnvioByPuntoEnvioMongo,
-    getDetalleEnvioByIdMongo,
-    updateDetalleEnvioMongo,
-    deleteDetalleEnvioMongo
-} from './detalleEnvioService';
+// ===== PUNTOS DE ENVÍO =====
+export * from './puntos-envio/puntos-envio';
+
+// ===== AUTH =====
+export * from './auth/auth';
+
+// ===== USERS =====
+export * from './users/users';
+
+// ===== CATEGORÍAS =====
+export * from './categorias/categorias';
+
+// ===== MÉTODOS DE PAGO =====
+export * from './metodos-pago/metodos-pago';
+
+// ===== PROVEEDORES =====
+export * from './proveedores/proveedores';
+
+// ===== SALIDAS =====
+export * from './salidas/salidas';
+
+// ===== OTRAS ENTIDADES (Vacías por ahora) =====
+export * from './puntos-ventas/puntos-ventas';
+export * from './prices/prices';
+export * from './balance/balance';
+export * from './repartos/repartos';
 
 // ===== UTILIDADES =====
+export * from './utils/upload';
 export {
     mapSelectOptionToDBFormat,
     processOrderItems,

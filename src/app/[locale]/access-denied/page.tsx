@@ -1,5 +1,5 @@
 // import { SignOutButton } from '@/lib/auth/client';
-import { signOut, getCurrentUser } from '@/lib/services/services/authService';
+import { signOut, getCurrentUser } from '@/lib/services/services/barfer';
 import { Button } from '@/components/ui/button';
 import { Leaf, ShieldAlert, Clock } from 'lucide-react';
 import { redirect } from 'next/navigation';

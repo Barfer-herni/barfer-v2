@@ -14,13 +14,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { User, Mail, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
-import type { UserData } from '@/lib/services/types/user';
+import type { UserGestor } from '@/lib/services';
 import type { UserRole, PuntoEnvio } from '@/lib/services';
 import type { Dictionary } from '@/config/i18n';
 import { createUser, updateUser, deleteUser } from '../actions';
 
 interface UsersSectionProps {
-    users: UserData[];
+    users: UserGestor[];
     currentUser: any;
     dictionary: Dictionary;
 }
@@ -29,8 +29,8 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
     const { toast } = useToast();
     const router = useRouter();
     const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<UserData | null>(null);
-    const [deleteUserDialog, setDeleteUserDialog] = useState<{ open: boolean; user: UserData | null }>({ open: false, user: null });
+    const [editingUser, setEditingUser] = useState<UserGestor | null>(null);
+    const [deleteUserDialog, setDeleteUserDialog] = useState<{ open: boolean; user: UserGestor | null }>({ open: false, user: null });
     const [isPending, startTransition] = useTransition();
     const [puntosEnvio, setPuntosEnvio] = useState<PuntoEnvio[]>([]);
 
@@ -90,13 +90,13 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
         setIsUserDialogOpen(true);
     };
 
-    const handleEditUser = (user: UserData) => {
+    const handleEditUser = (user: UserGestor) => {
         setEditingUser(user);
         // Normalizar puntoEnvio: si es string, convertir a array; si es array, usar directamente
-        const puntoEnvioArray = Array.isArray(user.puntoEnvio) 
-            ? user.puntoEnvio 
+        const puntoEnvioArray = Array.isArray(user.puntoEnvio)
+            ? user.puntoEnvio
             : (user.puntoEnvio ? [user.puntoEnvio] : []);
-        
+
         setUserForm({
             name: user.name,
             lastName: user.lastName,
@@ -111,7 +111,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
 
     const handleUserSubmit = async () => {
         console.log('🔵 handleUserSubmit llamado', { editingUser: !!editingUser, userForm });
-        
+
         // Validaciones básicas del lado del cliente para UX
         if (!userForm.name || !userForm.lastName || !userForm.email) {
             console.log('❌ Validación fallida: nombre, apellido o email faltante');
@@ -128,7 +128,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
             toast({ title: "Error", description: "La contraseña debe tener al menos 6 caracteres", variant: "destructive" });
             return;
         }
-        
+
         console.log('✅ Todas las validaciones pasaron, procediendo con startTransition');
 
         startTransition(async () => {
@@ -146,7 +146,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                     formData.append('puntoEnvio', JSON.stringify(userForm.puntoEnvio));
                 }
 
-                console.log('🟢 Llamando a createUser/updateUser', { 
+                console.log('🟢 Llamando a createUser/updateUser', {
                     isEditing: !!editingUser,
                     formDataEntries: Array.from(formData.entries())
                 });
@@ -182,7 +182,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
         });
     };
 
-    const handleDeleteUser = async (user: UserData) => {
+    const handleDeleteUser = async (user: UserGestor) => {
         startTransition(async () => {
             const result = await deleteUser(user.id);
             if (result.success) {
@@ -266,7 +266,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                                 </Badge>
                                             </div>
                                             <p className="text-xs text-muted-foreground">
-                                                Creado: {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                                                Creado: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES') : 'N/A'}
                                             </p>
                                         </div>
                                         <div className="flex gap-2">
@@ -812,13 +812,13 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                         <Button variant="outline" onClick={() => setIsUserDialogOpen(false)} disabled={isPending}>
                             Cancelar
                         </Button>
-                        <Button 
+                        <Button
                             type="button"
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleUserSubmit();
-                            }} 
+                            }}
                             disabled={isPending}
                         >
                             {isPending ? (

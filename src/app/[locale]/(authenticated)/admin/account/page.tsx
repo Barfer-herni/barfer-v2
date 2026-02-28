@@ -1,5 +1,5 @@
-import { getCurrentUser } from '@/lib/services/services/authService';
-import { getAllUsers } from '@/lib/services/services/userService';
+import { getCurrentUser } from '@/lib/services/services/barfer';
+import { getAllUsers } from '@/lib/services/services/barfer';
 import { getDictionary } from '@/config/i18n';
 import { hasPermission, requirePermission } from '@/lib/auth/server-permissions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

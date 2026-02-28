@@ -8,7 +8,7 @@ import {
     createSalidaMongo,
     updateSalidaMongo,
     deleteSalidaMongo,
-    getSalidasByDateRangeMongo,
+    // getSalidasByDateRangeMongo, no quiero usar mas esta api
     getAllCategoriasMongo,
     getAllMetodosPagoMongo,
     createCategoriaMongo,
@@ -38,14 +38,15 @@ import {
     getSalidasOverviewAnalyticsMongo,
     // Servicios adicionales
     getSalidaByIdMongo,
-    getSalidasByCategoryMongo,
+    // getSalidasByCategoryMongo, no quiero usar mas esta api
     // Tipos MongoDB
     type CreateSalidaMongoInput,
     type UpdateSalidaMongoInput,
     type CreateProveedorMongoInput,
     type UpdateProveedorMongoInput,
     type CreateCategoriaProveedorMongoInput,
-    type UpdateCategoriaProveedorMongoInput
+    type UpdateCategoriaProveedorMongoInput,
+    type SalidaMongoData
 } from '@/lib/services';
 import { revalidatePath } from 'next/cache';
 import { TipoSalida, TipoRegistro } from '@prisma/client';
@@ -140,14 +141,14 @@ export async function deleteSalidaAction(salidaId: string) {
 }
 
 // Obtener salidas por rango de fechas
-export async function getSalidasByDateRangeAction(startDate: Date, endDate: Date) {
-    return await getSalidasByDateRangeMongo(startDate, endDate);
-}
+// export async function getSalidasByDateRangeAction(startDate: Date, endDate: Date) {
+//     return await getSalidasByDateRangeMongo(startDate, endDate);
+// }
 
 // Obtener salidas por categoría
-export async function getSalidasByCategoryAction(categoria: string) {
-    return await getSalidasByCategoryMongo(categoria);
-}
+// export async function getSalidasByCategoryAction(categoria: string) {
+//     return await getSalidasByCategoryMongo(categoria);
+// }
 
 // Nuevas acciones para categorías y métodos de pago
 
@@ -226,10 +227,10 @@ export async function initializeMetodosPagoAction() {
 // ==========================================
 
 // Obtener estadísticas de salidas por mes
-export async function getSalidasStatsByMonthAction(year: number, month: number) {
-    const { getSalidasStatsByMonthMongo } = await import('@/lib/services');
-    return await getSalidasStatsByMonthMongo(year, month);
-}
+// export async function getSalidasStatsByMonthAction(year: number, month: number) {
+//     const { getSalidasStatsByMonthMongo } = await import('@/lib/services');
+//     return await getSalidasStatsByMonthMongo(year, month);
+// }
 
 // ==========================================
 // ACCIONES DE ANALYTICS (PostgreSQL/Prisma)
@@ -265,7 +266,7 @@ export async function getSalidasDetailsByCategoryAction(categoriaId: string, sta
     }
 
     // Filtrar por categoría y rango de fechas
-    const filteredSalidas = result.salidas.filter(salida => {
+    const filteredSalidas = result.salidas.filter((salida: SalidaMongoData) => {
         const matchesCategory = salida.categoriaId === categoriaId;
 
         if (!matchesCategory) return false;
@@ -461,7 +462,7 @@ export async function duplicateSalidaAction(id: string) {
         // Crear la salida duplicada usando el servicio existente
         const result = await createSalidaMongo(duplicatedSalidaData);
         if (!result.success) {
-            return { success: false, error: result.error || 'Error al duplicar la salida' };
+            return { success: false || 'Error al duplicar la salida' };
         }
 
         revalidatePath('/admin/salidas');

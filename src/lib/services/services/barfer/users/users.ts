@@ -1,6 +1,7 @@
 'use server';
 
 import { apiClient } from '@/lib/api';
+import { revalidatePath } from 'next/cache';
 
 export type UserRole = 'admin' | 'user';
 
@@ -37,6 +38,10 @@ export interface UserGestorUpdateInput {
     permissions?: string[];
     puntoEnvio?: string | string[];
 }
+
+// Re-export types for compatibility if needed
+export type UserData = any; // For backward compatibility with userService.ts
+export type UserFormData = any; // For backward compatibility with userService.ts
 
 /**
  * Crear un nuevo usuario
@@ -239,4 +244,42 @@ export async function changeUserGestorPassword(
             error: 'SERVER_ERROR',
         };
     }
+}
+
+// Wrappers for compatibility with userService.ts
+
+export async function createUser(data: any) {
+    return await createUserGestor(data);
+}
+
+export async function getUserById(userId: string) {
+    return await getUserGestorById(userId);
+}
+
+export async function getAllUsers(excludeUserId?: string) {
+    return await getAllUsersGestor(excludeUserId);
+}
+
+export async function updateUser(userId: string, data: any) {
+    const user = await updateUserGestor(userId, data);
+    if (user) {
+        revalidatePath('/admin/account');
+    }
+    return user;
+}
+
+export async function deleteUser(userId: string) {
+    const result = await deleteUserGestor(userId);
+    if (result.success) {
+        revalidatePath('/admin/account');
+    }
+    return result;
+}
+
+export async function verifyUserCredentials(email: string, password: string) {
+    return await verifyUserGestorCredentials(email, password);
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+    return await changeUserGestorPassword(userId, currentPassword, newPassword);
 }

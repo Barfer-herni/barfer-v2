@@ -1,6 +1,6 @@
 'use server';
 
-import { signOut } from '@/lib/services/services/authService';
+import { signOut } from '@/lib/services/services/barfer';
 import { redirect } from 'next/navigation';
 
 export async function logoutAction(locale: string = 'es') {

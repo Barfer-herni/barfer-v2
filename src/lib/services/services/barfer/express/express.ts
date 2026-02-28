@@ -1,6 +1,6 @@
 import 'server-only';
 import { apiClient } from '@/lib/api';
-import type { Stock, CreateStockData, UpdateStockData } from '../../types/barfer';
+import type { Stock, CreateStockData, UpdateStockData } from '../../../types/barfer';
 
 /**
  * Crear un nuevo registro de stock

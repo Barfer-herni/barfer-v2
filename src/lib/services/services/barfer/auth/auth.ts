@@ -1,11 +1,125 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { createUser, getUserById } from './userService';
+import { createUser, getUserById } from '../users/users';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { env } from '@/config/env';
 
 const API_URL = env.API_URL;
+
+
+// Tipos de permisos disponibles
+type Permission =
+    // Analytics
+    | 'analytics:view'
+    | 'analytics:export'
+    // Users
+    | 'users:view'
+    | 'users:create'
+    | 'users:edit'
+    | 'users:delete'
+    // Account
+    | 'account:view_own'
+    | 'account:edit_own'
+    | 'account:change_password'
+    | 'account:manage_users'
+    // Admin
+    | 'admin:full_access'
+    | 'admin:system_settings'
+    // Clients
+    | 'clients:view'
+    | 'clients:create'
+    | 'clients:edit'
+    | 'clients:delete'
+    | 'clients:view_analytics'
+    | 'clients:send_email'
+    | 'clients:send_whatsapp'
+    // Table
+    | 'table:view'
+    | 'table:export'
+    | 'table:delete'
+    | 'table:edit'
+    // Balance
+    | 'balance:view'
+    | 'balance:export'
+    // Prices
+    | 'prices:view'
+    | 'prices:edit'
+    // Balance  
+    | 'balance:view'
+    | 'balance:export'
+    // Outputs/Salidas
+    | 'outputs:view'
+    | 'outputs:export'
+    | 'outputs:create'
+    | 'outputs:edit'
+    | 'outputs:delete'
+    | 'outputs:view_statistics'
+    // Permisos dinámicos por categoría (se generan automáticamente)
+    | 'outputs:view_all_categories'
+    | `outputs:view_category:${string}`
+    // Mayoristas/Puntos de Venta
+    | 'mayoristas:view'
+    | 'mayoristas:create'
+    | 'mayoristas:edit'
+    | 'mayoristas:delete'
+    | 'mayoristas:view_statistics'
+    | 'mayoristas:view_matrix'
+    // Express
+    | 'express:view'
+    | 'express:create'
+    | 'express:edit'
+    | 'express:delete'
+
+// Permisos por defecto para admins (siempre tienen todos)
+const ADMIN_PERMISSIONS: Permission[] = [
+    'analytics:view',
+    'analytics:export',
+    'users:view',
+    'users:create',
+    'users:edit',
+    'users:delete',
+    'account:view_own',
+    'account:edit_own',
+    'account:change_password',
+    'account:manage_users',
+    'admin:full_access',
+    'admin:system_settings',
+    'clients:view',
+    'clients:create',
+    'clients:edit',
+    'clients:delete',
+    'clients:view_analytics',
+    'clients:send_email',
+    'clients:send_whatsapp',
+    'table:view',
+    'table:export',
+    'table:delete',
+    'table:edit',
+    'balance:view',
+    'balance:export',
+    'prices:view',
+    'prices:edit',
+    'outputs:view',
+    'outputs:export',
+    'outputs:create',
+    'outputs:edit',
+    'outputs:delete',
+    'outputs:view_statistics',
+    'outputs:view_all_categories',
+    'mayoristas:view',
+    'mayoristas:create',
+    'mayoristas:edit',
+    'mayoristas:delete',
+    'mayoristas:view_statistics',
+    'mayoristas:view_matrix',
+    'express:view',
+    'express:create',
+    'express:edit',
+    'express:delete',
+];
+
+
 
 // Cookie expiration (30 days in seconds)
 const COOKIE_EXPIRATION = 60 * 60 * 24 * 30;
@@ -224,4 +338,81 @@ export async function getCurrentUserId(): Promise<string | null> {
     } catch (error) {
         return null;
     }
+}
+
+export async function getCurrentUserWithPermissions() {
+    const user = await getCurrentUser();
+    if (!user) {
+        return null;
+    }
+
+    const isAdmin = user.role.toLowerCase() === 'admin';
+    const isUser = user.role.toLowerCase() === 'user';
+
+    // Si es admin, tiene todos los permisos siempre
+    if (isAdmin) {
+        return {
+            ...user,
+            permissions: ADMIN_PERMISSIONS,
+            isAdmin: true,
+            isUser: false,
+        };
+    }
+
+    // Si es usuario normal, usar sus permisos personalizados
+    if (isUser) {
+        return {
+            ...user,
+            permissions: user.permissions, // Usar permisos del usuario desde la BD
+            isAdmin: false,
+            isUser: true,
+        };
+    }
+
+    // Rol desconocido - sin permisos
+    return {
+        ...user,
+        permissions: [],
+        isAdmin: false,
+        isUser: true,
+    };
+}
+
+export async function isAdmin(): Promise<boolean> {
+    const userWithPermissions = await getCurrentUserWithPermissions();
+    return userWithPermissions?.isAdmin || false;
+}
+
+export async function canViewSalidaCategory(categoryName: string): Promise<boolean> {
+    const userWithPermissions = await getCurrentUserWithPermissions();
+    if (!userWithPermissions) {
+        return false;
+    }
+
+    // Log temporal para debug
+    console.log(`🔍 Verificando categoría "${categoryName}" para usuario ${userWithPermissions.name}`);
+    console.log(`  Permisos: ${userWithPermissions.permissions.join(', ')}`);
+
+    // Los admins pueden ver todo
+    if (userWithPermissions.isAdmin) {
+        console.log(`  ✅ Admin - puede ver todo`);
+        return true;
+    }
+
+    // Verificar si tiene el permiso general para ver todas las categorías
+    if (userWithPermissions.permissions.includes('outputs:view_all_categories')) {
+        console.log(`  ✅ Tiene permiso para ver todas las categorías`);
+        return true;
+    }
+
+    // Verificar permisos específicos por categoría
+    const categoryPermission = `outputs:view_category:${categoryName.toUpperCase()}`;
+    if (userWithPermissions.permissions.includes(categoryPermission)) {
+        console.log(`  ✅ Tiene permiso específico: ${categoryPermission}`);
+        return true;
+    }
+
+    // Si no tiene permisos específicos para esta categoría, no puede verla
+    console.log(`  ❌ No tiene permisos para esta categoría`);
+    return false;
 }

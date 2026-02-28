@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/lib/services/services/authService';
+import { getCurrentUser } from '@/lib/services/services/barfer';
 
 /**
  * Sistema de permisos del lado del servidor
@@ -310,7 +310,7 @@ export async function getAvailableCategoriesForPermissions(): Promise<string[]> 
         const result = await getAllCategoriasMongo();
 
         if (result.success && result.categorias) {
-            return result.categorias.map(cat => cat.nombre);
+            return result.categorias.map((cat: { nombre: string }) => cat.nombre);
         }
 
         return [];

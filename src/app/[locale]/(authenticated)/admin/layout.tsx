@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { getDictionary } from '@/config/i18n';
 import { AdminSidebar } from '../components/sidebar-components/admin-sidebar';
 import { UserHeaderClient } from '../components/user-header/userHeaderClient';
-import { getCurrentUser } from '@/lib/services/services/authService';
+import { getCurrentUser } from '@/lib/services/services/barfer';
 import Image from 'next/image';
 
 type AdminLayoutProps = {

@@ -39,19 +39,24 @@ export function DeleteSalidaDialog({ open, onOpenChange, salida, onSalidaDeleted
         if (date instanceof Date) {
             dateObj = date;
         } else if (typeof date === 'string') {
-            // Si es un string, parsear la fecha considerando que está en zona horaria local
-            // Extraer solo la parte de la fecha (YYYY-MM-DD) para evitar problemas de zona horaria
-            const dateOnly = date.split(' ')[0]; // Tomar solo "2025-07-27"
-            const [year, month, day] = dateOnly.split('-').map(Number);
+            // Si es un string, parsear la fecha considerando que puede ser ISO (con 'T') o separada por espacio
+            // Extraer solo la parte de la fecha (YYYY-MM-DD)
+            const dateOnly = date.split(/[ T]/)[0];
+            const parts = dateOnly.split('-').map(Number);
 
-            // Crear la fecha usando UTC para evitar problemas de zona horaria
-            dateObj = new Date(Date.UTC(year, month - 1, day));
+            if (parts.length === 3 && !parts.some(isNaN)) {
+                const [year, month, day] = parts;
+                // Crear la fecha usando UTC para evitar problemas de zona horaria
+                dateObj = new Date(Date.UTC(year, month - 1, day));
 
-            // Convertir a zona horaria local
-            const localYear = dateObj.getFullYear();
-            const localMonth = dateObj.getMonth();
-            const localDay = dateObj.getDate();
-            dateObj = new Date(localYear, localMonth, localDay);
+                // Convertir a zona horaria local para visualización
+                const localYear = dateObj.getUTCFullYear();
+                const localMonth = dateObj.getUTCMonth();
+                const localDay = dateObj.getUTCDate();
+                dateObj = new Date(localYear, localMonth, localDay);
+            } else {
+                dateObj = new Date(date);
+            }
         } else {
             dateObj = new Date(date);
         }
@@ -77,7 +82,7 @@ export function DeleteSalidaDialog({ open, onOpenChange, salida, onSalidaDeleted
             if (result.success) {
                 toast({
                     title: "¡Éxito!",
-                    description: result.message || "Salida eliminada correctamente",
+                    description: (result as any).message || "Salida eliminada correctamente",
                 });
 
                 onSalidaDeleted();
@@ -85,7 +90,7 @@ export function DeleteSalidaDialog({ open, onOpenChange, salida, onSalidaDeleted
             } else {
                 toast({
                     title: "Error",
-                    description: result.message || "Error al eliminar la salida",
+                    description: (result as any).error || (result as any).message || "Error al eliminar la salida",
                     variant: "destructive",
                 });
             }
