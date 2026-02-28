@@ -1,16 +1,12 @@
 // ==========================================
-// SERVICIOS DEL SISTEMA (MongoDB)
+// SERVICIOS DEL SISTEMA
 // ==========================================
 export * from './authService';
-export * from './dataService';
-export * from './imageService';
 export * from './uploadR2Image';
 export * from './userService';
-export * from './templateService';
-export * from './balanceService';
 
 // ==========================================
-// SERVICIOS MIGRADOS A MONGODB
+// SERVICIOS MIGRADOS A BACKEND API
 // ==========================================
 export * from './salidasMongoService';
 export * from './salidasAnalyticsMongoService';
@@ -27,54 +23,29 @@ export {
     getPuntoEnvioByNameMongo,
 } from './puntoEnvioMongoService';
 export * from './orderPriorityMongoService';
-// stockMongoService y detalleEnvioMongoService están duplicados en barfer/stockService y barfer/detalleEnvioService
-// Se exportan desde barfer/index.ts, no desde aquí para evitar conflictos
-// export * from './stockMongoService';
-// export * from './detalleEnvioMongoService';
 
 // ==========================================
-// SERVICIOS DE BARFER E-COMMERCE (MongoDB)
+// SERVICIOS DE BARFER E-COMMERCE
 // ==========================================
-export * from './mongoService';
-
-// Exportar utilidades de mapeo de productos
 export {
     mapSelectOptionToDBFormat,
     processOrderItems,
     type ProductMapping
 } from './barfer/productMapping';
 
-// Exportar servicios de Barfer - Solo Analytics que se usan
 export {
-    // Analytics (desde barfer/analytics/)
-    getOrdersByDay,
-    getRevenueByDay,
-    getAverageOrderValue,
-    getCustomerFrequency,
-    getCustomerInsights,
-    getProductSales,
-    getPaymentMethodStats,
-    getPaymentsByTimePeriod,
-    getProductsByTimePeriod,
-    getOrdersByMonth,
-    getCategorySales,
-    // Client Management (desde barfer/analytics/)
-    getClientCategorization,
-    getClientsByCategory,
-    getClientsByCategoryPaginated,
-    getClientGeneralStats,
-    type ClientGeneralStats,
-    getClientCategoriesStats,
-    type ClientCategoriesStats,
-    getClientsPaginated,
-    getClientsPaginatedWithStatus,
-    type ClientForTable,
-    type ClientForTableWithStatus,
-    type PaginatedClientsResponse,
-    type PaginatedClientsWithStatusResponse,
-    type ClientsPaginationOptions,
-    getPurchaseFrequency,
-    // WhatsApp Contact Management
-    markWhatsAppContacted,
-    getWhatsAppContactStatus,
+    getOrders,
+    deleteOrder,
+    createOrder,
+    createStockMongo,
+    getStockByPuntoEnvioMongo,
+    getStockByIdMongo,
+    updateStockMongo,
+    deleteStockMongo,
+    createDetalleEnvioMongo,
+    getDetalleEnvioByPuntoEnvioMongo,
+    getDetalleEnvioByIdMongo,
+    updateDetalleEnvioMongo,
+    deleteDetalleEnvioMongo,
+    calculateSalesFromOrders,
 } from './barfer';

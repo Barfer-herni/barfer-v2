@@ -3,7 +3,7 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { ZONA_TRANSLATIONS, TIPO_NEGOCIO_TRANSLATIONS } from '../constants';
-import type { Mayorista } from '@/lib/services';
+type Mayorista = any;
 import { Check, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 export const columns: ColumnDef<Mayorista>[] = [

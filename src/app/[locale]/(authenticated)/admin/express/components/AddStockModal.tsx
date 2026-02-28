@@ -20,7 +20,7 @@ import { es } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils/utils';
 import { getProductsForStockAction, getPedidosDelDiaAction } from '../actions';
-import type { ProductForStock } from '@/lib/services';
+type ProductForStock = any;
 
 interface AddStockModalProps {
     open: boolean;

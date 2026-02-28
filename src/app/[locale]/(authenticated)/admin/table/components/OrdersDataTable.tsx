@@ -786,7 +786,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
 
             // Mapear los items con sus precios calculados
             const itemsWithPrices = validItems.map(item => {
-                const itemPrice = priceResult.itemPrices!.find(ip =>
+                const itemPrice = priceResult.itemPrices!.find((ip: any) =>
                     ip.name === item.name || ip.name === item.fullName
                 );
 

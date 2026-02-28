@@ -22,7 +22,7 @@ import Link from 'next/link';
 
 import { createMayoristaAction, updateMayoristaAction, deleteMayoristaAction } from '../actions';
 import { ZONA_OPTIONS, FRECUENCIA_OPTIONS, TIPO_NEGOCIO_OPTIONS } from '../constants';
-import type { Mayorista } from '@/lib/services';
+type Mayorista = any;
 
 interface MayoristasDataTableProps {
     columns: ColumnDef<Mayorista>[];

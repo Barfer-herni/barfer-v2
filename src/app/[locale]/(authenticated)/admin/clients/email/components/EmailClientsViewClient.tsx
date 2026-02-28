@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Mail, Send, Users, Clock, CalendarIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Dictionary } from '@/config/i18n';
-import type { ClientForTableWithStatus } from '@/lib/services';
 import type { EmailTemplateData } from '@/lib/services';
+// TODO: Migrar a backend API
+type ClientForTableWithStatus = any;
 import {
     Dialog,
     DialogContent,

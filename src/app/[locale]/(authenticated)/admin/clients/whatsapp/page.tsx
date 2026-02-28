@@ -1,8 +1,8 @@
 import { getDictionary } from '@/config/i18n';
-import { getClientsPaginatedWithStatus, getWhatsAppTemplates } from '@/lib/services';
-import { getCurrentUser } from '@/lib/services/services/authService';
 import { WhatsAppClientsViewServer } from './components/WhatsAppClientsViewServer';
 import { PermissionGate } from '@/lib/auth/components/PermissionGate';
+
+// TODO: Migrar a backend API
 
 interface WhatsAppPageProps {
     params: Promise<{
@@ -20,27 +20,13 @@ export default async function WhatsAppPage({ params, searchParams }: WhatsAppPag
     const { locale } = await params;
     const { category, type, visibility, page: pageParam } = await searchParams;
 
-    const user = await getCurrentUser();
-    if (!user) {
-        throw new Error('Usuario no autenticado');
-    }
-
     const page = parseInt(pageParam || '1', 10);
 
-    const [dictionary, clientsResult, whatsappTemplates] = await Promise.all([
-        getDictionary(locale),
-        getClientsPaginatedWithStatus({
-            category,
-            type: type as 'behavior' | 'spending',
-            visibility,
-            page,
-            pageSize: 50
-        }),
-        getWhatsAppTemplates(user.id || (user as any)._id)
-    ]);
+    // TODO: Migrar a backend API
+    const clients: any[] = [];
+    const whatsappTemplates: any[] = [];
 
-    // Extraer solo los clientes para mantener compatibilidad
-    const clients = clientsResult.clients;
+    const dictionary = await getDictionary(locale);
 
     return (
         <PermissionGate
@@ -61,10 +47,10 @@ export default async function WhatsAppPage({ params, searchParams }: WhatsAppPag
                 clients={clients}
                 whatsappTemplates={whatsappTemplates}
                 paginationInfo={{
-                    totalCount: clientsResult.totalCount,
-                    totalPages: clientsResult.totalPages,
+                    totalCount: 0,
+                    totalPages: 0,
                     currentPage: page,
-                    hasMore: clientsResult.hasMore
+                    hasMore: false
                 }}
             />
         </PermissionGate>

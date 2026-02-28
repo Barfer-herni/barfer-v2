@@ -37,7 +37,7 @@ export const getProductsFromDatabase = async (clientType: 'minorista' | 'mayoris
             if (clientType === 'minorista') {
                 // Excluir productos prohibidos para minorista Y productos RAW
                 // Los productos RAW solo están disponibles para mayoristas
-                const filteredProducts = result.products.filter(product => {
+                const filteredProducts = result.products.filter((product: any) => {
                     // Excluir productos prohibidos para minorista
                     const isNotForbidden = !FORBIDDEN_PRODUCTS_FOR_RETAIL.some(f =>
                         product.toLowerCase().includes(f.toLowerCase())
@@ -59,7 +59,7 @@ export const getProductsFromDatabase = async (clientType: 'minorista' | 'mayoris
                     return isNotForbidden && isNotRaw && isAllowedOtros;
                 });
 
-                const filteredDetails = result.productsWithDetails.filter(detail => {
+                const filteredDetails = result.productsWithDetails.filter((detail: any) => {
                     // Excluir productos prohibidos para minorista
                     const isNotForbidden = !FORBIDDEN_PRODUCTS_FOR_RETAIL.some(f =>
                         detail.formattedName.toLowerCase().includes(f.toLowerCase())

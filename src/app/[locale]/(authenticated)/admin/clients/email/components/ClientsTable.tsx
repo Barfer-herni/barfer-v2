@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/table';
 import { Search, Mail, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle, EyeOff, Eye } from 'lucide-react';
 import type { Dictionary } from '@/config/i18n';
-import type { ClientForTableWithStatus } from '@/lib/services';
+// TODO: Migrar a backend API
+type ClientForTableWithStatus = any;
 import { markClientsAsWhatsAppContacted, unmarkClientsAsWhatsAppContacted, getClientsWhatsAppContactStatus, hideSelectedClients, showSelectedClients, getClientsVisibilityStatus } from '../../actions';
 import { useToast } from '@/hooks/use-toast';
 import { VisibilityFilter, type VisibilityFilterType } from '../../components/VisibilityFilter';

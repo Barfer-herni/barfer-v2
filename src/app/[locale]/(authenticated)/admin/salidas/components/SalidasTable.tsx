@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useTransition, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { TipoSalida, TipoRegistro } from '@/lib/database';
+import { TipoSalida, TipoRegistro } from '@prisma/client';
 import {
     Table,
     TableBody,
@@ -225,7 +225,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
     const uniqueCategorias = useMemo(() => {
         const categorias = salidas
             .map(s => s.categoria)
-            .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined && cat !== null)
+            .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined && cat !== null && !!cat._id)
             .filter((cat, index, array) => array.findIndex(c => c._id === cat._id) === index)
             .sort((a, b) => a.nombre.localeCompare(b.nombre));
         return categorias;
@@ -234,7 +234,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
     const uniqueMetodosPago = useMemo(() => {
         const metodos = salidas
             .map(s => s.metodoPago)
-            .filter((mp): mp is NonNullable<typeof mp> => mp !== undefined && mp !== null)
+            .filter((mp): mp is NonNullable<typeof mp> => mp !== undefined && mp !== null && !!mp._id)
             .filter((mp, index, array) => array.findIndex(m => m._id === mp._id) === index)
             .sort((a, b) => a.nombre.localeCompare(b.nombre));
         return metodos;

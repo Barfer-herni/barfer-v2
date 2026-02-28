@@ -646,7 +646,7 @@ export function SalidasEstadisticas() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Todas las categorías</SelectItem>
-                                        {availableCategories.map((categoria) => (
+                                        {availableCategories.filter(c => !!c._id).map((categoria) => (
                                             <SelectItem key={categoria._id} value={categoria._id}>
                                                 {categoria.nombre}
                                             </SelectItem>

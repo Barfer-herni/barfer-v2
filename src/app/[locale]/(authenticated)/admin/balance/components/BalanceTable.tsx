@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Dictionary } from '@/config/i18n';
-import { BalanceMonthlyData } from '@/lib/services';
+type BalanceMonthlyData = any;
 import {
     Table,
     TableBody,

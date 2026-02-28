@@ -37,6 +37,7 @@ import {
     getSalidasMonthlyAnalyticsMongo,
     getSalidasOverviewAnalyticsMongo,
     // Servicios adicionales
+    getSalidaByIdMongo,
     getSalidasByCategoryMongo,
     // Tipos MongoDB
     type CreateSalidaMongoInput,
@@ -47,7 +48,7 @@ import {
     type UpdateCategoriaProveedorMongoInput
 } from '@/lib/services';
 import { revalidatePath } from 'next/cache';
-import { TipoSalida, TipoRegistro } from '@/lib/database';
+import { TipoSalida, TipoRegistro } from '@prisma/client';
 import { hasPermission } from '@/lib/auth/server-permissions';
 
 // Re-exportar tipos para las acciones
@@ -427,32 +428,32 @@ export async function duplicateSalidaAction(id: string) {
             return { success: false, error: 'No tienes permisos para duplicar salidas' };
         }
 
-        // Obtener la salida original
-        const { getCollection, ObjectId } = await import('@/lib/database');
-        const salidasCollection = await getCollection('salidas');
-        const originalSalida = await salidasCollection.findOne({ _id: new ObjectId(id) });
+        // Obtener la salida original via API
+        const originalResult = await getSalidaByIdMongo(id);
 
-        if (!originalSalida) {
+        if (!originalResult.success || !originalResult.salida) {
             return { success: false, error: 'Salida no encontrada' };
         }
 
+        const originalSalida = originalResult.salida;
+
         // Crear una copia de la salida con modificaciones para indicar que es duplicada
         const duplicatedSalidaData: CreateSalidaMongoInput = {
-            fechaFactura: originalSalida.fechaFactura instanceof Date 
-                ? originalSalida.fechaFactura 
-                : new Date(originalSalida.fechaFactura),
+            fechaFactura: originalSalida.fechaFactura instanceof Date
+                ? originalSalida.fechaFactura
+                : new Date(originalSalida.fechaFactura as string),
             detalle: `DUPLICADO - ${originalSalida.detalle || ''}`,
-            categoriaId: originalSalida.categoriaId.toString(),
+            categoriaId: originalSalida.categoriaId,
             tipo: originalSalida.tipo,
             marca: originalSalida.marca || 'BARFER',
             monto: originalSalida.monto,
-            metodoPagoId: originalSalida.metodoPagoId.toString(),
+            metodoPagoId: originalSalida.metodoPagoId,
             tipoRegistro: originalSalida.tipoRegistro,
-            proveedorId: originalSalida.proveedorId ? originalSalida.proveedorId.toString() : undefined,
-            fechaPago: originalSalida.fechaPago 
-                ? (originalSalida.fechaPago instanceof Date 
-                    ? originalSalida.fechaPago 
-                    : new Date(originalSalida.fechaPago))
+            proveedorId: originalSalida.proveedorId || undefined,
+            fechaPago: originalSalida.fechaPago
+                ? (originalSalida.fechaPago instanceof Date
+                    ? originalSalida.fechaPago
+                    : new Date(originalSalida.fechaPago as string))
                 : undefined,
             comprobanteNumber: originalSalida.comprobanteNumber || undefined,
         };

@@ -2,8 +2,9 @@
 
 import { WhatsAppClientsViewClient } from './WhatsAppClientsViewClient';
 import type { Dictionary } from '@/config/i18n';
-import type { ClientForTableWithStatus } from '@/lib/services';
 import type { WhatsAppTemplateData } from '@/lib/services';
+// TODO: Migrar a backend API
+type ClientForTableWithStatus = any;
 
 interface WhatsAppClientsViewServerProps {
     category?: string;

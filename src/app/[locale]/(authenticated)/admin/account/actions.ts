@@ -258,19 +258,17 @@ export async function updateUserCategoryPermissions(userId: string, permissions:
 
 export async function getAvailableCategoriesAction() {
     try {
-        // Usar MongoDB en lugar de Prisma
-        const { getCollection } = await import('@/lib/database');
-        const categoriasCollection = await getCollection('categorias');
+        const { getAllCategoriasMongo } = await import('@/lib/services');
+        const result = await getAllCategoriasMongo();
 
-        const categorias = await categoriasCollection
-            .find({ isActive: true })
-            .sort({ nombre: 1 })
-            .toArray();
+        if (result.success && result.categorias) {
+            return {
+                success: true,
+                categories: result.categorias.map(cat => cat.nombre)
+            };
+        }
 
-        return {
-            success: true,
-            categories: categorias.map(cat => cat.nombre)
-        };
+        return { success: false, categories: [] };
     } catch (error) {
         console.error('Error getting available categories:', error);
         return { success: false, categories: [] };

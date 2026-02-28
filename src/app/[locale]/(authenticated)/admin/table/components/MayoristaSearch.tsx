@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Search, X, Store } from 'lucide-react';
 import { searchMayoristasAction } from '../actions';
-import type { Mayorista } from '@/lib/services';
+
+type Mayorista = any;
 
 interface MayoristaSearchProps {
     onMayoristaSelect: (mayorista: Mayorista | null) => void;

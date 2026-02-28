@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { MatrixTableClient } from '../../components/MatrixTableClient';
-import type { ProductoMatrixData } from '@/lib/services';
+type ProductoMatrixData = any;
 
 interface MatrizPageClientProps {
     matrix: ProductoMatrixData[];

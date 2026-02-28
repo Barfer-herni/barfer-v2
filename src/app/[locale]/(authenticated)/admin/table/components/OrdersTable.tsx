@@ -404,7 +404,7 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
                                                                     itemsLength: currentItems.length,
                                                                     pricesLength: priceResult.itemPrices.length,
                                                                     items: currentItems.map((i: any) => ({ name: i.name, fullName: i.fullName })),
-                                                                    prices: priceResult.itemPrices.map(p => ({ name: p.name, price: p.unitPrice }))
+                                                                    prices: priceResult.itemPrices.map((p: any) => ({ name: p.name, price: p.unitPrice }))
                                                                 });
 
                                                                 // CRÍTICO: Mapear por NOMBRE, no por índice
@@ -419,7 +419,7 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
                                                                     });
 
                                                                     // Estrategia de búsqueda múltiple para encontrar el precio correcto
-                                                                    let priceInfo = priceResult.itemPrices?.find(ip => {
+                                                                    let priceInfo = priceResult.itemPrices?.find((ip: any) => {
                                                                         // 1. Coincidencia exacta con fullName
                                                                         if (ip.name === itemFullName) {
                                                                             console.log(`✅ Match exacto por fullName: ${ip.name} === ${itemFullName}`);
@@ -451,7 +451,7 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
                                                                         console.error(`❌ [PDF EDIT] No se encontró precio para:`, {
                                                                             itemName,
                                                                             itemFullName,
-                                                                            availablePrices: priceResult.itemPrices?.map(p => p.name)
+                                                                            availablePrices: priceResult.itemPrices?.map((p: any) => p.name)
                                                                         });
                                                                     } else {
                                                                         console.log(`✅ [PDF EDIT] Precio encontrado:`, {

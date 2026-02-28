@@ -1,6 +1,6 @@
 'use client';
 
-import type { TipoRegistro, TipoSalida } from '@/lib/database';
+import type { TipoRegistro, TipoSalida } from '@prisma/client';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
