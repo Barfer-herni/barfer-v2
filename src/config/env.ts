@@ -20,7 +20,7 @@ export const env = createEnv({
     KNOCK_SECRET_API_KEY: z.string().optional(),
     VERCEL: z.string().optional(),
     ANALYZE: z.string().optional(),
-    API_URL: z.string().default('http://localhost:3000/api/v1/barfer'),
+    API_URL: z.string().default('http://localhost:3001/api/v1/barfer'),
   },
   client: {
     NEXT_PUBLIC_AUTH_SIGN_IN_URL: z.string().default('/sign-in'),
