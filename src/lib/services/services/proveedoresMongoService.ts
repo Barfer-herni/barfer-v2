@@ -1,4 +1,4 @@
-import { ObjectId, getCollection } from '@/lib/database';
+import { apiClient } from '@/lib/api';
 
 // Tipos para el servicio MongoDB
 export interface ProveedorMongoData {
@@ -10,7 +10,6 @@ export interface ProveedorMongoData {
     registro: 'BLANCO' | 'NEGRO';
     categoriaId?: string | null;
     metodoPagoId?: string | null;
-    // Datos relacionados (populados)
     categoria?: {
         _id: string;
         nombre: string;
@@ -46,8 +45,6 @@ export interface UpdateProveedorMongoInput {
     isActive?: boolean;
 }
 
-// Servicios CRUD
-
 /**
  * Obtener todos los proveedores activos con datos relacionados
  */
@@ -59,65 +56,11 @@ export async function getAllProveedoresMongo(): Promise<{
     error?: string;
 }> {
     try {
-        const proveedoresCollection = await getCollection('proveedores');
-
-        const proveedores = await proveedoresCollection
-            .aggregate([
-                { $match: { isActive: true } },
-                {
-                    $lookup: {
-                        from: 'categorias',
-                        localField: 'categoriaId',
-                        foreignField: '_id',
-                        as: 'categoria'
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'metodos_pago',
-                        localField: 'metodoPagoId',
-                        foreignField: '_id',
-                        as: 'metodoPago'
-                    }
-                },
-                {
-                    $addFields: {
-                        categoria: { $arrayElemAt: ['$categoria', 0] },
-                        metodoPago: { $arrayElemAt: ['$metodoPago', 0] }
-                    }
-                },
-                {
-                    $sort: { nombre: 1 }
-                }
-            ])
-            .toArray();
-
-        const formattedProveedores = proveedores.map(proveedor => ({
-            _id: proveedor._id.toString(),
-            nombre: proveedor.nombre,
-            detalle: proveedor.detalle,
-            telefono: proveedor.telefono,
-            personaContacto: proveedor.personaContacto,
-            registro: proveedor.registro,
-            categoriaId: proveedor.categoriaId ? proveedor.categoriaId.toString() : null,
-            metodoPagoId: proveedor.metodoPagoId ? proveedor.metodoPagoId.toString() : null,
-            categoria: proveedor.categoria ? {
-                _id: proveedor.categoria._id.toString(),
-                nombre: proveedor.categoria.nombre
-            } : undefined,
-            metodoPago: proveedor.metodoPago ? {
-                _id: proveedor.metodoPago._id.toString(),
-                nombre: proveedor.metodoPago.nombre
-            } : undefined,
-            isActive: proveedor.isActive,
-            createdAt: proveedor.createdAt,
-            updatedAt: proveedor.updatedAt
-        }));
-
+        const result = await apiClient.get('/proveedores');
         return {
             success: true,
-            proveedores: formattedProveedores,
-            total: formattedProveedores.length
+            proveedores: result.proveedores || result || [],
+            total: result.total || (result.proveedores || result || []).length
         };
     } catch (error) {
         console.error('Error in getAllProveedoresMongo:', error);
@@ -140,64 +83,11 @@ export async function getAllProveedoresIncludingInactiveMongo(): Promise<{
     error?: string;
 }> {
     try {
-        const proveedoresCollection = await getCollection('proveedores');
-
-        const proveedores = await proveedoresCollection
-            .aggregate([
-                {
-                    $lookup: {
-                        from: 'categorias',
-                        localField: 'categoriaId',
-                        foreignField: '_id',
-                        as: 'categoria'
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'metodos_pago',
-                        localField: 'metodoPagoId',
-                        foreignField: '_id',
-                        as: 'metodoPago'
-                    }
-                },
-                {
-                    $addFields: {
-                        categoria: { $arrayElemAt: ['$categoria', 0] },
-                        metodoPago: { $arrayElemAt: ['$metodoPago', 0] }
-                    }
-                },
-                {
-                    $sort: { nombre: 1 }
-                }
-            ])
-            .toArray();
-
-        const formattedProveedores = proveedores.map(proveedor => ({
-            _id: proveedor._id.toString(),
-            nombre: proveedor.nombre,
-            detalle: proveedor.detalle,
-            telefono: proveedor.telefono,
-            personaContacto: proveedor.personaContacto,
-            registro: proveedor.registro,
-            categoriaId: proveedor.categoriaId ? proveedor.categoriaId.toString() : null,
-            metodoPagoId: proveedor.metodoPagoId ? proveedor.metodoPagoId.toString() : null,
-            categoria: proveedor.categoria ? {
-                _id: proveedor.categoria._id.toString(),
-                nombre: proveedor.categoria.nombre
-            } : undefined,
-            metodoPago: proveedor.metodoPago ? {
-                _id: proveedor.metodoPago._id.toString(),
-                nombre: proveedor.metodoPago.nombre
-            } : undefined,
-            isActive: proveedor.isActive,
-            createdAt: proveedor.createdAt,
-            updatedAt: proveedor.updatedAt
-        }));
-
+        const result = await apiClient.get('/proveedores/all');
         return {
             success: true,
-            proveedores: formattedProveedores,
-            total: formattedProveedores.length
+            proveedores: result.proveedores || result || [],
+            total: result.total || (result.proveedores || result || []).length
         };
     } catch (error) {
         console.error('Error in getAllProveedoresIncludingInactiveMongo:', error);
@@ -219,70 +109,10 @@ export async function getProveedorByIdMongo(id: string): Promise<{
     error?: string;
 }> {
     try {
-        const proveedoresCollection = await getCollection('proveedores');
-
-        const proveedor = await proveedoresCollection
-            .aggregate([
-                { $match: { _id: new ObjectId(id) } },
-                {
-                    $lookup: {
-                        from: 'categorias',
-                        localField: 'categoriaId',
-                        foreignField: '_id',
-                        as: 'categoria'
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'metodos_pago',
-                        localField: 'metodoPagoId',
-                        foreignField: '_id',
-                        as: 'metodoPago'
-                    }
-                },
-                {
-                    $addFields: {
-                        categoria: { $arrayElemAt: ['$categoria', 0] },
-                        metodoPago: { $arrayElemAt: ['$metodoPago', 0] }
-                    }
-                }
-            ])
-            .toArray();
-
-        if (proveedor.length === 0) {
-            return {
-                success: false,
-                message: 'Proveedor no encontrado',
-                error: 'PROVEEDOR_NOT_FOUND'
-            };
-        }
-
-        const proveedorData = proveedor[0];
-        const formattedProveedor: ProveedorMongoData = {
-            _id: proveedorData._id.toString(),
-            nombre: proveedorData.nombre,
-            detalle: proveedorData.detalle,
-            telefono: proveedorData.telefono,
-            personaContacto: proveedorData.personaContacto,
-            registro: proveedorData.registro,
-            categoriaId: proveedorData.categoriaId ? proveedorData.categoriaId.toString() : null,
-            metodoPagoId: proveedorData.metodoPagoId ? proveedorData.metodoPagoId.toString() : null,
-            categoria: proveedorData.categoria ? {
-                _id: proveedorData.categoria._id.toString(),
-                nombre: proveedorData.categoria.nombre
-            } : undefined,
-            metodoPago: proveedorData.metodoPago ? {
-                _id: proveedorData.metodoPago._id.toString(),
-                nombre: proveedorData.metodoPago.nombre
-            } : undefined,
-            isActive: proveedorData.isActive,
-            createdAt: proveedorData.createdAt,
-            updatedAt: proveedorData.updatedAt
-        };
-
+        const result = await apiClient.get(`/proveedores/${id}`);
         return {
             success: true,
-            proveedor: formattedProveedor
+            proveedor: result.proveedor || result
         };
     } catch (error) {
         console.error('Error in getProveedorByIdMongo:', error);
@@ -304,45 +134,10 @@ export async function createProveedorMongo(data: CreateProveedorMongoInput): Pro
     error?: string;
 }> {
     try {
-        const proveedoresCollection = await getCollection('proveedores');
-
-        // Verificar si ya existe un proveedor con el mismo nombre
-        const existingProveedor = await proveedoresCollection.findOne({
-            nombre: { $regex: new RegExp(`^${data.nombre}$`, 'i') }
-        });
-
-        if (existingProveedor) {
-            return {
-                success: false,
-                message: 'Ya existe un proveedor con ese nombre',
-                error: 'PROVEEDOR_ALREADY_EXISTS'
-            };
-        }
-
-        // Construir documento para insertar
-        const proveedorDoc: any = {
-            nombre: data.nombre,
-            detalle: data.detalle,
-            telefono: data.telefono,
-            personaContacto: data.personaContacto,
-            registro: data.registro,
-            isActive: data.isActive !== undefined ? data.isActive : true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-
-        // Agregar campos opcionales
-        if (data.categoriaId) proveedorDoc.categoriaId = new ObjectId(data.categoriaId);
-        if (data.metodoPagoId) proveedorDoc.metodoPagoId = new ObjectId(data.metodoPagoId);
-
-        const result = await proveedoresCollection.insertOne(proveedorDoc);
-
-        // Obtener el proveedor creado con datos relacionados
-        const createdProveedor = await getProveedorByIdMongo(result.insertedId.toString());
-
+        const result = await apiClient.post('/proveedores', data);
         return {
             success: true,
-            proveedor: createdProveedor.proveedor,
+            proveedor: result.proveedor || result,
             message: 'Proveedor creado exitosamente'
         };
     } catch (error) {
@@ -365,69 +160,10 @@ export async function updateProveedorMongo(id: string, data: UpdateProveedorMong
     error?: string;
 }> {
     try {
-        const proveedoresCollection = await getCollection('proveedores');
-
-        // Verificar si el proveedor existe
-        const existingProveedor = await proveedoresCollection.findOne({ _id: new ObjectId(id) });
-
-        if (!existingProveedor) {
-            return {
-                success: false,
-                message: 'Proveedor no encontrado',
-                error: 'PROVEEDOR_NOT_FOUND'
-            };
-        }
-
-        // Si se está actualizando el nombre, verificar que no exista otro proveedor con el mismo nombre
-        if (data.nombre && data.nombre !== existingProveedor.nombre) {
-            const duplicateProveedor = await proveedoresCollection.findOne({
-                nombre: { $regex: new RegExp(`^${data.nombre}$`, 'i') },
-                _id: { $ne: new ObjectId(id) }
-            });
-
-            if (duplicateProveedor) {
-                return {
-                    success: false,
-                    message: 'Ya existe otro proveedor con ese nombre',
-                    error: 'PROVEEDOR_NAME_ALREADY_EXISTS'
-                };
-            }
-        }
-
-        // Construir objeto de actualización
-        const updateData: any = {
-            updatedAt: new Date()
-        };
-
-        // Agregar campos solo si están presentes
-        if (data.nombre !== undefined) updateData.nombre = data.nombre;
-        if (data.detalle !== undefined) updateData.detalle = data.detalle;
-        if (data.telefono !== undefined) updateData.telefono = data.telefono;
-        if (data.personaContacto !== undefined) updateData.personaContacto = data.personaContacto;
-        if (data.registro !== undefined) updateData.registro = data.registro;
-        if (data.isActive !== undefined) updateData.isActive = data.isActive;
-        if (data.categoriaId !== undefined) updateData.categoriaId = data.categoriaId ? new ObjectId(data.categoriaId) : null;
-        if (data.metodoPagoId !== undefined) updateData.metodoPagoId = data.metodoPagoId ? new ObjectId(data.metodoPagoId) : null;
-
-        const result = await proveedoresCollection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: updateData }
-        );
-
-        if (result.matchedCount === 0) {
-            return {
-                success: false,
-                message: 'Proveedor no encontrado',
-                error: 'PROVEEDOR_NOT_FOUND'
-            };
-        }
-
-        // Obtener el proveedor actualizado
-        const updatedProveedor = await getProveedorByIdMongo(id);
-
+        const result = await apiClient.patch(`/proveedores/${id}`, data);
         return {
             success: true,
-            proveedor: updatedProveedor.proveedor,
+            proveedor: result.proveedor || result,
             message: 'Proveedor actualizado exitosamente'
         };
     } catch (error) {
@@ -449,26 +185,7 @@ export async function deleteProveedorMongo(id: string): Promise<{
     error?: string;
 }> {
     try {
-        const proveedoresCollection = await getCollection('proveedores');
-
-        const result = await proveedoresCollection.updateOne(
-            { _id: new ObjectId(id) },
-            {
-                $set: {
-                    isActive: false,
-                    updatedAt: new Date()
-                }
-            }
-        );
-
-        if (result.matchedCount === 0) {
-            return {
-                success: false,
-                message: 'Proveedor no encontrado',
-                error: 'PROVEEDOR_NOT_FOUND'
-            };
-        }
-
+        await apiClient.delete(`/proveedores/${id}`);
         return {
             success: true,
             message: 'Proveedor eliminado exitosamente'
@@ -484,7 +201,7 @@ export async function deleteProveedorMongo(id: string): Promise<{
 }
 
 /**
- * Buscar proveedores por término de búsqueda
+ * Buscar proveedores por termino de busqueda
  */
 export async function searchProveedoresMongo(searchTerm: string): Promise<{
     success: boolean;
@@ -494,78 +211,14 @@ export async function searchProveedoresMongo(searchTerm: string): Promise<{
     error?: string;
 }> {
     try {
-        console.log('🔍 searchProveedoresMongo - Término de búsqueda:', searchTerm);
-        const proveedoresCollection = await getCollection('proveedores');
-
-        const proveedores = await proveedoresCollection
-            .aggregate([
-                {
-                    $match: {
-                        isActive: true,
-                        $or: [
-                            { nombre: { $regex: searchTerm, $options: 'i' } },
-                            { detalle: { $regex: searchTerm, $options: 'i' } },
-                            { personaContacto: { $regex: searchTerm, $options: 'i' } }
-                        ]
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'categorias',
-                        localField: 'categoriaId',
-                        foreignField: '_id',
-                        as: 'categoria'
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'metodos_pago',
-                        localField: 'metodoPagoId',
-                        foreignField: '_id',
-                        as: 'metodoPago'
-                    }
-                },
-                {
-                    $addFields: {
-                        categoria: { $arrayElemAt: ['$categoria', 0] },
-                        metodoPago: { $arrayElemAt: ['$metodoPago', 0] }
-                    }
-                },
-                {
-                    $sort: { nombre: 1 }
-                }
-            ])
-            .toArray();
-
-        const formattedProveedores = proveedores.map(proveedor => ({
-            _id: proveedor._id.toString(),
-            nombre: proveedor.nombre,
-            detalle: proveedor.detalle,
-            telefono: proveedor.telefono,
-            personaContacto: proveedor.personaContacto,
-            registro: proveedor.registro,
-            categoriaId: proveedor.categoriaId ? proveedor.categoriaId.toString() : null,
-            metodoPagoId: proveedor.metodoPagoId ? proveedor.metodoPagoId.toString() : null,
-            categoria: proveedor.categoria ? {
-                _id: proveedor.categoria._id.toString(),
-                nombre: proveedor.categoria.nombre
-            } : undefined,
-            metodoPago: proveedor.metodoPago ? {
-                _id: proveedor.metodoPago._id.toString(),
-                nombre: proveedor.metodoPago.nombre
-            } : undefined,
-            isActive: proveedor.isActive,
-            createdAt: proveedor.createdAt,
-            updatedAt: proveedor.updatedAt
-        }));
-
+        const result = await apiClient.get(`/proveedores/search?q=${encodeURIComponent(searchTerm)}`);
         return {
             success: true,
-            proveedores: formattedProveedores,
-            total: formattedProveedores.length
+            proveedores: result.proveedores || result || [],
+            total: result.total || (result.proveedores || result || []).length
         };
     } catch (error) {
-        console.error('❌ Error in searchProveedoresMongo:', error);
+        console.error('Error in searchProveedoresMongo:', error);
         return {
             success: false,
             message: 'Error al buscar proveedores',
@@ -574,46 +227,22 @@ export async function searchProveedoresMongo(searchTerm: string): Promise<{
     }
 }
 
-// Función de prueba simple
+/**
+ * Funcion de prueba simple
+ */
 export async function testSearchProveedoresMongo(searchTerm: string): Promise<{
     success: boolean;
     proveedores?: any[];
     message?: string;
 }> {
     try {
-        console.log('🧪 testSearchProveedoresMongo - Término:', searchTerm);
-        const proveedoresCollection = await getCollection('proveedores');
-
-        // Búsqueda simple sin agregación
-        const proveedores = await proveedoresCollection
-            .find({
-                isActive: true,
-                $or: [
-                    { nombre: { $regex: searchTerm, $options: 'i' } },
-                    { detalle: { $regex: searchTerm, $options: 'i' } },
-                    { personaContacto: { $regex: searchTerm, $options: 'i' } }
-                ]
-            })
-            .toArray();
-
-        console.log('🧪 testSearchProveedoresMongo - Resultados:', proveedores.length);
-
+        const result = await searchProveedoresMongo(searchTerm);
         return {
             success: true,
-            proveedores: proveedores.map(p => ({
-                _id: p._id.toString(),
-                nombre: p.nombre,
-                detalle: p.detalle,
-                telefono: p.telefono,
-                personaContacto: p.personaContacto,
-                registro: p.registro,
-                categoriaId: p.categoriaId?.toString(),
-                metodoPagoId: p.metodoPagoId?.toString(),
-                isActive: p.isActive
-            }))
+            proveedores: result.proveedores || []
         };
     } catch (error) {
-        console.error('❌ Error in testSearchProveedoresMongo:', error);
+        console.error('Error in testSearchProveedoresMongo:', error);
         return {
             success: false,
             message: 'Error al buscar proveedores'

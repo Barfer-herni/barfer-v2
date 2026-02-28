@@ -1,8 +1,12 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { createUser, getUserById, verifyUserCredentials } from './userService';
+import { createUser, getUserById } from './userService';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
+import { env } from '@/config/env';
+
+const API_URL = env.API_URL;
+
 // Cookie expiration (30 days in seconds)
 const COOKIE_EXPIRATION = 60 * 60 * 24 * 30;
 
@@ -27,35 +31,36 @@ async function setCookie(name: string, value: string, options?: Partial<Response
 }
 
 /**
- * Sign in a user with email and password
+ * Sign in a user with email and password via backend API
  */
 export async function signIn({ email, password }: { email: string; password: string }) {
     try {
-        // Verify credentials
-        const authResult = await verifyUserCredentials(email, password);
+        // Call backend login endpoint
+        const response = await fetch(`${API_URL}/users-gestor/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
 
-        if (!authResult.success) {
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
             return {
                 success: false,
-                message: authResult.message || 'Credenciales inválidas',
-                error: authResult.error
+                message: errorData.message || 'Credenciales inválidas',
             };
         }
 
-        // Get user details
-        const user = await getUserById(authResult.user?.id || '');
-        if (!user) {
-            return { success: false, message: 'Usuario no encontrado' };
-        }
+        const { access_token, refresh_token, user } = await response.json();
 
-
-
-        // Create session token (simple JSON string, no encryption)
+        // Create session token with all needed data for the middleware
         const token = JSON.stringify({
             id: user.id,
             email: user.email,
-            role: user.role.toLowerCase(), // Asegurar que el rol está en minúsculas
+            role: user.role.toLowerCase(),
             permissions: Array.isArray(user.permissions) ? user.permissions : [],
+            puntoEnvio: user.puntoEnvio,
+            access_token,
+            refresh_token,
         });
 
         // Establecer cookie
@@ -141,11 +146,9 @@ export async function signOut() {
 
 /**
  * Get the current authenticated user
- * NOTA: Esta función NO modifica cookies cuando se llama desde un Server Component
  */
 export async function getCurrentUser() {
     try {
-        // Obtener la cookie directamente
         const cookieStore = await cookies();
         const tokenCookie = cookieStore.get('auth-token');
 
@@ -160,20 +163,40 @@ export async function getCurrentUser() {
                 return null;
             }
 
-            const user = await getUserById(token.id);
+            // Try to get user from backend API
+            try {
+                const response = await fetch(`${API_URL}/users-gestor/${token.id}`, {
+                    headers: token.access_token
+                        ? { 'Authorization': `Bearer ${token.access_token}` }
+                        : {},
+                    cache: 'no-store',
+                });
 
-            if (!user) {
-                return null;
+                if (response.ok) {
+                    const user = await response.json();
+                    return {
+                        id: user.id || user._id,
+                        name: user.name,
+                        lastName: user.lastName,
+                        email: user.email,
+                        role: user.role,
+                        permissions: Array.isArray(user.permissions) ? user.permissions : [],
+                        puntoEnvio: user.puntoEnvio,
+                    };
+                }
+            } catch {
+                // If API call fails, use data from cookie
             }
 
+            // Fallback: use cookie data
             return {
-                id: user.id,
-                name: user.name,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role,
-                permissions: Array.isArray(user.permissions) ? user.permissions : [],
-                puntoEnvio: user.puntoEnvio,
+                id: token.id,
+                name: '',
+                lastName: '',
+                email: token.email || '',
+                role: token.role || '',
+                permissions: Array.isArray(token.permissions) ? token.permissions : [],
+                puntoEnvio: token.puntoEnvio,
             };
         } catch (parseError) {
             console.error('Error al analizar el token:', parseError);
@@ -209,4 +232,4 @@ export async function getCurrentUserId(): Promise<string | null> {
         console.error('Error al obtener ID de usuario actual:', error);
         return null;
     }
-} 
+}
