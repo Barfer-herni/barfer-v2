@@ -1,5 +1,6 @@
 'use server';
 
+import { apiClient } from '@/lib/api';
 import { getCollection, ObjectId } from '@/lib/database';
 
 export type MayoristaZona = 'CABA' | 'LA_PLATA' | 'OESTE' | 'NOROESTE' | 'NORTE' | 'SUR';
@@ -15,12 +16,12 @@ export interface Mayorista {
     fechaPrimerPedido?: Date | string;
     fechaUltimoPedido?: Date | string;
     tieneFreezer: boolean;
-    cantidadFreezers?: number; // Cantidad de freezers
-    capacidadFreezer?: number; // en litros o unidad de medida
-    tiposNegocio: MayoristaTipoNegocio[]; // Array para múltiples opciones
-    horarios?: string; // Horarios de atención (ej: "Lunes a viernes de 10 a 14hs\nSábados de 10 a 14hs")
+    cantidadFreezers?: number;
+    capacidadFreezer?: number;
+    tiposNegocio: MayoristaTipoNegocio[];
+    horarios?: string;
     kilosPorMes: Array<{
-        mes: number; // 1-12
+        mes: number;
         anio: number;
         kilos: number;
     }>;
@@ -60,7 +61,7 @@ export interface MayoristaUpdateInput extends Partial<MayoristaCreateInput> {
 }
 
 /**
- * Obtener todos los mayoristas con paginación y filtros
+ * Obtener todos los mayoristas con paginacion y filtros
  */
 export async function getMayoristas({
     pageIndex = 0,
@@ -86,55 +87,23 @@ export async function getMayoristas({
     error?: string;
 }> {
     try {
-        const mayoristasCollection = await getCollection('puntos_venta');
+        const params = new URLSearchParams();
+        params.set('pageIndex', String(pageIndex));
+        params.set('pageSize', String(pageSize));
+        if (search) params.set('search', search);
+        if (zona) params.set('zona', zona);
+        if (!activo) params.set('activo', 'false');
+        params.set('sortBy', sortBy);
+        if (sortDesc) params.set('sortDesc', 'true');
 
-        // Construir filtro de búsqueda
-        const filter: any = { activo };
-
-        if (zona) {
-            filter.zona = zona;
-        }
-
-        if (search) {
-            // Crear patrón regex flexible para zona que acepta espacios o guiones bajos
-            // Ejemplo: "la plata" -> "la[\s_]plata" coincide con "la plata" o "LA_PLATA"
-            const flexibleZonaTerm = search.replace(/\s+/g, '[\\s_]');
-
-            filter.$or = [
-                { nombre: { $regex: search, $options: 'i' } },
-                { 'contacto.telefono': { $regex: search, $options: 'i' } },
-                { 'contacto.email': { $regex: search, $options: 'i' } },
-                { zona: { $regex: flexibleZonaTerm, $options: 'i' } }, // Búsqueda flexible de zona
-            ];
-        }
-
-        // Obtener total de documentos
-        const total = await mayoristasCollection.countDocuments(filter);
-        const pageCount = Math.ceil(total / pageSize);
-
-        // Construir objeto de ordenamiento
-        const sortObject: any = {};
-        sortObject[sortBy] = sortDesc ? -1 : 1;
-
-        // Obtener mayoristas con paginación
-        const mayoristas = await mayoristasCollection
-            .find(filter)
-            .sort(sortObject)
-            .skip(pageIndex * pageSize)
-            .limit(pageSize)
-            .toArray();
-
+        const result = await apiClient.get(`/puntos-venta?${params.toString()}`);
         return {
             success: true,
-            mayoristas: mayoristas.map(m => ({
-                ...m,
-                _id: m._id.toString(),
-            })) as Mayorista[],
-            total,
-            pageCount,
+            mayoristas: result.mayoristas || result.data || result || [],
+            total: result.total || 0,
+            pageCount: result.pageCount || 0,
         };
     } catch (error) {
-        console.error('Error al obtener mayoristas:', error);
         return {
             success: false,
             error: 'Error al obtener los mayoristas',
@@ -153,25 +122,12 @@ export async function getMayoristaById(
     error?: string;
 }> {
     try {
-        const mayoristasCollection = await getCollection('puntos_venta');
-        const mayorista = await mayoristasCollection.findOne({ _id: new ObjectId(id) });
-
-        if (!mayorista) {
-            return {
-                success: false,
-                error: 'Mayorista no encontrado',
-            };
-        }
-
+        const result = await apiClient.get(`/puntos-venta/${id}`);
         return {
             success: true,
-            mayorista: {
-                ...mayorista,
-                _id: mayorista._id.toString(),
-            } as Mayorista,
+            mayorista: result.mayorista || result,
         };
     } catch (error) {
-        console.error('Error al obtener mayorista:', error);
         return {
             success: false,
             error: 'Error al obtener el mayorista',
@@ -190,27 +146,12 @@ export async function createMayorista(
     error?: string;
 }> {
     try {
-        const mayoristasCollection = await getCollection('puntos_venta');
-
-        const newMayorista = {
-            ...data,
-            kilosPorMes: [],
-            activo: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-
-        const result = await mayoristasCollection.insertOne(newMayorista);
-
+        const result = await apiClient.post('/puntos-venta', data);
         return {
             success: true,
-            mayorista: {
-                ...newMayorista,
-                _id: result.insertedId.toString(),
-            } as Mayorista,
+            mayorista: result.mayorista || result,
         };
     } catch (error) {
-        console.error('Error al crear mayorista:', error);
         return {
             success: false,
             error: 'Error al crear el mayorista',
@@ -230,35 +171,12 @@ export async function updateMayorista(
     error?: string;
 }> {
     try {
-        const mayoristasCollection = await getCollection('puntos_venta');
-
-        const updateData = {
-            ...data,
-            updatedAt: new Date(),
-        };
-
-        const result = await mayoristasCollection.findOneAndUpdate(
-            { _id: new ObjectId(id) },
-            { $set: updateData },
-            { returnDocument: 'after' }
-        );
-
-        if (!result) {
-            return {
-                success: false,
-                error: 'Mayorista no encontrado',
-            };
-        }
-
+        const result = await apiClient.patch(`/puntos-venta/${id}`, data);
         return {
             success: true,
-            mayorista: {
-                ...result,
-                _id: result._id.toString(),
-            } as Mayorista,
+            mayorista: result.mayorista || result,
         };
     } catch (error) {
-        console.error('Error al actualizar mayorista:', error);
         return {
             success: false,
             error: 'Error al actualizar el mayorista',
@@ -276,31 +194,9 @@ export async function deleteMayorista(
     error?: string;
 }> {
     try {
-        const mayoristasCollection = await getCollection('puntos_venta');
-
-        const result = await mayoristasCollection.findOneAndUpdate(
-            { _id: new ObjectId(id) },
-            {
-                $set: {
-                    activo: false,
-                    updatedAt: new Date(),
-                },
-            },
-            { returnDocument: 'after' }
-        );
-
-        if (!result) {
-            return {
-                success: false,
-                error: 'Mayorista no encontrado',
-            };
-        }
-
-        return {
-            success: true,
-        };
+        await apiClient.delete(`/puntos-venta/${id}`);
+        return { success: true };
     } catch (error) {
-        console.error('Error al eliminar mayorista:', error);
         return {
             success: false,
             error: 'Error al eliminar el mayorista',
@@ -309,7 +205,7 @@ export async function deleteMayorista(
 }
 
 /**
- * Agregar registro de kilos vendidos en un mes
+ * Agregar registro de kilos vendidos en un mes - MongoDB directo (sin endpoint)
  */
 export async function addKilosMes(
     id: string,
@@ -323,7 +219,6 @@ export async function addKilosMes(
     try {
         const mayoristasCollection = await getCollection('puntos_venta');
 
-        // Primero verificar si ya existe un registro para ese mes/año
         const mayorista = await mayoristasCollection.findOne({ _id: new ObjectId(id) });
 
         if (!mayorista) {
@@ -333,13 +228,11 @@ export async function addKilosMes(
             };
         }
 
-        // Buscar si ya existe el registro
         const existingIndex = mayorista.kilosPorMes?.findIndex(
             (k: any) => k.mes === mes && k.anio === anio
         ) ?? -1;
 
         if (existingIndex >= 0) {
-            // Actualizar el registro existente
             await mayoristasCollection.updateOne(
                 { _id: new ObjectId(id) },
                 {
@@ -350,7 +243,6 @@ export async function addKilosMes(
                 }
             );
         } else {
-            // Agregar nuevo registro
             await mayoristasCollection.updateOne(
                 { _id: new ObjectId(id) },
                 {
@@ -364,11 +256,8 @@ export async function addKilosMes(
             );
         }
 
-        return {
-            success: true,
-        };
+        return { success: true };
     } catch (error) {
-        console.error('Error al agregar kilos del mes:', error);
         return {
             success: false,
             error: 'Error al agregar los kilos del mes',
@@ -377,7 +266,7 @@ export async function addKilosMes(
 }
 
 /**
- * Buscar puntos de venta para autocompletar órdenes
+ * Buscar puntos de venta para autocompletar ordenes
  */
 export async function searchPuntosVenta(
     searchTerm: string
@@ -387,37 +276,16 @@ export async function searchPuntosVenta(
     error?: string;
 }> {
     try {
-        const puntosVentaCollection = await getCollection('puntos_venta');
-
         if (!searchTerm || searchTerm.trim().length < 2) {
-            return {
-                success: true,
-                puntosVenta: [],
-            };
+            return { success: true, puntosVenta: [] };
         }
 
-        // Buscar por nombre, teléfono o dirección
-        const puntosVenta = await puntosVentaCollection
-            .find({
-                activo: true,
-                $or: [
-                    { nombre: { $regex: searchTerm, $options: 'i' } },
-                    { 'contacto.telefono': { $regex: searchTerm, $options: 'i' } },
-                    { 'contacto.direccion': { $regex: searchTerm, $options: 'i' } },
-                ],
-            })
-            .limit(10)
-            .toArray();
-
+        const result = await apiClient.get(`/mayoristas/search?q=${encodeURIComponent(searchTerm)}`);
         return {
             success: true,
-            puntosVenta: puntosVenta.map(pv => ({
-                ...pv,
-                _id: pv._id.toString(),
-            })) as Mayorista[],
+            puntosVenta: result.puntosVenta || result.data || result || [],
         };
     } catch (error) {
-        console.error('Error al buscar puntos de venta:', error);
         return {
             success: false,
             error: 'Error al buscar puntos de venta',
@@ -426,7 +294,7 @@ export async function searchPuntosVenta(
 }
 
 /**
- * Obtener estadísticas de ventas por zona
+ * Obtener estadisticas de ventas por zona - MongoDB directo (sin endpoint)
  */
 export async function getVentasPorZona(): Promise<{
     success: boolean;
@@ -491,11 +359,9 @@ export async function getVentasPorZona(): Promise<{
             data: result as any,
         };
     } catch (error) {
-        console.error('Error al obtener ventas por zona:', error);
         return {
             success: false,
             error: 'Error al obtener las ventas por zona',
         };
     }
 }
-
