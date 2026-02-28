@@ -1,18 +1,5 @@
 'use server';
 
-import {
-    getMayoristas,
-    getMayoristaById,
-    createMayorista,
-    updateMayorista,
-    deleteMayorista,
-    addKilosMes,
-    getVentasPorZona,
-    type MayoristaCreateInput,
-    type MayoristaUpdateInput,
-} from '@/lib/services';
-import { revalidatePath } from 'next/cache';
-
 export async function getMayoristasAction({
     pageIndex = 0,
     pageSize = 50,
@@ -31,79 +18,27 @@ export async function getMayoristasAction({
     sortDesc?: boolean;
 }) {
     'use server';
-
-    return await getMayoristas({
-        pageIndex,
-        pageSize,
-        search,
-        zona: zona as any,
-        activo,
-        sortBy,
-        sortDesc,
-    });
+    return { success: false, error: 'Servicio no disponible - migrando a backend API', mayoristas: [], pageCount: 0, total: 0 };
 }
 
 export async function getMayoristaByIdAction(id: string) {
     'use server';
-
-    return await getMayoristaById(id);
+    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
 }
 
-export async function createMayoristaAction(data: MayoristaCreateInput) {
+export async function createMayoristaAction(data: any) {
     'use server';
-
-    try {
-        const result = await createMayorista(data);
-
-        if (result.success) {
-            revalidatePath('/admin/mayoristas');
-        }
-
-        return result;
-    } catch (error) {
-        return {
-            success: false,
-            error: (error as Error).message,
-        };
-    }
+    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
 }
 
-export async function updateMayoristaAction(id: string, data: MayoristaUpdateInput) {
+export async function updateMayoristaAction(id: string, data: any) {
     'use server';
-
-    try {
-        const result = await updateMayorista(id, data);
-
-        if (result.success) {
-            revalidatePath('/admin/mayoristas');
-        }
-
-        return result;
-    } catch (error) {
-        return {
-            success: false,
-            error: (error as Error).message,
-        };
-    }
+    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
 }
 
 export async function deleteMayoristaAction(id: string) {
     'use server';
-
-    try {
-        const result = await deleteMayorista(id);
-
-        if (result.success) {
-            revalidatePath('/admin/mayoristas');
-        }
-
-        return result;
-    } catch (error) {
-        return {
-            success: false,
-            error: (error as Error).message,
-        };
-    }
+    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
 }
 
 export async function addKilosMesAction(
@@ -113,57 +48,20 @@ export async function addKilosMesAction(
     kilos: number
 ) {
     'use server';
-
-    try {
-        const result = await addKilosMes(id, mes, anio, kilos);
-
-        if (result.success) {
-            revalidatePath('/admin/mayoristas');
-        }
-
-        return result;
-    } catch (error) {
-        return {
-            success: false,
-            error: (error as Error).message,
-        };
-    }
+    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
 }
 
 export async function getVentasPorZonaAction() {
     'use server';
-
-    return await getVentasPorZona();
+    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
 }
 
 export async function getPuntosVentaStatsAction(from?: string, to?: string) {
     'use server';
-
-    const { getPuntosVentaStats } = await import('@/lib/services');
-    return await getPuntosVentaStats(from, to);
+    return { success: false, error: 'Servicio no disponible - migrando a backend API', stats: [] };
 }
 
 export async function getProductosMatrixAction(from?: string, to?: string) {
     'use server';
-
-    const { getProductosMatrix } = await import('@/lib/services');
-
-    // Convertir fechas from/to a year/month para obtener los productNames
-    let year: number;
-    let month: number;
-
-    if (from) {
-        const fromDate = new Date(from);
-        year = fromDate.getFullYear();
-        month = fromDate.getMonth() + 1; // JavaScript months are 0-based, we need 1-based
-    } else {
-        // Si no se proporciona fecha, usar la fecha actual
-        const now = new Date();
-        year = now.getFullYear();
-        month = now.getMonth() + 1;
-    }
-
-    // Pasar las fechas específicas para el filtrado de la matriz
-    return await getProductosMatrix(year, month, from, to);
+    return { success: false, error: 'Servicio no disponible - migrando a backend API', matrix: [], productNames: [] };
 }
-

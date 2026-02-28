@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { getProductosMatrixAction } from '../actions';
-import type { ProductoMatrixData } from '@/lib/services';
+type ProductoMatrixData = any;
 
 type SortDirection = 'asc' | 'desc' | null;
 

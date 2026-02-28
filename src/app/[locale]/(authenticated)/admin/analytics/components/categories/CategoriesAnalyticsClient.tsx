@@ -9,8 +9,25 @@ import { Tag, Filter, Bug } from 'lucide-react';
 import { useInitStore } from '@/stores/initStore';
 import { CategoriesChart } from '../charts/CategoriesChart';
 import { CategoryProgressChart } from '../charts/CategoryProgressChart';
-import type { ProductByTimePeriod } from '@/lib/services/services/barfer';
 import { debugBigDogAction } from '../../actions';
+
+interface ProductByTimePeriod {
+    period: string;
+    date: string;
+    bigDogQuantity: number;
+    bigDogRevenue: number;
+    perroQuantity: number;
+    perroRevenue: number;
+    gatoQuantity: number;
+    gatoRevenue: number;
+    huesosQuantity: number;
+    huesosRevenue: number;
+    complementosQuantity: number;
+    complementosRevenue: number;
+    totalQuantity: number;
+    totalRevenue: number;
+    [key: string]: string | number;
+}
 
 interface CategorySale {
     categoryName: string;

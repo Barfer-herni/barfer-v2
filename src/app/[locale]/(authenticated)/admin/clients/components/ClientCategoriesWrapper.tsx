@@ -1,7 +1,8 @@
-import { getClientCategoriesStats } from '@/lib/services';
 import { getCurrentUserWithPermissions } from '@/lib/auth/server-permissions';
 import { ClientCategoriesServer } from './ClientCategoriesServer';
 import type { Dictionary } from '@/config/i18n';
+
+// TODO: Migrar a backend API
 
 interface ClientCategoriesWrapperProps {
     dictionary: Dictionary;
@@ -10,9 +11,12 @@ interface ClientCategoriesWrapperProps {
 /**
  * Server Component wrapper que obtiene las estadísticas de categorías
  * y las pasa al componente cliente interactivo
+ * Actualmente devuelve datos vacíos - migrando a backend API
  */
 export async function ClientCategoriesWrapper({ dictionary }: ClientCategoriesWrapperProps) {
-    const { behaviorCategories, spendingCategories } = await getClientCategoriesStats();
+    // TODO: Migrar a backend API
+    const behaviorCategories: never[] = [];
+    const spendingCategories: never[] = [];
 
     // Obtener permisos del usuario actual
     const userWithPermissions = await getCurrentUserWithPermissions();

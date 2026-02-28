@@ -1,53 +1,45 @@
-import { getClientGeneralStats } from '@/lib/services';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, DollarSign, Repeat, ShoppingCart } from 'lucide-react';
 import type { Dictionary } from '@/config/i18n';
+
+// TODO: Migrar a backend API
 
 interface ClientStatsServerProps {
     dictionary: Dictionary;
 }
 
-const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('es-AR', {
-        style: 'currency',
-        currency: 'ARS',
-        minimumFractionDigits: 0
-    }).format(amount);
-};
-
 /**
  * Componente Server que obtiene y muestra las estadísticas generales de clientes
+ * Actualmente deshabilitado - migrando a backend API
  */
 export async function ClientStatsServer({ dictionary }: ClientStatsServerProps) {
-    const stats = await getClientGeneralStats();
-
     const statsData = [
         {
             title: dictionary.app.admin.clients.stats.totalClients,
-            value: stats.totalClients.toLocaleString(),
+            value: '-',
             icon: Users,
-            description: "Clientes con pedidos",
+            description: "Migrando a backend API",
             color: "text-blue-600"
         },
         {
             title: dictionary.app.admin.clients.stats.averageSpending,
-            value: formatCurrency(stats.averageMonthlySpending),
+            value: '-',
             icon: DollarSign,
-            description: "Gasto mensual promedio",
+            description: "Migrando a backend API",
             color: "text-green-600"
         },
         {
             title: dictionary.app.admin.clients.stats.repeatRate,
-            value: `${stats.repeatCustomerRate.toFixed(1)}%`,
+            value: '-',
             icon: Repeat,
-            description: "Clientes que repiten",
+            description: "Migrando a backend API",
             color: "text-purple-600"
         },
         {
             title: dictionary.app.admin.clients.stats.averageOrders,
-            value: stats.averageOrdersPerCustomer.toFixed(1),
+            value: '-',
             icon: ShoppingCart,
-            description: "Pedidos por cliente",
+            description: "Migrando a backend API",
             color: "text-orange-600"
         }
     ];

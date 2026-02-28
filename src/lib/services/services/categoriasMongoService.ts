@@ -1,4 +1,4 @@
-import { ObjectId, getCollection } from '@/lib/database';
+import { apiClient } from '@/lib/api';
 
 // Tipos para el servicio MongoDB
 export interface CategoriaMongoData {
@@ -35,29 +35,13 @@ export async function getAllCategoriasMongo(): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const categorias = await categoriasCollection
-            .find({ isActive: true })
-            .sort({ nombre: 1 })
-            .toArray();
-
-        const formattedCategorias = categorias.map(categoria => ({
-            _id: categoria._id.toString(),
-            nombre: categoria.nombre,
-            descripcion: categoria.descripcion,
-            isActive: categoria.isActive,
-            createdAt: categoria.createdAt,
-            updatedAt: categoria.updatedAt
-        }));
-
+        const result = await apiClient.get('/categorias');
         return {
             success: true,
-            categorias: formattedCategorias,
-            total: formattedCategorias.length
+            categorias: result.categorias || result || [],
+            total: result.total || (result.categorias || result || []).length
         };
     } catch (error) {
-        console.error('Error in getAllCategoriasMongo:', error);
         return {
             success: false,
             message: 'Error al obtener las categorías',
@@ -77,29 +61,13 @@ export async function getAllCategoriasIncludingInactiveMongo(): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const categorias = await categoriasCollection
-            .find({})
-            .sort({ nombre: 1 })
-            .toArray();
-
-        const formattedCategorias = categorias.map(categoria => ({
-            _id: categoria._id.toString(),
-            nombre: categoria.nombre,
-            descripcion: categoria.descripcion,
-            isActive: categoria.isActive,
-            createdAt: categoria.createdAt,
-            updatedAt: categoria.updatedAt
-        }));
-
+        const result = await apiClient.get('/categorias/all');
         return {
             success: true,
-            categorias: formattedCategorias,
-            total: formattedCategorias.length
+            categorias: result.categorias || result || [],
+            total: result.total || (result.categorias || result || []).length
         };
     } catch (error) {
-        console.error('Error in getAllCategoriasIncludingInactiveMongo:', error);
         return {
             success: false,
             message: 'Error al obtener las categorías',
@@ -118,33 +86,12 @@ export async function getCategoriaByIdMongo(id: string): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const categoria = await categoriasCollection.findOne({ _id: new ObjectId(id) });
-
-        if (!categoria) {
-            return {
-                success: false,
-                message: 'Categoría no encontrada',
-                error: 'CATEGORIA_NOT_FOUND'
-            };
-        }
-
-        const formattedCategoria: CategoriaMongoData = {
-            _id: categoria._id.toString(),
-            nombre: categoria.nombre,
-            descripcion: categoria.descripcion,
-            isActive: categoria.isActive,
-            createdAt: categoria.createdAt,
-            updatedAt: categoria.updatedAt
-        };
-
+        const result = await apiClient.get(`/categorias/${id}`);
         return {
             success: true,
-            categoria: formattedCategoria
+            categoria: result.categoria || result
         };
     } catch (error) {
-        console.error('Error in getCategoriaByIdMongo:', error);
         return {
             success: false,
             message: 'Error al obtener la categoría',
@@ -162,94 +109,25 @@ export async function createCategoriaMongo(data: CreateCategoriaMongoInput): Pro
     message?: string;
     error?: string;
 }> {
-    // Normalizar el nombre: trim y normalizar espacios múltiples a uno solo
-    // Definirlo fuera del try para que esté disponible en el catch
-    const normalizedNombre = data.nombre.trim().replace(/\s+/g, ' ').toUpperCase();
-
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        console.log('[createCategoriaMongo] Input nombre:', data.nombre);
-        console.log('[createCategoriaMongo] Normalized nombre:', normalizedNombre);
-
-        if (!normalizedNombre) {
-            return {
-                success: false,
-                message: 'El nombre de la categoría no puede estar vacío',
-                error: 'CATEGORIA_EMPTY_NAME'
-            };
-        }
-
-        // Verificar si ya existe una categoría con ese nombre (búsqueda exacta)
-        const existingCategoria = await categoriasCollection.findOne({
-            nombre: normalizedNombre
-        });
-
-        console.log('[createCategoriaMongo] Existing categoria found:', existingCategoria ? {
-            _id: existingCategoria._id?.toString(),
-            nombre: existingCategoria.nombre
-        } : 'NO');
-
-        if (existingCategoria) {
-            return {
-                success: false,
-                message: `Ya existe una categoría con ese nombre: "${existingCategoria.nombre}"`,
-                error: 'CATEGORIA_ALREADY_EXISTS'
-            };
-        }
-
-        const categoriaDoc = {
-            nombre: normalizedNombre,
-            descripcion: data.descripcion,
-            isActive: data.isActive ?? true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-
-        console.log('[createCategoriaMongo] Attempting to insert:', categoriaDoc);
-
-        const result = await categoriasCollection.insertOne(categoriaDoc);
-
-        console.log('[createCategoriaMongo] Insert result:', result.insertedId);
-
-        const newCategoria: CategoriaMongoData = {
-            _id: result.insertedId.toString(),
-            nombre: categoriaDoc.nombre,
-            descripcion: categoriaDoc.descripcion,
-            isActive: categoriaDoc.isActive,
-            createdAt: categoriaDoc.createdAt,
-            updatedAt: categoriaDoc.updatedAt
-        };
-
+        const result = await apiClient.post('/categorias', data);
         return {
             success: true,
-            categoria: newCategoria,
+            categoria: result.categoria || result,
             message: 'Categoría creada exitosamente'
         };
     } catch (error: any) {
-        console.error('[createCategoriaMongo] Error details:', {
-            message: error.message,
-            code: error.code,
-            codeName: error.codeName,
-            keyPattern: error.keyPattern,
-            keyValue: error.keyValue,
-            stack: error.stack
-        });
-        
-        // Manejar errores específicos de MongoDB
-        if (error.code === 11000 || error.codeName === 'DuplicateKey') {
-            const duplicateField = error.keyPattern ? Object.keys(error.keyPattern)[0] : 'nombre';
-            const duplicateValue = error.keyValue ? error.keyValue[duplicateField] : (normalizedNombre || data.nombre);
+        const errorMessage = error?.message || '';
+        if (errorMessage.includes('already exists') || errorMessage.includes('ya existe')) {
             return {
                 success: false,
-                message: `Ya existe una categoría con ese nombre: "${duplicateValue}"`,
+                message: `Ya existe una categoría con ese nombre`,
                 error: 'CATEGORIA_ALREADY_EXISTS'
             };
         }
-
         return {
             success: false,
-            message: error.message || 'Error al crear la categoría',
+            message: 'Error al crear la categoría',
             error: 'CREATE_CATEGORIA_MONGO_ERROR'
         };
     }
@@ -265,51 +143,13 @@ export async function updateCategoriaMongo(id: string, data: UpdateCategoriaMong
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        // Construir objeto de actualización
-        const updateData: any = {
-            updatedAt: new Date()
-        };
-
-        if (data.nombre !== undefined) {
-            // Normalizar el nombre: trim y normalizar espacios múltiples a uno solo
-            const normalizedNombre = data.nombre.trim().replace(/\s+/g, ' ').toUpperCase();
-            if (!normalizedNombre) {
-                return {
-                    success: false,
-                    message: 'El nombre de la categoría no puede estar vacío',
-                    error: 'CATEGORIA_EMPTY_NAME'
-                };
-            }
-            updateData.nombre = normalizedNombre;
-        }
-        if (data.descripcion !== undefined) updateData.descripcion = data.descripcion;
-        if (data.isActive !== undefined) updateData.isActive = data.isActive;
-
-        const result = await categoriasCollection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: updateData }
-        );
-
-        if (result.matchedCount === 0) {
-            return {
-                success: false,
-                message: 'Categoría no encontrada',
-                error: 'CATEGORIA_NOT_FOUND'
-            };
-        }
-
-        // Obtener la categoría actualizada
-        const updatedCategoria = await getCategoriaByIdMongo(id);
-
+        const result = await apiClient.patch(`/categorias/${id}`, data);
         return {
             success: true,
-            categoria: updatedCategoria.categoria,
+            categoria: result.categoria || result,
             message: 'Categoría actualizada exitosamente'
         };
     } catch (error) {
-        console.error('Error in updateCategoriaMongo:', error);
         return {
             success: false,
             message: 'Error al actualizar la categoría',
@@ -327,32 +167,12 @@ export async function deleteCategoriaMongo(id: string): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const result = await categoriasCollection.updateOne(
-            { _id: new ObjectId(id) },
-            {
-                $set: {
-                    isActive: false,
-                    updatedAt: new Date()
-                }
-            }
-        );
-
-        if (result.matchedCount === 0) {
-            return {
-                success: false,
-                message: 'Categoría no encontrada',
-                error: 'CATEGORIA_NOT_FOUND'
-            };
-        }
-
+        await apiClient.delete(`/categorias/${id}`);
         return {
             success: true,
             message: 'Categoría desactivada exitosamente'
         };
     } catch (error) {
-        console.error('Error in deleteCategoriaMongo:', error);
         return {
             success: false,
             message: 'Error al desactivar la categoría',
@@ -370,24 +190,12 @@ export async function deleteCategoriaPermanentlyMongo(id: string): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const result = await categoriasCollection.deleteOne({ _id: new ObjectId(id) });
-
-        if (result.deletedCount === 0) {
-            return {
-                success: false,
-                message: 'Categoría no encontrada',
-                error: 'CATEGORIA_NOT_FOUND'
-            };
-        }
-
+        await apiClient.delete(`/categorias/${id}/permanent`);
         return {
             success: true,
             message: 'Categoría eliminada permanentemente'
         };
     } catch (error) {
-        console.error('Error in deleteCategoriaPermanentlyMongo:', error);
         return {
             success: false,
             message: 'Error al eliminar la categoría',
@@ -406,60 +214,13 @@ export async function initializeCategoriasMongo(): Promise<{
     created?: number;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const categoriasPredefinidas = [
-            'SUELDOS',
-            'IMPUESTOS',
-            'MANTENIMIENTO MAQUINARIA',
-            'INSUMOS',
-            'MATERIA PRIMA',
-            'SERVICIOS',
-            'FLETE',
-            'LIMPIEZA',
-            'ALQUILERES',
-            'UTILES',
-            'PUBLICIDAD',
-            'MANTENIMIENTO EDILICIO',
-            'OTROS',
-            'CAJA CHICA',
-            'VIATICOS',
-            'VEHICULOS',
-            'COMBUSTIBLE',
-            'OFICINA',
-            'FINANCIACION',
-            'INVERSION EDILICIA',
-            'INDUMENTARIA',
-            'INVERSION PRODUCTO',
-            'PRODUCTOS',
-            'INVERSION TECNOLOGICA',
-            'I&D'
-        ];
-
-        let created = 0;
-
-        for (const nombre of categoriasPredefinidas) {
-            const exists = await categoriasCollection.findOne({ nombre });
-
-            if (!exists) {
-                await categoriasCollection.insertOne({
-                    nombre,
-                    descripcion: null,
-                    isActive: true,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                });
-                created++;
-            }
-        }
-
+        const result = await apiClient.post('/categorias/initialize');
         return {
             success: true,
-            message: `Inicialización completada. ${created} categorías creadas.`,
-            created
+            message: result.message || 'Inicialización completada',
+            created: result.created || 0
         };
     } catch (error) {
-        console.error('Error in initializeCategoriasMongo:', error);
         return {
             success: false,
             message: 'Error al inicializar las categorías',
@@ -478,54 +239,13 @@ export async function ensureSueldosCategoryMongo(): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        // Verificar si ya existe la categoría SUELDOS
-        const existingCategory = await categoriasCollection.findOne({ nombre: 'SUELDOS' });
-
-        if (existingCategory) {
-            return {
-                success: true,
-                categoria: {
-                    _id: existingCategory._id.toString(),
-                    nombre: existingCategory.nombre,
-                    descripcion: existingCategory.descripcion,
-                    isActive: existingCategory.isActive,
-                    createdAt: existingCategory.createdAt,
-                    updatedAt: existingCategory.updatedAt
-                },
-                message: 'La categoría SUELDOS ya existe'
-            };
-        }
-
-        // Crear la categoría SUELDOS
-        const newCategoryDoc = {
-            nombre: 'SUELDOS',
-            descripcion: 'Gastos relacionados con salarios y remuneraciones',
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-
-        const result = await categoriasCollection.insertOne(newCategoryDoc);
-
-        const newCategory: CategoriaMongoData = {
-            _id: result.insertedId.toString(),
-            nombre: newCategoryDoc.nombre,
-            descripcion: newCategoryDoc.descripcion,
-            isActive: newCategoryDoc.isActive,
-            createdAt: newCategoryDoc.createdAt,
-            updatedAt: newCategoryDoc.updatedAt
-        };
-
+        const result = await apiClient.post('/categorias/ensure-sueldos');
         return {
             success: true,
-            categoria: newCategory,
-            message: 'Categoría SUELDOS creada exitosamente'
+            categoria: result.categoria || result,
+            message: result.message || 'Categoría SUELDOS verificada'
         };
-
     } catch (error) {
-        console.error('Error ensuring SUELDOS category in MongoDB:', error);
         return {
             success: false,
             message: 'Error al crear la categoría SUELDOS',
@@ -545,39 +265,13 @@ export async function searchCategoriasMongo(searchTerm: string): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const categorias = await categoriasCollection
-            .find({
-                $and: [
-                    { isActive: true },
-                    {
-                        $or: [
-                            { nombre: { $regex: searchTerm, $options: 'i' } },
-                            { descripcion: { $regex: searchTerm, $options: 'i' } }
-                        ]
-                    }
-                ]
-            })
-            .sort({ nombre: 1 })
-            .toArray();
-
-        const formattedCategorias = categorias.map(categoria => ({
-            _id: categoria._id.toString(),
-            nombre: categoria.nombre,
-            descripcion: categoria.descripcion,
-            isActive: categoria.isActive,
-            createdAt: categoria.createdAt,
-            updatedAt: categoria.updatedAt
-        }));
-
+        const result = await apiClient.get(`/categorias/search?q=${encodeURIComponent(searchTerm)}`);
         return {
             success: true,
-            categorias: formattedCategorias,
-            total: formattedCategorias.length
+            categorias: result.categorias || result || [],
+            total: result.total || (result.categorias || result || []).length
         };
     } catch (error) {
-        console.error('Error in searchCategoriasMongo:', error);
         return {
             success: false,
             message: 'Error al buscar las categorías',
@@ -600,26 +294,12 @@ export async function getCategoriasStatsMongo(): Promise<{
     error?: string;
 }> {
     try {
-        const categoriasCollection = await getCollection('categorias');
-
-        const [totalCategorias, categoriasActivas, categoriasInactivas] = await Promise.all([
-            categoriasCollection.countDocuments({}),
-            categoriasCollection.countDocuments({ isActive: true }),
-            categoriasCollection.countDocuments({ isActive: false })
-        ]);
-
-        const stats = {
-            totalCategorias,
-            categoriasActivas,
-            categoriasInactivas
-        };
-
+        const result = await apiClient.get('/categorias/stats');
         return {
             success: true,
-            stats
+            stats: result.stats || result
         };
     } catch (error) {
-        console.error('Error in getCategoriasStatsMongo:', error);
         return {
             success: false,
             message: 'Error al obtener estadísticas de categorías',
@@ -627,4 +307,3 @@ export async function getCategoriasStatsMongo(): Promise<{
         };
     }
 }
-

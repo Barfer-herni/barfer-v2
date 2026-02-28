@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Order, PuntoEnvio, ProductForStock } from '@/lib/services';
+import type { Order, PuntoEnvio } from '@/lib/services';
+type ProductForStock = any;
 import { ResumenGeneralChart } from './ResumenGeneralChart';
 import { Calendar as CalendarIcon, Filter } from 'lucide-react';
 import { calculateItemWeight } from '@/lib/services/utils/weightUtils';

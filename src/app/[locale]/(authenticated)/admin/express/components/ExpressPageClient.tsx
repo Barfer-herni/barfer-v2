@@ -37,7 +37,8 @@ import {
     saveOrderPriorityAction,
     initializeStockForDateAction,
 } from '../actions';
-import type { Order, Stock, DetalleEnvio, PuntoEnvio, ProductForStock } from '@/lib/services';
+import type { Order, Stock, DetalleEnvio, PuntoEnvio } from '@/lib/services';
+type ProductForStock = any;
 import { OrdersDataTable } from '../../table/components/OrdersDataTable';
 import { DateRangeFilter } from '../../table/components/DateRangeFilter';
 import { createExpressColumns } from './expressColumns';
@@ -1316,7 +1317,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                                         </SelectItem>
                                     )}
                                     {puntosEnvio.length === 0 ? (
-                                        <SelectItem value="" disabled>
+                                        <SelectItem value="__empty" disabled>
                                             No hay puntos de envío
                                         </SelectItem>
                                     ) : (

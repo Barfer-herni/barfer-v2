@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, TrendingUp, Package, Activity, ShoppingCart } from 'lucide-react';
 import { getPuntosVentaStatsAction } from '../actions';
-import type { PuntoVentaStats } from '@/lib/services';
+type PuntoVentaStats = any;
 
 export function PuntosVentaStats() {
     const [stats, setStats] = useState<PuntoVentaStats[]>([]);

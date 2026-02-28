@@ -1,6 +1,4 @@
-// Tipos para la base de datos Barfer MongoDB
-
-import { ObjectId } from '@/lib/database';
+// Tipos para la base de datos Barfer
 
 export interface Product {
     _id: string;
@@ -305,7 +303,7 @@ export type PriceType = 'EFECTIVO' | 'TRANSFERENCIA' | 'MAYORISTA';
 
 // Interfaz principal para precios con historial
 export interface Price {
-    _id: string | ObjectId;
+    _id: string;
     section: PriceSection;
     product: string;
     weight?: string; // 5KG, 10KG (opcional para algunos productos)
@@ -376,7 +374,7 @@ export interface PriceStats {
 
 // ===== PRODUCTOS GESTOR =====
 export interface ProductoGestor {
-    _id: string | ObjectId;
+    _id: string;
     section: PriceSection;
     product: string;
     weight?: string; // 5KG, 10KG, etc. (opcional)
@@ -416,7 +414,7 @@ export interface UpdateProductoGestorData {
 // ===== DETALLE DE ENVÍO =====
 // Similar a ProductQuantity, representa la cantidad de KG vendido por mes
 export interface DetalleEnvio {
-    _id: string | ObjectId;
+    _id: string;
     puntoEnvio: string; // Nombre del punto de envío (conecta con DeliveryArea.puntoEnvio y Order.puntoEnvio)
     fecha: string; // Formato: "YYYY-MM" (mes del registro, se guarda como 'fecha' en la BD)
     // Productos Perro
@@ -479,7 +477,7 @@ export interface UpdateDetalleEnvioData {
 
 // ===== STOCK =====
 export interface Stock {
-    _id: string | ObjectId;
+    _id: string;
     puntoEnvio: string; // Nombre del punto de envío (conecta con DeliveryArea.puntoEnvio y Order.puntoEnvio)
     section?: string; // Sección del producto (PERRO, GATO, etc.)
     producto: string; // Nombre del producto
@@ -519,7 +517,7 @@ export interface UpdateStockData {
 
 // ===== PUNTO DE ENVÍO =====
 export interface PuntoEnvio {
-    _id: string | ObjectId;
+    _id: string;
     nombre: string;
     cutoffTime?: string; // Hora de corte (HH:mm)
     createdAt: string;
@@ -538,7 +536,7 @@ export interface UpdatePuntoEnvioData {
 
 // ===== ORDEN DE PRIORIDAD DE PEDIDOS =====
 export interface OrderPriority {
-    _id: string | ObjectId;
+    _id: string;
     fecha: string;              // Fecha del día (YYYY-MM-DD)
     puntoEnvio: string;         // Nombre del punto de envío
     orderIds: string[];         // Array ordenado de IDs de pedidos

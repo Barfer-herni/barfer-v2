@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import type { PuntoVentaStats } from '@/lib/services';
+type PuntoVentaStats = any;
 
 interface EstadisticasTableProps {
     stats: PuntoVentaStats[];

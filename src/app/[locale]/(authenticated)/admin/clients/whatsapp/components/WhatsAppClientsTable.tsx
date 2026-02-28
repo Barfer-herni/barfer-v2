@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/table';
 import { Search, Phone, ArrowUpDown, ArrowUp, ArrowDown, EyeOff, Eye } from 'lucide-react';
 import type { Dictionary } from '@/config/i18n';
-import type { ClientForTableWithStatus } from '@/lib/services';
+// TODO: Migrar a backend API
+type ClientForTableWithStatus = any;
 import { VisibilityFilter, type VisibilityFilterType } from '../../components/VisibilityFilter';
 import { Pagination } from '../../components/Pagination';
 

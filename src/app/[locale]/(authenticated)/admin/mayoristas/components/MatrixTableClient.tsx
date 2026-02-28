@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import type { ProductoMatrixData } from '@/lib/services';
+type ProductoMatrixData = any;
 
 type SortDirection = 'asc' | 'desc' | null;
 

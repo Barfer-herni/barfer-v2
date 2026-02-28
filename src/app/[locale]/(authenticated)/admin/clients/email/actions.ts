@@ -2,10 +2,9 @@
 
 import { getCurrentUser } from '@/lib/auth/server';
 import resend, { BulkEmailTemplate } from '@/lib/email';
-import { keys } from '@/lib/email/keys';
-import { createScheduledEmailCampaign, createEmailTemplate, deleteEmailTemplate, getClientsByCategory } from '@/lib/services';
 import { revalidatePath } from 'next/cache';
-// import { getClientsByCategory } from '@/lib/services';
+
+// TODO: Migrar a backend API
 
 interface ClientData {
     id: string;
@@ -60,7 +59,6 @@ export async function sendBulkEmailAction(
 
         // 3. Manejar la respuesta del lote
         if (error) {
-            console.error('❌ Error enviando lote de emails:', error);
             return {
                 success: false,
                 error: `Error al enviar el lote: ${error.message}`,
@@ -75,7 +73,6 @@ export async function sendBulkEmailAction(
         };
 
     } catch (error) {
-        console.error('Error al enviar emails:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error desconocido'
@@ -89,41 +86,12 @@ export async function scheduleEmailCampaignAction(
     targetAudience: { type: 'behavior' | 'spending'; category: string },
     emailTemplateId: string
 ) {
-    try {
-        const user = await getCurrentUser();
-        if (!user) {
-            return { success: false, error: 'Usuario no autenticado' };
-        }
-
-        const userId = user.id || (user as any)._id;
-        if (!userId) {
-            return { success: false, error: 'ID de usuario no disponible' };
-        }
-
-        await createScheduledEmailCampaign(userId, {
-            name: campaignName,
-            scheduleCron: scheduleCron,
-            targetAudience: targetAudience,
-            status: 'ACTIVE',
-            emailTemplate: {
-                connect: {
-                    id: emailTemplateId,
-                },
-            },
-        });
-
-        // Revalidar la ruta para que en el futuro se puedan ver las campañas creadas
-        revalidatePath('/admin/clients/email');
-
-        return { success: true, message: 'Campaña programada exitosamente.' };
-
-    } catch (error) {
-        console.error('Error al programar la campaña:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Error desconocido',
-        };
-    }
+    // TODO: Migrar a backend API
+    return {
+        success: false,
+        error: 'Servicio no disponible - migrando a backend API',
+        message: 'Servicio no disponible - migrando a backend API'
+    };
 }
 
 export async function createEmailTemplateAction(
@@ -133,58 +101,18 @@ export async function createEmailTemplateAction(
     description?: string
 ) {
     "use server"
-    try {
-        const user = await getCurrentUser();
-        if (!user) {
-            return { success: false, error: 'Usuario no autenticado' };
-        }
-
-        const userId = user.id || (user as any)._id;
-        if (!userId) {
-            return { success: false, error: 'ID de usuario no disponible' };
-        }
-
-        await createEmailTemplate(userId, {
-            name,
-            subject,
-            content,
-            description,
-            isDefault: false
-        });
-
-        revalidatePath('/admin/clients/email');
-        return { success: true };
-    } catch (error) {
-        console.error('Error al crear template de email:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Error desconocido'
-        };
-    }
+    // TODO: Migrar a backend API
+    return {
+        success: false,
+        error: 'Servicio no disponible - migrando a backend API'
+    };
 }
 
 export async function deleteEmailTemplateAction(templateId: string) {
     "use server"
-    try {
-        const user = await getCurrentUser();
-        if (!user) {
-            return { success: false, error: 'Usuario no autenticado' };
-        }
-
-        const userId = user.id || (user as any)._id;
-        if (!userId) {
-            return { success: false, error: 'ID de usuario no disponible' };
-        }
-
-        await deleteEmailTemplate(templateId, userId);
-
-        revalidatePath('/admin/clients/email');
-        return { success: true };
-    } catch (error) {
-        console.error('Error al eliminar template de email:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Error desconocido'
-        };
-    }
+    // TODO: Migrar a backend API
+    return {
+        success: false,
+        error: 'Servicio no disponible - migrando a backend API'
+    };
 } 

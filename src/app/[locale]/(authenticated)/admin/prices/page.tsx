@@ -48,7 +48,7 @@ export default async function PricesPage({
 
     // Obtener permisos del usuario
     const userWithPermissions = await getCurrentUserWithPermissions();
-    const userPermissions = (userWithPermissions?.permissions || []).map(p => String(p));
+    const userPermissions = (userWithPermissions?.permissions || []).map((p: any) => String(p));
 
     return (
         <div className="h-full w-full">

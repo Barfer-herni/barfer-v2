@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MessageCircle, Send, Users } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import type { Dictionary } from '@/config/i18n';
-import type { ClientForTableWithStatus } from '@/lib/services';
 import type { WhatsAppTemplateData } from '@/lib/services';
+// TODO: Migrar a backend API
+type ClientForTableWithStatus = any;
 import { WhatsAppClientsTable } from './WhatsAppClientsTable';
 import { WhatsAppTemplateSelectorClient } from './WhatsAppTemplateSelectorClient';
 import { type VisibilityFilterType } from '../../components/VisibilityFilter';

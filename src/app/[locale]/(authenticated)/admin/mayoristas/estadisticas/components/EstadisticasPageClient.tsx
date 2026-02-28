@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { EstadisticasTable } from './EstadisticasTable';
-import type { PuntoVentaStats } from '@/lib/services';
+type PuntoVentaStats = any;
 
 interface EstadisticasPageClientProps {
     stats: PuntoVentaStats[];
