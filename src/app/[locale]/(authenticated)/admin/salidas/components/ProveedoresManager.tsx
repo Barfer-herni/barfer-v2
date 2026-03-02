@@ -145,7 +145,7 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
             const result = await getAllProveedoresAction();
             if (result.success && result.proveedores) {
                 // Convertir datos de MongoDB al formato esperado por el componente
-                const formattedProveedores = result.proveedores.map(proveedor => ({
+                const formattedProveedores = result.proveedores.map((proveedor: any) => ({
                     id: proveedor._id,
                     nombre: proveedor.nombre,
                     detalle: proveedor.detalle,
@@ -162,7 +162,7 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
                 }));
                 setProveedores(formattedProveedores);
             } else {
-                console.error('Error loading proveedores:', result.error);
+                console.error('Error loading proveedores:', (result as any).error);
                 setProveedores([]);
             }
         } catch (error) {
@@ -293,7 +293,7 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
                     onProveedorChanged();
                 }
             } else {
-                console.error('Error updating proveedor:', result.error);
+                console.error('Error updating proveedor:', (result as any).error);
             }
         } catch (error) {
             console.error('Error updating proveedor:', error);
@@ -313,7 +313,7 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
                     onProveedorChanged();
                 }
             } else {
-                console.error('Error deleting proveedor:', result.error);
+                console.error('Error deleting proveedor:', (result as any).error);
             }
         } catch (error) {
             console.error('Error deleting proveedor:', error);

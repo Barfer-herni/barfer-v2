@@ -11,9 +11,12 @@ export const STATUS_TRANSLATIONS: Record<Order['status'], string> = {
 // Traducciones de métodos de pago
 export const PAYMENT_METHOD_TRANSLATIONS: Record<string, string> = {
     cash: 'Efectivo',
+    efectivo: 'Efectivo',
     transfer: 'Transferencia',
+    transferencia: 'Transferencia',
     'bank-transfer': 'Transferencia Bancaria',
     'mercado-pago': 'Mercado Pago',
+    'mercado_pago': 'Mercado Pago',
 };
 
 // Productos disponibles para minoristas - ORDENADO según preferencia

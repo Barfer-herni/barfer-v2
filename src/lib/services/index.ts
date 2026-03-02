@@ -1,14 +1,72 @@
 export * from './services';
-// export * from './types';
-// export * from './services/authService';
-// export * from './types'
-export * from './types/barfer'
-export * from './types/data'
-export * from './types/image'
+export type {
+    GenericData,
+    DataFormData,
+    ImageFormData,
+    UserData,
+    UserFormData,
+    UserDisplay,
+    Product,
+    ProductOption,
+    Category,
+    Order,
+    OrderItem,
+    User,
+    Address,
+    DeliveryArea,
+    Coupon,
+    Ally,
+    BankInfo,
+    Event,
+    Discount,
+    DashboardStats,
+    OrderStatus,
+    ClientBehaviorCategory,
+    ClientSpendingCategory,
+    ClientCategorization,
+    ClientCategoryStats,
+    ClientAnalytics,
+    MayoristaPerson,
+    MayoristaOrder,
+    PriceSection,
+    PriceHistoryQuery,
+    CreatePriceData,
+    UpdatePriceData,
+    PriceHistory,
+    PriceStats,
+    ProductoGestor,
+    CreateProductoGestorData,
+    UpdateProductoGestorData,
+    DetalleEnvio,
+    CreateDetalleEnvioData,
+    UpdateDetalleEnvioData,
+    Stock,
+    CreateStockData,
+    UpdateStockData,
+    PuntoEnvio,
+    CreatePuntoEnvioData,
+    UpdatePuntoEnvioData,
+    OrderPriority,
+    CreateOrderPriorityData,
+    UpdateOrderPriorityData,
+    PuntoVentaZona,
+    PuntoVentaFrecuencia,
+    PuntoVentaTipoNegocio,
+    PuntoVenta,
+    CreatePuntoVentaData,
+    UpdatePuntoVentaData,
+    EmailTemplateData,
+    WhatsAppTemplateData,
+    CreateEmailTemplateData,
+    CreateWhatsAppTemplateData,
+    UpdateEmailTemplateData,
+    UpdateWhatsAppTemplateData,
+    RepartoEntry,
+    WeekData,
+    RepartosData,
+    RepartosFilters,
+    RepartosStats,
+} from './types';
 
 // export type { UserRole } from './services/usersGestorService';
 export type { UserRole } from './services/barfer/users/users';
-
-export * from './types/barfer';
-export * from './types/data';
-export * from './types/image';

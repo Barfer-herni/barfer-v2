@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/lib/services/services/authService';
+import { getCurrentUser } from '@/lib/services/services/barfer';
 import { UserHeaderClient } from "./userHeaderClient";
 
 type User = {

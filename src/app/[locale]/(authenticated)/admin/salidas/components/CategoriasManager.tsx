@@ -48,7 +48,7 @@ export function CategoriasManager() {
         try {
             const result = await getAllCategoriasAction();
             if (result.success && result.categorias) {
-                setCategorias(result.categorias.map(c => ({
+                setCategorias(result.categorias.map((c: any) => ({
                     id: c._id,
                     nombre: c.nombre,
                     descripcion: c.descripcion,
@@ -104,7 +104,7 @@ export function CategoriasManager() {
                 console.error('[CategoriasManager] Create failed:', result);
                 toast({
                     title: "Error",
-                    description: result.message || result.error || "Error al crear la categoría",
+                    description: (result as any).message || (result as any).error || "Error al crear la categoría",
                     variant: "destructive",
                 });
             }

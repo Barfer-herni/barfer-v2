@@ -212,7 +212,7 @@ export function EditSalidaModal({
 
             if (categoriasResult.success && categoriasResult.categorias) {
                 setCategorias(
-                    categoriasResult.categorias.map((c) => ({
+                    categoriasResult.categorias.map((c: any) => ({
                         id: c._id,
                         nombre: c.nombre,
                     }))
@@ -223,15 +223,15 @@ export function EditSalidaModal({
                 // Filtrar solo EFECTIVO y TRANSFERENCIA
                 const metodosFiltrados = metodosPagoResult.metodosPago
                     .filter(
-                        (m) => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA'
+                        (m: any) => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA'
                     )
-                    .map((m) => ({ id: m._id, nombre: m.nombre }));
+                    .map((m: any) => ({ id: m._id, nombre: m.nombre }));
                 setMetodosPago(metodosFiltrados);
             }
 
             if (proveedoresResult.success && proveedoresResult.proveedores) {
                 setProveedores(
-                    proveedoresResult.proveedores.map((p) => ({
+                    proveedoresResult.proveedores.map((p: any) => ({
                         id: p._id,
                         nombre: p.nombre,
                         detalle: p.detalle,
@@ -293,7 +293,7 @@ export function EditSalidaModal({
             const result = await testSearchProveedoresAction(searchTerm);
 
             if (result.success && result.proveedores) {
-                const formattedResults = result.proveedores.map((p) => ({
+                const formattedResults = result.proveedores.map((p: any) => ({
                     id: p._id,
                     nombre: p.nombre,
                     detalle: p.detalle,
@@ -516,7 +516,7 @@ export function EditSalidaModal({
             if (result.success) {
                 toast({
                     title: '¡Éxito!',
-                    description: result.message || 'Salida actualizada correctamente',
+                    description: (result as any).message || 'Salida actualizada correctamente',
                 });
 
                 // Resetear estados de campos personalizados
@@ -531,7 +531,7 @@ export function EditSalidaModal({
             } else {
                 toast({
                     title: 'Error',
-                    description: result.message || 'Error al actualizar la salida',
+                    description: (result as any).message || 'Error al actualizar la salida',
                     variant: 'destructive',
                 });
             }

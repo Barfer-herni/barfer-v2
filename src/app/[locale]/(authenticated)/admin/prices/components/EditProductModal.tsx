@@ -161,7 +161,7 @@ export function EditProductModal({ isOpen, onClose, onProductUpdated, product }:
 
             // Actualizar tipos de precio si cambiaron
             const priceTypesChanged = JSON.stringify(product.priceTypes.sort()) !== JSON.stringify(formData.priceTypes.sort());
-            let priceTypesResult: { success: boolean; addedCount: number; removedCount: number; message?: string; error?: string } = {
+            let priceTypesResult: { success: boolean; addedCount?: number; removedCount?: number; message?: string; error?: string } = {
                 success: true,
                 addedCount: 0,
                 removedCount: 0,

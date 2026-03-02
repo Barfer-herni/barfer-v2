@@ -51,14 +51,14 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
             ]);
 
             if (categoriasResult.success && categoriasResult.categorias) {
-                setCategorias(categoriasResult.categorias.map(c => ({ id: c._id, nombre: c.nombre })));
+                setCategorias(categoriasResult.categorias.map((c: any) => ({ id: c._id, nombre: c.nombre })));
             }
 
             if (metodosPagoResult.success && metodosPagoResult.metodosPago) {
                 // Filtrar solo EFECTIVO y TRANSFERENCIA
                 const metodosFiltrados = metodosPagoResult.metodosPago
-                    .filter(m => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA')
-                    .map(m => ({ id: m._id, nombre: m.nombre }));
+                    .filter((m: any) => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA')
+                    .map((m: any) => ({ id: m._id, nombre: m.nombre }));
                 setMetodosPago(metodosFiltrados);
             }
         } catch (error) {
@@ -133,11 +133,11 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
                 onOpenChange(false);
 
                 // Notificar al componente padre para recargar la lista
-                onProveedorCreated(result.proveedor as any);
+                onProveedorCreated((result as any).proveedor);
             } else {
                 toast({
                     title: 'Error',
-                    description: result.message || 'Error al crear el proveedor',
+                    description: (result as any).message || 'Error al crear el proveedor',
                     variant: 'destructive'
                 });
             }

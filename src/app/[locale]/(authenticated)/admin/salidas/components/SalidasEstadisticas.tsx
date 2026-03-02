@@ -180,7 +180,7 @@ export function SalidasEstadisticas() {
             if (response.success && response.categorias) {
                 // Adaptar categorías MongoDB al formato esperado
                 setAvailableCategories(
-                    response.categorias.map((c) => ({
+                    response.categorias.map((c: any) => ({
                         ...c,
                         id: c._id,
                     }))

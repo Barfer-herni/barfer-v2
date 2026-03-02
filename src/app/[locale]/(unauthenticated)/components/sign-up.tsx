@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { signUp } from '@/lib/services/services/authService';
+import { signUp } from '@/lib/services/services/barfer/auth/auth';
 import { Dictionary } from '@/config/i18n';
 import { SignUpButton } from './SignUpButton';
 import { PasswordInput } from './PasswordInput';

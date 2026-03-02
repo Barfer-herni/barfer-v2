@@ -126,7 +126,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
     // useEffect para calcular precio automáticamente en el formulario de creación
     useEffect(() => {
         const validItems = filterValidItems(createFormData.items);
-        if (validItems.length > 0 && createFormData.orderType && createFormData.paymentMethod && !isCalculatingPrice) {
+        if (validItems.length > 0 && createFormData.orderType && !isCalculatingPrice) {
             const timeoutId = setTimeout(() => {
                 calculateAutomaticPrice();
             }, 300); // Debounce de 300ms para evitar cálculos excesivos
@@ -271,7 +271,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             },
             city: row.original.address?.city || '',
             phone: row.original.address?.phone || '',
-            paymentMethod: row.original.paymentMethod || '',
+            paymentMethod: ({'efectivo': 'cash', 'mercado_pago': 'mercado-pago', 'transferencia': 'mercado-pago'} as Record<string, string>)[row.original.paymentMethod] || row.original.paymentMethod || '',
             userName: row.original.user?.name || '',
             userLastName: row.original.user?.lastName || '',
             userEmail: row.original.user?.email || '',
@@ -480,12 +480,28 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 return item;
             });
 
+            // Limpiar fullName de los items antes de enviar al backend
+            const cleanedItems = processedItems.map(item => {
+                const { fullName, ...cleanItem } = item;
+                return cleanItem;
+            });
+
+            // Mapear paymentMethod del frontend al formato del backend
+            const paymentMethodMap: Record<string, string> = {
+                'cash': 'efectivo',
+                'mercado-pago': 'mercado_pago',
+                'efectivo': 'efectivo',
+                'mercado_pago': 'mercado_pago',
+                'transferencia': 'transferencia',
+            };
+            const mappedPaymentMethod = paymentMethodMap[editValues.paymentMethod] || editValues.paymentMethod;
+
             const updateData = {
                 notes: editValues.notes,
                 notesOwn: editValues.notesOwn,
                 status: editValues.status,
                 orderType: editValues.orderType,
-                paymentMethod: editValues.paymentMethod,
+                paymentMethod: mappedPaymentMethod,
                 total: Number(editValues.total),
                 subTotal: Number(editValues.subTotal),
                 shippingPrice: Number(editValues.shippingPrice),
@@ -509,15 +525,15 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 deliveryArea: {
                     ...row.original.deliveryArea,
                     schedule: normalizeScheduleTime(editValues.deliveryAreaSchedule),
-                    sameDayDelivery: !!(editValues.puntoEnvio || row.original.puntoEnvio)
+                    sameDayDelivery: row.original.deliveryArea?.sameDayDelivery || false
                 },
-                items: processedItems,
+                items: cleanedItems,
                 deliveryDay: editValues.deliveryDay,
             };
 
             console.log(`🔍 [DEBUG] GUARDADO - Datos finales a enviar al backend:`, {
                 updateData,
-                processedItems,
+                processedItems: cleanedItems,
                 timestamp: new Date().toISOString()
             });
 
@@ -649,6 +665,13 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 return;
             }
 
+            // Validar que el método de pago sea obligatorio
+            if (!createFormData.paymentMethod || createFormData.paymentMethod === '') {
+                alert('Debe seleccionar un método de pago.');
+                setLoading(false);
+                return;
+            }
+
             // Validar que la fecha de entrega sea obligatoria
             if (!createFormData.deliveryDay || createFormData.deliveryDay === '') {
                 alert('El campo Fecha de Entrega es obligatorio. Debe seleccionar una fecha.');
@@ -667,10 +690,11 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 // Items no modificados ya están en formato DB correcto
                 const itemToProcess = item.fullName;
 
+                let processedItem = item;
                 // Solo procesar si hay fullName, es diferente del name, y parece ser una opción del select
                 if (itemToProcess && itemToProcess !== item.name && itemToProcess.includes(' - ')) {
                     const dbFormat = mapSelectOptionToDBFormat(itemToProcess);
-                    return {
+                    processedItem = {
                         ...item,
                         id: dbFormat.name,
                         name: dbFormat.name,
@@ -681,19 +705,31 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                     };
                 }
 
-                // Si no es una opción del select, mantener el item tal como está
-                return item;
+                // Limpiar fullName antes de enviar al backend (no existe en el DTO)
+                const { fullName, ...cleanItem } = processedItem;
+                return cleanItem;
             });
+
+            // Mapear paymentMethod del frontend al formato del backend
+            const paymentMethodMap: Record<string, string> = {
+                'cash': 'efectivo',
+                'mercado-pago': 'mercado_pago',
+                'efectivo': 'efectivo',
+                'mercado_pago': 'mercado_pago',
+                'transferencia': 'transferencia',
+            };
+            const mappedPaymentMethod = paymentMethodMap[createFormData.paymentMethod] || createFormData.paymentMethod;
 
             // Construir el objeto de datos de la orden
             const orderDataWithFilteredItems: any = {
                 ...createFormData,
                 total: totalValue, // Asegurar que sea un número
+                paymentMethod: mappedPaymentMethod, // Usar valor mapeado al backend
                 items: processedItems,
                 deliveryArea: {
                     ...createFormData.deliveryArea,
                     schedule: normalizeScheduleTime(createFormData.deliveryArea.schedule),
-                    sameDayDelivery: !!createFormData.puntoEnvio // Forzar true si es express
+                    sameDayDelivery: false
                 }
             };
 
@@ -716,7 +752,9 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 completeData: orderDataWithFilteredItems
             });
 
+            console.log('🚀 Llamando createOrderAction...');
             const result = await createOrderAction(orderDataWithFilteredItems);
+            console.log('📨 Resultado de createOrderAction:', JSON.stringify(result));
             if (!result.success) throw new Error(result.error || 'Error al crear');
 
             setShowCreateModal(false);
@@ -820,9 +858,12 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
         if (isCalculatingPrice) return; // Evitar cálculos múltiples
 
         const validItems = filterValidItems(createFormData.items);
-        if (validItems.length === 0 || !createFormData.orderType || !createFormData.paymentMethod) {
+        if (validItems.length === 0 || !createFormData.orderType) {
             return;
         }
+
+        // Usar paymentMethod actual o 'mercado-pago' como default para calcular
+        const effectivePaymentMethod = createFormData.paymentMethod || 'mercado-pago';
 
         // Procesar items para convertir fullName de vuelta al formato de la DB
         const processedItems = validItems.map(item => {
@@ -854,7 +895,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             const result = await calculatePriceAction(
                 processedItems,
                 createFormData.orderType,
-                createFormData.paymentMethod,
+                effectivePaymentMethod,
                 createFormData.deliveryDay // Pasar la fecha de entrega para usar los precios del mes correspondiente
             );
 
@@ -882,10 +923,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             setSelectedMayorista(null);
         }
 
-        // Si se están cambiando los items, limpiar los precios almacenados
-        if (field === 'items') {
-            setItemPrices([]);
-        }
+        // No limpiar itemPrices aquí - se actualizan dinámicamente con cada cálculo
 
         if (field.includes('.')) {
             const parts = field.split('.');
@@ -1568,8 +1606,8 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                                                 X
                                                             </Button>
                                                         </div>
-                                                        {/* Mostrar precio unitario y total en inputs solo si son válidos */}
-                                                        {hasValidPrice && (
+                                                        {/* Mostrar precio unitario y subtotal */}
+                                                        {hasValidPrice ? (
                                                             <div className="flex gap-2 pl-2">
                                                                 <div className="flex-1">
                                                                     <Label className="text-xs text-gray-600">Precio Unitario</Label>
@@ -1577,7 +1615,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                                                         type="text"
                                                                         value={`$${itemPrice.unitPrice.toLocaleString('es-AR')}`}
                                                                         readOnly
-                                                                        className="text-xs bg-gray-50 border-gray-300"
+                                                                        className="text-xs bg-green-50 border-green-300 font-medium"
                                                                     />
                                                                 </div>
                                                                 <div className="flex-1">
@@ -1586,11 +1624,13 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                                                         type="text"
                                                                         value={`$${itemPrice.subtotal.toLocaleString('es-AR')}`}
                                                                         readOnly
-                                                                        className="text-xs bg-gray-50 border-gray-300"
+                                                                        className="text-xs bg-green-50 border-green-300 font-medium"
                                                                     />
                                                                 </div>
                                                             </div>
-                                                        )}
+                                                        ) : (itemName && isCalculatingPrice) ? (
+                                                            <p className="text-xs text-blue-500 pl-2">Calculando precio...</p>
+                                                        ) : null}
                                                     </div>
                                                 );
                                             })}
@@ -1622,28 +1662,14 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                     </div>
 
                                     <div className="space-y-2 col-span-2">
-                                        <Label>Total * {isCalculatingPrice && <span className="text-blue-500">(Calculando...)</span>}</Label>
+                                        <Label>Total {isCalculatingPrice && <span className="text-blue-500">(Calculando...)</span>}</Label>
                                         <Input
-                                            type="number"
-                                            value={createFormData.total === '' ? '' : createFormData.total}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                if (value === '') {
-                                                    handleCreateFormChange('total', '');
-                                                } else {
-                                                    const numValue = Number(value);
-                                                    if (!isNaN(numValue)) {
-                                                        handleCreateFormChange('total', numValue);
-                                                    }
-                                                }
-                                            }}
+                                            type="text"
+                                            value={createFormData.total === '' ? '' : `$${Number(createFormData.total).toLocaleString('es-AR')}`}
+                                            readOnly
                                             placeholder={isCalculatingPrice ? "Calculando precio..." : "Se calcula automáticamente"}
-                                            required
-                                            className={isCalculatingPrice ? "bg-blue-50 text-lg font-semibold" : "text-lg font-semibold"}
+                                            className={`text-lg font-semibold cursor-default ${isCalculatingPrice ? 'bg-blue-50' : 'bg-green-50 border-green-300'}`}
                                         />
-                                        <p className="text-xs text-gray-500">
-                                            El precio se calcula automáticamente basado en los productos, tipo de cliente y método de pago.
-                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-2 mt-4">

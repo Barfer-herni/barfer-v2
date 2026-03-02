@@ -1,7 +1,6 @@
 'use client';
 
-import { getCurrentUser } from '@/lib/services/services/authService';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { LogoutButton } from '../logout-button';
 import { LanguageSwitcher } from '../language-switcher';
 import { Dictionary } from '@/config/i18n';

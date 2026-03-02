@@ -147,7 +147,7 @@ export function AddSalidaModal({
 
             if (categoriasResult.success && categoriasResult.categorias) {
                 setCategorias(
-                    categoriasResult.categorias.map((c) => ({
+                    categoriasResult.categorias.map((c: any) => ({
                         id: c._id,
                         nombre: c.nombre,
                     }))
@@ -158,15 +158,15 @@ export function AddSalidaModal({
                 // Filtrar solo EFECTIVO y TRANSFERENCIA
                 const metodosFiltrados = metodosPagoResult.metodosPago
                     .filter(
-                        (m) => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA'
+                        (m: any) => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA'
                     )
-                    .map((m) => ({ id: m._id, nombre: m.nombre }));
+                    .map((m: any) => ({ id: m._id, nombre: m.nombre }));
                 setMetodosPago(metodosFiltrados);
             }
 
             if (proveedoresResult.success && proveedoresResult.proveedores) {
                 setProveedores(
-                    proveedoresResult.proveedores.map((p) => ({
+                    proveedoresResult.proveedores.map((p: any) => ({
                         id: p._id,
                         nombre: p.nombre,
                         detalle: p.detalle,
@@ -229,7 +229,7 @@ export function AddSalidaModal({
             const result = await testSearchProveedoresAction(searchTerm);
 
             if (result.success && result.proveedores) {
-                const formattedResults = result.proveedores.map((p) => ({
+                const formattedResults = result.proveedores.map((p: any) => ({
                     id: p._id,
                     nombre: p.nombre,
                     detalle: p.detalle,
@@ -461,7 +461,7 @@ export function AddSalidaModal({
             if (result.success) {
                 toast({
                     title: '¡Éxito!',
-                    description: result.message || 'Salida creada correctamente',
+                    description: (result as any).message || 'Salida creada correctamente',
                 });
 
                 // Resetear formulario
@@ -495,7 +495,7 @@ export function AddSalidaModal({
             } else {
                 toast({
                     title: 'Error',
-                    description: result.message || 'Error al crear la salida',
+                    description: (result as any).message || 'Error al crear la salida',
                     variant: 'destructive',
                 });
             }

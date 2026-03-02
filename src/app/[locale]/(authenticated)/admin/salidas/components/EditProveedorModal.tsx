@@ -51,14 +51,14 @@ export function EditProveedorModal({ open, onOpenChange, proveedor, onProveedorU
             ]);
 
             if (categoriasResult.success && categoriasResult.categorias) {
-                setCategorias(categoriasResult.categorias.map(c => ({ id: c._id, nombre: c.nombre })));
+                setCategorias(categoriasResult.categorias.map((c: any) => ({ id: c._id, nombre: c.nombre })));
             }
 
             if (metodosPagoResult.success && metodosPagoResult.metodosPago) {
                 // Filtrar solo EFECTIVO y TRANSFERENCIA
                 const metodosFiltrados = metodosPagoResult.metodosPago
-                    .filter(m => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA')
-                    .map(m => ({ id: m._id, nombre: m.nombre }));
+                    .filter((m: any) => m.nombre === 'EFECTIVO' || m.nombre === 'TRANSFERENCIA')
+                    .map((m: any) => ({ id: m._id, nombre: m.nombre }));
                 setMetodosPago(metodosFiltrados);
             }
         } catch (error) {

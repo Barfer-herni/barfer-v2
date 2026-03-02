@@ -377,13 +377,13 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
         setIsLoading(true);
         try {
             const result = await duplicateSalidaAction(salida._id);
-            if (!result.success) throw new Error(result.error || 'Error al duplicar');
+            if (!result.success) throw new Error((result as any).error || 'Error al duplicar');
             if (onRefreshSalidas) {
                 onRefreshSalidas();
             }
             toast({
                 title: '¡Éxito!',
-                description: result.message || 'Gasto duplicado correctamente',
+                description: (result as any).message || 'Gasto duplicado correctamente',
             });
         } catch (e) {
             toast({

@@ -264,7 +264,7 @@ export async function getAvailableCategoriesAction() {
         if (result.success && result.categorias) {
             return {
                 success: true,
-                categories: result.categorias.map(cat => cat.nombre)
+                categories: result.categorias.map((cat: any) => cat.nombre)
             };
         }
 

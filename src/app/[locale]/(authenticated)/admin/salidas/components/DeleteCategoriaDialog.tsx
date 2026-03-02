@@ -55,7 +55,7 @@ export function DeleteCategoriaDialog({
             } else {
                 toast({
                     title: "Error",
-                    description: result.message || "Error al eliminar la categoría",
+                    description: (result as any).message || "Error al eliminar la categoría",
                     variant: "destructive",
                 });
             }
