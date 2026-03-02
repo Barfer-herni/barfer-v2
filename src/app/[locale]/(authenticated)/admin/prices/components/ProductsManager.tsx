@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { PriceSection, PriceType } from '@/lib/services';
-import { getAllUniqueProductsAction } from '../actions';
+import { getAllUniqueProductsAction, deleteProductAction } from '../actions';
 import { EditProductModal } from './EditProductModal';
 import {
     Table,
@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pencil, Package } from 'lucide-react';
+import { Pencil, Package, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Product {
@@ -37,6 +37,7 @@ export function ProductsManager({ userPermissions }: ProductsManagerProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeletingProduct, setIsDeletingProduct] = useState<string | null>(null);
 
     // Verificar permisos del usuario
     const canEditPrices = userPermissions.includes('prices:edit');
@@ -87,6 +88,48 @@ export function ProductsManager({ userPermissions }: ProductsManagerProps) {
     // Manejar actualización exitosa del producto
     const handleProductUpdated = () => {
         loadProducts(); // Recargar la lista
+    };
+
+    // Manejar eliminación de producto
+    const handleDeleteProduct = async (product: Product) => {
+        const productLabel = `${product.product}${product.weight ? ` (${product.weight})` : ''}`;
+        if (!confirm(`¿Estás seguro de que quieres eliminar el producto "${productLabel}"? Se eliminarán todos los precios asociados.`)) {
+            return;
+        }
+
+        const productKey = `${product.section}-${product.product}-${product.weight || 'no-weight'}`;
+        setIsDeletingProduct(productKey);
+
+        try {
+            const result = await deleteProductAction(
+                product.section,
+                product.product,
+                product.weight
+            );
+
+            if (result.success) {
+                toast({
+                    title: "Producto eliminado",
+                    description: result.message || "El producto se eliminó exitosamente",
+                });
+                loadProducts();
+            } else {
+                toast({
+                    title: "Error",
+                    description: result.message || "Error al eliminar el producto",
+                    variant: "destructive"
+                });
+            }
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            toast({
+                title: "Error",
+                description: "Error inesperado al eliminar el producto",
+                variant: "destructive"
+            });
+        } finally {
+            setIsDeletingProduct(null);
+        }
     };
 
     const getSectionLabel = (section: PriceSection) => {
@@ -201,8 +244,23 @@ export function ProductsManager({ userPermissions }: ProductsManagerProps) {
                                                         variant="ghost"
                                                         onClick={() => handleEditProduct(product)}
                                                         className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        title="Editar Producto"
                                                     >
                                                         <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => handleDeleteProduct(product)}
+                                                        disabled={isDeletingProduct === `${product.section}-${product.product}-${product.weight || 'no-weight'}`}
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        title="Eliminar Producto"
+                                                    >
+                                                        {isDeletingProduct === `${product.section}-${product.product}-${product.weight || 'no-weight'}` ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
                                                     </Button>
                                                 </TableCell>
                                             )}

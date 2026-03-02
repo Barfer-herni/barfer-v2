@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Dictionary } from '@/config/i18n';
 import { PriceSection, PriceType } from '@/lib/services';
-import { updatePriceAction, getPricesByMonthAction, getAllPricesAction, initializePricesForPeriodAction, deletePriceAction } from '../actions';
+import { updatePriceAction, getPricesByMonthAction, getAllPricesAction, initializePricesForPeriodAction, deletePriceAction, deleteProductAction } from '../actions';
 import { CreateProductModal } from './CreateProductModal';
 import {
     Table,
@@ -72,6 +72,7 @@ export function PricesTable({ prices, dictionary, userPermissions }: PricesTable
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isInitializingPeriod, setIsInitializingPeriod] = useState(false);
     const [deletingPriceId, setDeletingPriceId] = useState<string | null>(null);
+    const [deletingProductKey, setDeletingProductKey] = useState<string | null>(null);
 
     // Verificar permisos del usuario
     const canEditPrices = userPermissions.includes('prices:edit');
@@ -470,6 +471,50 @@ export function PricesTable({ prices, dictionary, userPermissions }: PricesTable
         }
     };
 
+    // Función para eliminar todos los precios de un producto
+    const handleDeleteProduct = async (row: ProductRow) => {
+        const productLabel = `${row.product}${row.weight ? ` (${row.weight})` : ''}`;
+        if (!confirm(`¿Estás seguro de que deseas eliminar el producto "${productLabel}"? Esta acción eliminará todos los tipos de precio asociados y la entrada en el gestor.`)) {
+            return;
+        }
+
+        const productKey = `${row.section}-${row.product}-${row.weight || 'no-weight'}`;
+        setDeletingProductKey(productKey);
+
+        try {
+            const result = await deleteProductAction(row.section, row.product, row.weight);
+            if (result.success) {
+                // Actualizar el estado local removiendo todos los precios que coincidan
+                setLocalPrices(prev => prev.filter(p => {
+                    const matchesSection = p.section === row.section;
+                    const matchesProduct = p.product === row.product;
+                    const matchesWeight = p.weight === row.weight;
+                    return !(matchesSection && matchesProduct && matchesWeight);
+                }));
+
+                toast({
+                    title: "Producto eliminado",
+                    description: `Se eliminó el producto "${productLabel}" y todos sus precios.`,
+                });
+            } else {
+                toast({
+                    title: "Error",
+                    description: result.message || "Error al eliminar el producto",
+                    variant: "destructive"
+                });
+            }
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            toast({
+                title: "Error",
+                description: "Error al eliminar el producto",
+                variant: "destructive"
+            });
+        } finally {
+            setDeletingProductKey(null);
+        }
+    };
+
 
     const renderPriceInput = (price: Price | null, placeholder: string = "—") => {
         if (!price) {
@@ -698,6 +743,24 @@ export function PricesTable({ prices, dictionary, userPermissions }: PricesTable
                     {renderPriceInput(row.efectivo)}
                     {renderPriceInput(row.transferencia)}
                     {renderPriceInput(row.mayorista, "—")}
+                    {canEditPrices && (
+                        <TableCell className="text-center">
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteProduct(row)}
+                                disabled={deletingProductKey === key}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100"
+                                title="Eliminar Producto Completo"
+                            >
+                                {deletingProductKey === key ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </TableCell>
+                    )}
                 </TableRow>
             );
         });
@@ -989,6 +1052,7 @@ export function PricesTable({ prices, dictionary, userPermissions }: PricesTable
                                 <TableHead className="font-semibold text-center">Efectivo</TableHead>
                                 <TableHead className="font-semibold text-center">Transferencia</TableHead>
                                 <TableHead className="font-semibold text-center">Mayorista</TableHead>
+                                {canEditPrices && <TableHead className="font-semibold text-center w-10">Producto</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>

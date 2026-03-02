@@ -126,20 +126,17 @@ export function CreateProductModal({ isOpen, onClose, onProductCreated, currentM
         try {
             const weight = formData.weight === 'none' ? undefined : formData.weight;
             const productName = formData.product.trim();
-
-            // Crear un precio por cada tipo de precio seleccionado
             const createPromises = formData.priceTypes.map(priceType => {
                 const priceData: CreatePriceData = {
                     section: formData.section,
                     product: productName,
                     weight,
                     priceType,
-                    price: 0, // Precio inicial en $0
+                    price: 0,
                     isActive: true,
-                    // Usar la fecha del período actual (currentMonth/currentYear)
                     effectiveDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-15`
                 };
-                return createPriceAction(priceData);
+                return createPriceAction(priceData as any);
             });
 
             const results = await Promise.all(createPromises);

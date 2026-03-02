@@ -1,59 +1,98 @@
 'use server'
 
+import * as pricesService from '@/lib/services/services/barfer/prices/prices';
+import { Section, PriceType, CreatePriceInput, UpdatePriceInput } from '@/lib/services/services/barfer/prices/prices';
+
 export async function updatePriceAction(priceId: string, newPrice: number) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    try {
+        return await pricesService.updatePrice(priceId, { price: newPrice });
+    } catch (error) {
+        return { success: false, message: 'Error al actualizar el precio' };
+    }
 }
 
 export async function initializeDefaultPricesAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    // This seems to be handled by initializePricesForPeriodAction now
+    return { success: false, message: 'Función obsoleta. Use initializePricesForPeriodAction.' };
 }
 
 export async function getAllPricesAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', prices: [], total: 0 };
+    try {
+        return await pricesService.getAllPrices();
+    } catch (error) {
+        return { success: false, message: 'Error al obtener los precios', prices: [], total: 0 };
+    }
 }
 
 export async function getPricesByMonthAction(month: number, year: number) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', prices: [], total: 0 };
+    try {
+        return await pricesService.getAllPrices({ month, year });
+    } catch (error) {
+        return { success: false, message: 'Error al obtener los precios por mes', prices: [], total: 0 };
+    }
 }
 
 export async function initializePricesForPeriodAction(month: number, year: number) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    try {
+        return await pricesService.initializePricesForPeriod(month, year);
+    } catch (error) {
+        return { success: false, message: 'Error al inicializar los precios para el período' };
+    }
 }
 
+// These functions seem to be related to a different entity or legacy, 
+// leaving them as placeholders return false if not explicitly used by the new price flow
 export async function getAllProductosGestorAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', productos: [], total: 0 };
+    return { success: false, message: 'Servicio no disponible', productos: [], total: 0 };
 }
 
 export async function createProductoGestorAction(data: any) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    return { success: false, message: 'Servicio no disponible' };
 }
 
 export async function updateProductoGestorAction(productoId: string, data: any) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    return { success: false, message: 'Servicio no disponible' };
 }
 
 export async function deleteProductoGestorAction(productoId: string) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    return { success: false, message: 'Servicio no disponible' };
 }
 
 export async function initializeProductosGestorAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    return { success: false, message: 'Servicio no disponible' };
 }
 
-export async function createPriceAction(data: any) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+export async function createPriceAction(data: CreatePriceInput) {
+    try {
+        return await pricesService.createPrice(data);
+    } catch (error) {
+        return { success: false, message: 'Error al crear el precio' };
+    }
 }
 
 export async function deletePriceAction(priceId: string) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    try {
+        return await pricesService.deletePrice(priceId);
+    } catch (error) {
+        return { success: false, message: 'Error al eliminar el precio' };
+    }
 }
 
 export async function getAllUniqueProductsAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', products: [] };
+    try {
+        return await pricesService.getUniqueProducts();
+    } catch (error) {
+        return { success: false, message: 'Error al obtener los productos únicos', products: [] };
+    }
 }
 
 export async function deleteProductAction(section: string, product: string, weight: string | null) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', deletedCount: 0 };
+    try {
+        const result = await pricesService.deleteProductPrices(section as Section, product, weight);
+        return { ...result, deletedCount: (result as any).deletedCount || 0 };
+    } catch (error) {
+        return { success: false, message: 'Error al eliminar el producto', deletedCount: 0 };
+    }
 }
 
 export async function updateProductAction(
@@ -66,7 +105,16 @@ export async function updateProductAction(
         weight?: string | null;
     }
 ) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', updatedCount: 0 };
+    try {
+        return await pricesService.updateProductPrices(
+            oldSection as Section,
+            oldProduct,
+            oldWeight,
+            newData as any
+        );
+    } catch (error) {
+        return { success: false, message: 'Error al actualizar el producto', updatedCount: 0 };
+    }
 }
 
 export async function updateProductPriceTypesAction(
@@ -76,13 +124,23 @@ export async function updateProductPriceTypesAction(
     oldPriceTypes: string[],
     newPriceTypes: string[]
 ) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', addedCount: 0, removedCount: 0 };
+    try {
+        return await pricesService.updateProductPriceTypes(
+            section as Section,
+            product,
+            weight,
+            oldPriceTypes as PriceType[],
+            newPriceTypes as PriceType[]
+        );
+    } catch (error) {
+        return { success: false, message: 'Error al actualizar los tipos de precio', addedCount: 0, removedCount: 0 };
+    }
 }
 
 export async function normalizePricesCapitalizationAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', updated: 0 };
+    return { success: false, message: 'Funcionalidad no implementada en el nuevo backend', updated: 0 };
 }
 
 export async function removeDuplicatePricesAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API', removed: 0 };
+    return { success: false, message: 'Funcionalidad no implementada en el nuevo backend', removed: 0 };
 }
