@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Pencil, Trash2, Search, BarChart3, Table2 } from 'lucide-react';
 import Link from 'next/link';
 
-import { createMayoristaAction, updateMayoristaAction, deleteMayoristaAction } from '../actions';
+import { createPuntoVentaAction, updatePuntoVentaAction, deletePuntoVentaAction } from '../actions';
 import { ZONA_OPTIONS, FRECUENCIA_OPTIONS, TIPO_NEGOCIO_OPTIONS } from '../constants';
 type Mayorista = any;
 
@@ -174,7 +174,7 @@ export function MayoristasDataTable({
     const handleCreate = async () => {
         setLoading(true);
         try {
-            const result = await createMayoristaAction(formData);
+            const result = await createPuntoVentaAction(formData);
             if (!result.success) throw new Error(result.error || 'Error al crear');
             setShowCreateModal(false);
             resetForm();
@@ -191,7 +191,7 @@ export function MayoristasDataTable({
 
         setLoading(true);
         try {
-            const result = await updateMayoristaAction(editingMayorista._id!, formData);
+            const result = await updatePuntoVentaAction(editingMayorista._id!, formData);
             if (!result.success) throw new Error(result.error || 'Error al actualizar');
             setEditingMayorista(null);
             resetForm();
@@ -210,7 +210,7 @@ export function MayoristasDataTable({
 
         setLoading(true);
         try {
-            const result = await deleteMayoristaAction(id);
+            const result = await deletePuntoVentaAction(id);
             if (!result.success) throw new Error(result.error || 'Error al eliminar');
             router.refresh();
         } catch (e) {

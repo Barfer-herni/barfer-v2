@@ -1,14 +1,17 @@
 'use server';
 
-export async function getMayoristasAction({
-    pageIndex = 0,
-    pageSize = 50,
-    search = '',
-    zona,
-    activo = true,
-    sortBy = 'nombre',
-    sortDesc = false,
-}: {
+import {
+    getPuntosVentaMongo,
+    getPuntoVentaByIdMongo,
+    createPuntoVentaMongo,
+    updatePuntoVentaMongo,
+    deletePuntoVentaMongo,
+    addKilosMesMongo,
+    getVentasPorZonaMongo
+} from '@/lib/services/services/barfer/puntos-ventas/puntos-ventas';
+import { CreatePuntoVentaData, UpdatePuntoVentaData } from '@/lib/services/types/barfer';
+
+export async function getMayoristasAction(query: {
     pageIndex?: number;
     pageSize?: number;
     search?: string;
@@ -18,27 +21,52 @@ export async function getMayoristasAction({
     sortDesc?: boolean;
 }) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', mayoristas: [], pageCount: 0, total: 0 };
+    const result = await getPuntosVentaMongo(query);
+    if (!result.success) {
+        return { success: false, error: result.message, mayoristas: [], pageCount: 0, total: 0 };
+    }
+    return {
+        success: true,
+        mayoristas: result.data,
+        pageCount: result.pageCount,
+        total: result.total
+    };
 }
 
-export async function getMayoristaByIdAction(id: string) {
+export async function getPuntoVentaByIdAction(id: string) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
+    const result = await getPuntoVentaByIdMongo(id);
+    if (!result.success) {
+        return { success: false, error: result.message };
+    }
+    return { success: true, puntoVenta: result.puntoVenta };
 }
 
-export async function createMayoristaAction(data: any) {
+export async function createPuntoVentaAction(data: CreatePuntoVentaData) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
+    const result = await createPuntoVentaMongo(data);
+    if (!result.success) {
+        return { success: false, error: result.message };
+    }
+    return { success: true, puntoVenta: result.puntoVenta };
 }
 
-export async function updateMayoristaAction(id: string, data: any) {
+export async function updatePuntoVentaAction(id: string, data: UpdatePuntoVentaData) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
+    const result = await updatePuntoVentaMongo(id, data);
+    if (!result.success) {
+        return { success: false, error: result.message };
+    }
+    return { success: true, puntoVenta: result.puntoVenta };
 }
 
-export async function deleteMayoristaAction(id: string) {
+export async function deletePuntoVentaAction(id: string) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
+    const result = await deletePuntoVentaMongo(id);
+    if (!result.success) {
+        return { success: false, error: result.message };
+    }
+    return { success: true };
 }
 
 export async function addKilosMesAction(
@@ -48,20 +76,31 @@ export async function addKilosMesAction(
     kilos: number
 ) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
+    const result = await addKilosMesMongo(id, mes, anio, kilos);
+    if (!result.success) {
+        return { success: false, error: result.message };
+    }
+    return { success: true };
 }
 
 export async function getVentasPorZonaAction() {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
+    const result = await getVentasPorZonaMongo();
+    if (!result.success) {
+        return { success: false, error: result.message };
+    }
+    return { success: true, data: result.data };
 }
 
 export async function getPuntosVentaStatsAction(from?: string, to?: string) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', stats: [] };
+    // Mantenemos como placeholder si no hay endpoint de stats generales aún
+    return { success: false, error: 'Estadísticas no implementadas aún', stats: [] };
 }
 
 export async function getProductosMatrixAction(from?: string, to?: string) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', matrix: [], productNames: [] };
+    // Mantenemos como placeholder si no hay endpoint de matriz aún
+    return { success: false, error: 'Matriz de productos no implementada aún', matrix: [], productNames: [] };
 }
+
