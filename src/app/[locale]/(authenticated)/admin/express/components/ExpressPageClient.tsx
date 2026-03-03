@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Plus, Package, ShoppingCart, BarChart3, Edit2, Save, X, ChevronUp, ChevronDown, GripVertical, Trash2, CalendarDays } from 'lucide-react';
+import { Plus, Package, ShoppingCart, BarChart3, Edit2, Save, X, ChevronUp, ChevronDown, GripVertical, Trash2, CalendarDays, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
@@ -36,6 +36,7 @@ import {
     getOrderPriorityAction,
     saveOrderPriorityAction,
     initializeStockForDateAction,
+    recalculateStockChainAction,
 } from '../actions';
 import type { Order, Stock, DetalleEnvio, PuntoEnvio } from '@/lib/services';
 type ProductForStock = any;
@@ -1530,10 +1531,47 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                                                         Gestión de stock día a día para este punto de envío
                                                     </CardDescription>
                                                 </div>
-                                                <Button onClick={() => setShowAddStockModal(true)} disabled={!selectedPuntoEnvio}>
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    Agregar producto
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={async () => {
+                                                            if (!selectedPuntoEnvio || !fromFromUrl) return;
+                                                            setIsLoading(true);
+                                                            try {
+                                                                const result = await recalculateStockChainAction(selectedPuntoEnvio, fromFromUrl);
+                                                                if (result.success) {
+                                                                    toast({
+                                                                        title: 'Stock recalculado',
+                                                                        description: 'La cadena de stock ha sido sincronizada.',
+                                                                    });
+                                                                    await loadTablasData(selectedPuntoEnvio);
+                                                                } else {
+                                                                    toast({
+                                                                        title: 'Error',
+                                                                        description: 'No se pudo recalcular el stock.',
+                                                                        variant: 'destructive',
+                                                                    });
+                                                                }
+                                                            } catch (error) {
+                                                                toast({
+                                                                    title: 'Error',
+                                                                    description: 'Ocurrió un error inesperado al recalcular.',
+                                                                    variant: 'destructive',
+                                                                });
+                                                            } finally {
+                                                                setIsLoading(false);
+                                                            }
+                                                        }}
+                                                        disabled={!selectedPuntoEnvio || !fromFromUrl || isLoading}
+                                                    >
+                                                        <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                                                        Recalcular Cadena
+                                                    </Button>
+                                                    <Button onClick={() => setShowAddStockModal(true)} disabled={!selectedPuntoEnvio}>
+                                                        <Plus className="h-4 w-4 mr-2" />
+                                                        Agregar producto
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     </CardHeader>

@@ -87,6 +87,24 @@ export async function getStockByIdMongo(
     }
 }
 
+
+
+export async function getProductsForStock() {
+    try {
+        const result = await apiClient.get(`/stock/products-for-stock`);
+        return {
+            success: true,
+            products: result.products || result || [],
+        };
+    } catch (error) {
+        return {
+            success: false,
+            products: [],
+            message: 'Error al obtener los productos',
+        };
+    }
+}
+
 /**
  * Actualizar un registro de stock
  */
@@ -263,3 +281,110 @@ export async function updateEstadoEnvio(
         };
     }
 }
+
+/**
+ * Obtener la cantidad de pedidos para un punto de envío y fecha
+ */
+export async function getPedidosDelDia(puntoEnvio: string, date: string): Promise<{
+    success: boolean;
+    count: number;
+    error?: string;
+}> {
+    try {
+        const params = new URLSearchParams();
+        params.set('puntoEnvio', puntoEnvio);
+        params.set('date', date);
+
+        const count = await apiClient.get(`/orders/count-by-day?${params.toString()}`);
+        return {
+            success: true,
+            count: typeof count === 'number' ? count : (count.count || 0),
+        };
+    } catch (error) {
+        return {
+            success: false,
+            count: 0,
+            error: 'GET_PEDIDOS_DEL_DIA_ERROR',
+        };
+    }
+}
+
+/**
+ * Inicializar stock para una fecha específica
+ */
+export async function initializeStockForDate(puntoEnvio: string, date: string): Promise<{
+    success: boolean;
+    initialized: boolean;
+    count: number;
+    message?: string;
+    error?: string;
+}> {
+    try {
+        const result = await apiClient.post('/stock/initialize', { puntoEnvio, date });
+        return {
+            success: true,
+            initialized: result.initialized ?? false,
+            count: result.count ?? 0,
+            message: result.message,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            initialized: false,
+            count: 0,
+            error: 'INITIALIZE_STOCK_ERROR',
+        };
+    }
+}
+
+/**
+ * Obtener zonas de entrega que tienen punto de envío
+ */
+export async function getDeliveryAreasWithPuntoEnvio(): Promise<{
+    success: boolean;
+    deliveryAreas: any[];
+    error?: string;
+}> {
+    try {
+        const result = await apiClient.get('/delivery-areas/with-punto-envio');
+        return {
+            success: true,
+            deliveryAreas: result || [],
+        };
+    } catch (error) {
+        return {
+            success: false,
+            deliveryAreas: [],
+            error: 'GET_DELIVERY_AREAS_ERROR',
+        };
+    }
+}
+
+/**
+ * Recalcular la cadena de stock hacia adelante
+ */
+export async function recalculateStockChain(puntoEnvio: string, startDate: string): Promise<{
+    success: boolean;
+    modifiedDays: number;
+    message?: string;
+    error?: string;
+}> {
+    try {
+        const result = await apiClient.post('/stock/recalculate', { puntoEnvio, startDate });
+        return {
+            success: true,
+            modifiedDays: result.modifiedDays ?? 0,
+            message: result.message,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            modifiedDays: 0,
+            error: 'RECALCULATE_STOCK_ERROR',
+        };
+    }
+}
+
+
+
+

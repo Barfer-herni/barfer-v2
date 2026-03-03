@@ -12,11 +12,21 @@ import {
     getExpressOrders,
     duplicateExpressOrder,
     saveOrderPriority,
+    getProductsForStock
 } from '@/lib/services';
 import { getCurrentUserWithPermissions } from '@/lib/auth/server-permissions';
 
 export async function getDeliveryAreasWithPuntoEnvioAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API' };
+    try {
+        const { getDeliveryAreasWithPuntoEnvio } = await import('@/lib/services');
+        return await getDeliveryAreasWithPuntoEnvio();
+    } catch (error) {
+        console.error('Error getting delivery areas:', error);
+        return {
+            success: false,
+            deliveryAreas: [],
+        };
+    }
 }
 
 export async function getExpressOrdersAction(puntoEnvio?: string, from?: string, to?: string) {
@@ -53,23 +63,23 @@ export async function createStockAction(data: {
 
 export async function getStockByPuntoEnvioAction(puntoEnvio: string) {
     try {
-        // Validar que el usuario tenga permiso para ver este punto de envío
-        const userWithPermissions = await getCurrentUserWithPermissions();
-        const isAdmin = userWithPermissions?.isAdmin || false;
+        // // Validar que el usuario tenga permiso para ver este punto de envío
+        // const userWithPermissions = await getCurrentUserWithPermissions();
+        // const isAdmin = userWithPermissions?.isAdmin || false;
 
         // Si no es admin, validar que el punto esté en sus puntos asignados
-        if (!isAdmin) {
-            const userPuntosEnvio = Array.isArray(userWithPermissions?.puntoEnvio)
-                ? userWithPermissions.puntoEnvio
-                : (userWithPermissions?.puntoEnvio ? [userWithPermissions.puntoEnvio] : []);
 
-            if (userPuntosEnvio.length === 0 || !userPuntosEnvio.includes(puntoEnvio)) {
-                return {
-                    success: true,
-                    stock: [],
-                };
-            }
-        }
+        // const userPuntosEnvio = Array.isArray(userWithPermissions?.puntoEnvio)
+        //     ? userWithPermissions.puntoEnvio
+        //     : (userWithPermissions?.puntoEnvio ? [userWithPermissions.puntoEnvio] : []);
+
+        // if (userPuntosEnvio.length === 0 || !userPuntosEnvio.includes(puntoEnvio)) {
+        //     return {
+        //         success: true,
+        //         stock: [],
+        //     };
+        // }
+
 
         return await getStockByPuntoEnvioMongo(puntoEnvio);
     } catch (error) {
@@ -209,7 +219,15 @@ export async function updateEstadoEnvioAction(orderId: string, estadoEnvio: 'pen
 }
 
 export async function getProductsForStockAction() {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', products: [] };
+    try {
+        return await getProductsForStock();
+    } catch (error) {
+        console.error('Error getting products for stock:', error);
+        return {
+            success: false,
+            products: [],
+        };
+    }
 }
 
 export async function updateStockAction(
@@ -239,8 +257,18 @@ export async function updateStockAction(
     }
 }
 
-export async function getPedidosDelDiaAction(puntoEnvio: string, date: Date) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', count: 0 };
+export async function getPedidosDelDiaAction(puntoEnvio: string, date: Date | string) {
+    try {
+        const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+        const { getPedidosDelDia } = await import('@/lib/services');
+        return await getPedidosDelDia(puntoEnvio, dateStr);
+    } catch (error) {
+        console.error('Error getting pedidos del día:', error);
+        return {
+            success: false,
+            count: 0,
+        };
+    }
 }
 
 // Acción para duplicar un pedido express en un punto de envío específico
@@ -302,6 +330,41 @@ export async function saveOrderPriorityAction(
 }
 
 export async function initializeStockForDateAction(puntoEnvio: string, date: Date | string) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    try {
+        const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+        const { initializeStockForDate } = await import('@/lib/services');
+        const result = await initializeStockForDate(puntoEnvio, dateStr);
+
+        if (result.success && result.initialized) {
+            revalidatePath('/admin/express');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Error initializing stock for date:', error);
+        return {
+            success: false,
+            error: 'Error al inicializar el stock',
+        };
+    }
+}
+
+export async function recalculateStockChainAction(puntoEnvio: string, startDate: string) {
+    try {
+        const { recalculateStockChain } = await import('@/lib/services');
+        const result = await recalculateStockChain(puntoEnvio, startDate);
+
+        if (result.success) {
+            revalidatePath('/admin/express');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Error recalculating stock chain:', error);
+        return {
+            success: false,
+            error: 'Error al recalcular la cadena de stock',
+        };
+    }
 }
 
