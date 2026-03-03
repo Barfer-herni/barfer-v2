@@ -1,6 +1,29 @@
 import 'server-only';
 import { apiClient } from '@/lib/api';
-import type { Stock, CreateStockData, UpdateStockData } from '../../../types/barfer';
+import type { Stock, CreateStockData, UpdateStockData, OrderPriority, CreateOrderPriorityData, UpdateOrderPriorityData, Order } from '../../../types/barfer';
+
+
+export async function getExpressOrders(puntoEnvio?: string, from?: string, to?: string) {
+    try {
+        const params = new URLSearchParams();
+        if (puntoEnvio) params.append('puntoEnvio', puntoEnvio);
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+        const query = params.toString() ? `?${params.toString()}` : '';
+        const result = await apiClient.get(`/orders/express${query}`);
+        return {
+            success: true,
+            orders: result || [],
+        };
+    } catch (error) {
+        return {
+            success: false,
+            orders: [],
+            message: 'Error al obtener el stock',
+        };
+    }
+}
+
 
 /**
  * Crear un nuevo registro de stock
@@ -102,6 +125,141 @@ export async function deleteStockMongo(
         return {
             success: false,
             message: 'Error al eliminar el stock',
+        };
+    }
+}
+
+
+export async function duplicateExpressOrder(orderId: string, targetPuntoEnvio: string) {
+    try {
+        const result = await apiClient.post(`/orders/express/${orderId}/duplicate`, { targetPuntoEnvio });
+        return {
+            success: true,
+            order: result.order || result,
+            message: 'Pedido duplicado exitosamente',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error al duplicar el pedido',
+        };
+    }
+}
+
+
+
+
+/**
+ * Guardar o actualizar el ordenamiento de pedidos
+ * Usa upsert para crear o actualizar el documento
+ */
+export async function saveOrderPriority(data: CreateOrderPriorityData): Promise<{
+    success: boolean;
+    orderPriority?: OrderPriority;
+    message?: string;
+    error?: string;
+}> {
+    try {
+        const result = await apiClient.post('/orders/priority', data);
+        return {
+            success: true,
+            orderPriority: result.data || result.orderPriority || result,
+            message: 'Orden de prioridad guardado exitosamente',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error al guardar el orden de prioridad',
+            error: 'SAVE_ORDER_PRIORITY_ERROR',
+        };
+    }
+}
+
+
+/**
+ * Obtener el ordenamiento guardado para una fecha y punto de envío específicos
+ */
+export async function getOrderPriority(fecha: string, puntoEnvio: string): Promise<{
+    success: boolean;
+    orderPriority?: OrderPriority;
+    error?: string;
+}> {
+    try {
+        const params = new URLSearchParams();
+        params.set('fecha', fecha);
+        params.set('puntoEnvio', puntoEnvio);
+
+        const result = await apiClient.get(`/orders/priority?${params.toString()}`);
+        return {
+            success: true,
+            orderPriority: result.data || result.orderPriority || result || undefined,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: 'GET_ORDER_PRIORITY_ERROR',
+        };
+    }
+}
+
+
+
+/**
+ * Actualizar solo el array de orderIds
+ */
+export async function updateOrderPriority(
+    fecha: string,
+    puntoEnvio: string,
+    data: UpdateOrderPriorityData
+): Promise<{
+    success: boolean;
+    orderPriority?: OrderPriority;
+    message?: string;
+    error?: string;
+}> {
+    try {
+        const params = new URLSearchParams();
+        params.set('fecha', fecha);
+        params.set('puntoEnvio', puntoEnvio);
+
+        const result = await apiClient.patch(`/orders/priority?${params.toString()}`, data);
+        return {
+            success: true,
+            orderPriority: result.orderPriority || result,
+            message: 'Orden de prioridad actualizado exitosamente',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error al actualizar el orden de prioridad',
+            error: 'UPDATE_ORDER_PRIORITY_ERROR',
+        };
+    }
+}
+/**
+ * Actualizar el estado de envío de un pedido
+ */
+export async function updateEstadoEnvio(
+    orderId: string,
+    estadoEnvio: 'pendiente' | 'pidiendo' | 'en-viaje' | 'listo'
+): Promise<{
+    success: boolean;
+    order?: Order;
+    message?: string;
+    error?: string;
+}> {
+    try {
+        const result = await apiClient.patch(`/orders/${orderId}/estado-envio`, { estadoEnvio });
+        return {
+            success: true,
+            order: result.order || result,
+            message: 'Estado de envío actualizado exitosamente',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error al actualizar el estado de envío',
+            error: 'UPDATE_ESTADO_ENVIO_ERROR',
         };
     }
 }

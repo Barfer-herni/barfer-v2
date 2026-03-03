@@ -271,7 +271,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             },
             city: row.original.address?.city || '',
             phone: row.original.address?.phone || '',
-            paymentMethod: ({'efectivo': 'cash', 'mercado_pago': 'mercado-pago', 'transferencia': 'mercado-pago'} as Record<string, string>)[row.original.paymentMethod] || row.original.paymentMethod || '',
+            paymentMethod: ({ 'efectivo': 'cash', 'mercado_pago': 'mercado-pago', 'transferencia': 'mercado-pago' } as Record<string, string>)[row.original.paymentMethod] || row.original.paymentMethod || '',
             userName: row.original.user?.name || '',
             userLastName: row.original.user?.lastName || '',
             userEmail: row.original.user?.email || '',
@@ -489,9 +489,9 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             // Mapear paymentMethod del frontend al formato del backend
             const paymentMethodMap: Record<string, string> = {
                 'cash': 'efectivo',
-                'mercado-pago': 'mercado_pago',
+                'mercado-pago': 'mercado-pago',
                 'efectivo': 'efectivo',
-                'mercado_pago': 'mercado_pago',
+                'mercado_pago': 'mercado-pago',
                 'transferencia': 'transferencia',
             };
             const mappedPaymentMethod = paymentMethodMap[editValues.paymentMethod] || editValues.paymentMethod;
@@ -713,9 +713,9 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             // Mapear paymentMethod del frontend al formato del backend
             const paymentMethodMap: Record<string, string> = {
                 'cash': 'efectivo',
-                'mercado-pago': 'mercado_pago',
+                'mercado-pago': 'mercado-pago',
                 'efectivo': 'efectivo',
-                'mercado_pago': 'mercado_pago',
+                'mercado_pago': 'mercado-pago',
                 'transferencia': 'transferencia',
             };
             const mappedPaymentMethod = paymentMethodMap[createFormData.paymentMethod] || createFormData.paymentMethod;

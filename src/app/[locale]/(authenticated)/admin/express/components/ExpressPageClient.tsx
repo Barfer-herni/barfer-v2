@@ -163,7 +163,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
     const loadOrderPriorityFromDB = useCallback(async (fecha: string, puntoEnvio: string) => {
         try {
             const result = await getOrderPriorityAction(fecha, puntoEnvio);
-            if (result.success && result.orderPriority) {
+            if (result.success && result.orderPriority && Array.isArray(result.orderPriority.orderIds)) {
                 setOrderPriorityFromDB(result.orderPriority.orderIds);
             } else {
                 setOrderPriorityFromDB([]);
@@ -176,7 +176,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
 
     // Función para aplicar el orden guardado a los pedidos
     const applySavedOrder = useCallback((orders: Order[]): Order[] => {
-        if (orderPriorityFromDB.length === 0) return orders;
+        if (!orderPriorityFromDB || !Array.isArray(orderPriorityFromDB) || orderPriorityFromDB.length === 0) return orders;
 
         // Normalizar todos los IDs a strings
         const normalizedSavedOrderIds = orderPriorityFromDB.map(id => String(id));
@@ -928,7 +928,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                     // CASO REGULAR: BOX PERRO, BOX GATO, etc.
                     const itemOptions = (item.options || []).map((opt: any) => (opt.name || '').toUpperCase().trim());
                     const itemMainOption = itemOptions[0] || '';
-                    
+
                     // Detectar pesos en el ítem (en nombre u opciones)
                     const itemFullIdent = `${itemProductBase} ${itemOptions.join(' ')}`.toUpperCase();
                     const weightRegex = /(\d+\s*KG)/gi;
@@ -980,7 +980,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                     // Fallback: Si no hay match, intentar comparación directa con el sabor extraído
                     if (!isMatch && extractedFlavor) {
                         const flavorMatch = extractedFlavor === cleanProductName;
-                        
+
                         if (flavorMatch) {
                             // Verificar peso
                             if (normalizedStockWeight || normalizedItemWeight) {

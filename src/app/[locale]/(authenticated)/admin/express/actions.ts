@@ -9,6 +9,9 @@ import {
     getAllPuntosEnvioMongo,
     deletePuntoEnvioMongo,
     updateStockMongo,
+    getExpressOrders,
+    duplicateExpressOrder,
+    saveOrderPriority,
 } from '@/lib/services';
 import { getCurrentUserWithPermissions } from '@/lib/auth/server-permissions';
 
@@ -17,7 +20,7 @@ export async function getDeliveryAreasWithPuntoEnvioAction() {
 }
 
 export async function getExpressOrdersAction(puntoEnvio?: string, from?: string, to?: string) {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', orders: [] };
+    return await getExpressOrders(puntoEnvio, from, to);
 }
 
 export async function createStockAction(data: {
@@ -187,7 +190,22 @@ export async function deletePuntoEnvioAction(id: string) {
 }
 
 export async function updateEstadoEnvioAction(orderId: string, estadoEnvio: 'pendiente' | 'pidiendo' | 'en-viaje' | 'listo') {
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', order: null, message: 'Servicio no disponible - migrando a backend API' };
+    try {
+        const { updateEstadoEnvio } = await import('@/lib/services');
+        const result = await updateEstadoEnvio(orderId, estadoEnvio);
+
+        if (result.success) {
+            revalidatePath('/admin/express');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Error updating estado de envío:', error);
+        return {
+            success: false,
+            message: 'Error al actualizar el estado de envío',
+        };
+    }
 }
 
 export async function getProductsForStockAction() {
@@ -227,8 +245,7 @@ export async function getPedidosDelDiaAction(puntoEnvio: string, date: Date) {
 
 // Acción para duplicar un pedido express en un punto de envío específico
 export async function duplicateExpressOrderAction(orderId: string, targetPuntoEnvio: string) {
-    'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', message: 'Servicio no disponible - migrando a backend API' };
+    return await duplicateExpressOrder(orderId, targetPuntoEnvio);
 }
 
 /**
@@ -273,29 +290,7 @@ export async function saveOrderPriorityAction(
     orderIds: string[]
 ) {
     try {
-        // Validar permisos del usuario
-        const userWithPermissions = await getCurrentUserWithPermissions();
-        const isAdmin = userWithPermissions?.isAdmin || false;
-
-        if (!isAdmin) {
-            const userPuntosEnvio = Array.isArray(userWithPermissions?.puntoEnvio)
-                ? userWithPermissions.puntoEnvio
-                : (userWithPermissions?.puntoEnvio ? [userWithPermissions.puntoEnvio] : []);
-
-            if (!userPuntosEnvio.includes(puntoEnvio)) {
-                return {
-                    success: false,
-                    error: 'No tienes permiso para modificar este punto de envío',
-                };
-            }
-        }
-
-        const { saveOrderPriority } = await import('@/lib/services');
         const result = await saveOrderPriority({ fecha, puntoEnvio, orderIds });
-
-        // No revalidamos la ruta para evitar recargas lentas
-        // El componente usa optimistic updates para actualización instantánea
-
         return result;
     } catch (error) {
         console.error('Error saving order priority:', error);
