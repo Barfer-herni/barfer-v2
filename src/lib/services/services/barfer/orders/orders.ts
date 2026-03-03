@@ -31,28 +31,20 @@ export async function getOrders({
         if (from) params.set('from', from);
         if (to) params.set('to', to);
         if (orderType) params.set('orderType', orderType);
-
-        const allOrders: Order[] = await apiClient.get(`/orders/all?${params.toString()}`);
-
-        // Sorting client-side
-        if (sorting.length > 0) {
-            const { id, desc } = sorting[0];
-            allOrders.sort((a: any, b: any) => {
-                const aVal = a[id] ?? '';
-                const bVal = b[id] ?? '';
-                if (aVal < bVal) return desc ? 1 : -1;
-                if (aVal > bVal) return desc ? -1 : 1;
-                return 0;
-            });
+        params.set('page', pageIndex.toString());
+        params.set('pageSize', pageSize.toString());
+        if (sorting && sorting.length > 0) {
+            params.set('sorting', JSON.stringify(sorting));
         }
 
-        const total = allOrders.length;
+        const response: { orders: Order[]; total: number } = await apiClient.get(`/orders/all?${params.toString()}`);
+        const orders = response.orders || [];
+        const total = response.total || 0;
         const pageCount = Math.ceil(total / pageSize);
-        const start = pageIndex * pageSize;
-        const orders = allOrders.slice(start, start + pageSize);
 
         return { orders, pageCount, total };
     } catch (error) {
+        console.error('Error fetching orders:', error);
         throw new Error('Could not fetch orders.');
     }
 }
