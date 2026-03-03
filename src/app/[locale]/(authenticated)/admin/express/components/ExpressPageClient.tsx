@@ -666,7 +666,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                 const result = await duplicateExpressOrderAction(row.id, targetPuntoEnvio);
 
                 if (!result.success) {
-                    throw new Error(result.error || 'Error al duplicar');
+                    throw new Error('Error al duplicar');
                 }
 
                 // Recargar datos del punto de envío actual
@@ -709,7 +709,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
             console.log('📦 Resultado de duplicación:', result);
 
             if (!result.success) {
-                const errorMsg = result.error || 'Error al duplicar';
+                const errorMsg = 'Error al duplicar';
                 console.error('❌ Error del servidor:', errorMsg);
                 throw new Error(errorMsg);
             }
