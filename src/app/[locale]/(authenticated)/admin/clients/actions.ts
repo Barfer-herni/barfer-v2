@@ -1,5 +1,7 @@
 'use server';
 
+import { getClientAnalytics } from '@/lib/services/services/barfer/users/users';
+
 // TODO: Migrar a backend API
 
 /**
@@ -66,4 +68,22 @@ export async function getClientsVisibilityStatus(clientEmails: string[]) {
         error: 'Servicio no disponible - migrando a backend API',
         message: 'Servicio no disponible - migrando a backend API'
     };
+}
+
+/**
+ * Obtiene las estadísticas analíticas de los clientes
+ */
+export async function getClientAnalyticsAction() {
+    try {
+        const result = await getClientAnalytics();
+        return {
+            success: true,
+            data: result
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Error al obtener analytics'
+        };
+    }
 }

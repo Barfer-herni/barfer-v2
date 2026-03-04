@@ -1,8 +1,7 @@
 import { getCurrentUserWithPermissions } from '@/lib/auth/server-permissions';
 import { ClientCategoriesServer } from './ClientCategoriesServer';
+import { getClientAnalyticsAction } from '../actions';
 import type { Dictionary } from '@/config/i18n';
-
-// TODO: Migrar a backend API
 
 interface ClientCategoriesWrapperProps {
     dictionary: Dictionary;
@@ -11,25 +10,26 @@ interface ClientCategoriesWrapperProps {
 /**
  * Server Component wrapper que obtiene las estadísticas de categorías
  * y las pasa al componente cliente interactivo
- * Actualmente devuelve datos vacíos - migrando a backend API
  */
 export async function ClientCategoriesWrapper({ dictionary }: ClientCategoriesWrapperProps) {
-    // TODO: Migrar a backend API
-    const behaviorCategories: never[] = [];
-    const spendingCategories: never[] = [];
+    const result = await getClientAnalyticsAction();
 
     // Obtener permisos del usuario actual
     const userWithPermissions = await getCurrentUserWithPermissions();
     const canSendEmail = userWithPermissions?.permissions.includes('clients:send_email') ?? false;
     const canSendWhatsApp = userWithPermissions?.permissions.includes('clients:send_whatsapp') ?? false;
 
+    if (!result.success || !result.data) {
+        return null; // O mostrar un estado de error
+    }
+
     return (
         <ClientCategoriesServer
-            behaviorCategories={behaviorCategories}
-            spendingCategories={spendingCategories}
+            behaviorCategories={result.data.behaviorCategories}
+            spendingCategories={result.data.spendingCategories}
             dictionary={dictionary}
             canSendEmail={canSendEmail}
             canSendWhatsApp={canSendWhatsApp}
         />
     );
-} 
+}

@@ -283,3 +283,37 @@ export async function verifyUserCredentials(email: string, password: string) {
 export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
     return await changeUserGestorPassword(userId, currentPassword, newPassword);
 }
+
+
+
+
+export async function getClientAnalytics() {
+    return await apiClient.get('/users/analytics');
+}
+
+
+// ESTADISTICAS
+
+export async function getClientsNew() {
+    return await apiClient.get('/users/clients-new');
+}
+
+export async function getClientsActive() {
+    return await apiClient.get('/users/clients-active');
+}
+
+export async function getClientsInactive() {
+    return await apiClient.get('/users/clients-inactive');
+}
+
+export async function getClientsRecovered() {
+    return await apiClient.get('/users/clients-recovered');
+}
+
+export async function getClientsLost() {
+    return await apiClient.get('/users/clients-lost');
+}
+
+export async function getClientsUnderFollowUp() {
+    return await apiClient.get('/users/clients-under-follow-up');
+}
