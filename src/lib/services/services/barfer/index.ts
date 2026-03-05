@@ -27,6 +27,9 @@ export * from './proveedores/proveedores';
 // ===== SALIDAS =====
 export * from './salidas/salidas';
 
+// ===== ANALYTICS =====
+export * from './analytics/analytics';
+
 // ===== OTRAS ENTIDADES (Vacías por ahora) =====
 export * from './puntos-ventas/puntos-ventas';
 export * from './prices/prices';
