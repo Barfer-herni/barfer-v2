@@ -712,17 +712,20 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
 
             // Mapear paymentMethod del frontend al formato del backend
             const paymentMethodMap: Record<string, string> = {
-                'cash': 'efectivo',
+                'efectivo': 'cash',
+                'cash': 'cash',
                 'mercado-pago': 'mercado-pago',
-                'efectivo': 'efectivo',
                 'mercado_pago': 'mercado-pago',
                 'transferencia': 'transferencia',
             };
             const mappedPaymentMethod = paymentMethodMap[createFormData.paymentMethod] || createFormData.paymentMethod;
 
+            // Extraer puntoVentaId del form antes de hacer el spread (el DTO no lo acepta)
+            const { puntoVentaId: _pvId, ...createFormDataClean } = createFormData as any;
+
             // Construir el objeto de datos de la orden
             const orderDataWithFilteredItems: any = {
-                ...createFormData,
+                ...createFormDataClean,
                 total: totalValue, // Asegurar que sea un número
                 paymentMethod: mappedPaymentMethod, // Usar valor mapeado al backend
                 items: processedItems,

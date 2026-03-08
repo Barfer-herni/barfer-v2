@@ -18,7 +18,6 @@ import { es } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { AddStockModal } from './AddStockModal';
-import { DetalleTable } from './DetalleTable';
 import { CreatePuntoEnvioModal } from './CreatePuntoEnvioModal';
 import { UpdatePuntoEnvioModal } from './UpdatePuntoEnvioModal';
 import { DeletePuntoEnvioDialog } from './DeletePuntoEnvioDialog';
@@ -28,7 +27,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     getExpressOrdersAction,
     getStockByPuntoEnvioAction,
-    getDetalleEnvioByPuntoEnvioAction,
     getProductsForStockAction,
     updateStockAction,
     createStockAction,
@@ -38,7 +36,7 @@ import {
     initializeStockForDateAction,
     recalculateStockChainAction,
 } from '../actions';
-import type { Order, Stock, DetalleEnvio, PuntoEnvio } from '@/lib/services';
+import type { Order, Stock, PuntoEnvio } from '@/lib/services';
 type ProductForStock = any;
 import { OrdersDataTable } from '../../table/components/OrdersDataTable';
 import { DateRangeFilter } from '../../table/components/DateRangeFilter';
@@ -48,6 +46,9 @@ import { MonthlyMetricsTable } from './MonthlyMetricsTable';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { getQuantityStatsByMonthAction } from '../../analytics/actions';
+import { QuantityTable } from '../../analytics/components/quantity/QuantityTable';
+
 
 interface ExpressPageClientProps {
     dictionary: Dictionary;
@@ -78,6 +79,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
     const [activeTab, setActiveTab] = useState<string>(initialTabFromUrl);
 
     const [puntosEnvio, setPuntosEnvio] = useState<PuntoEnvio[]>(initialPuntosEnvio);
+    const [quantityStats, setQuantityStats] = useState<any>(null);
 
     // Función auxiliar para actualizar URL
     const updateUrlParams = useCallback((param: string, value: string) => {
@@ -123,7 +125,6 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
     // Datos de las tablas
     const [orders, setOrders] = useState<Order[]>([]);
     const [stock, setStock] = useState<Stock[]>([]);
-    const [detalle, setDetalle] = useState<DetalleEnvio[]>([]);
     const [productsForStock, setProductsForStock] = useState<ProductForStock[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     // Estado para el orden de prioridad desde la base de datos
@@ -567,7 +568,6 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
         } else {
             setOrders([]);
             setStock([]);
-            setDetalle([]);
         }
     }, [selectedPuntoEnvio, fromFromUrl, toFromUrl]);
 
@@ -603,12 +603,17 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
 
             // Si es 'all', no traemos stock ni detalle específico por ahora (o podríamos adaptarlo luego)
             const stockPromise = puntoEnvio === 'all' ? Promise.resolve({ success: true, stock: [] }) : getStockByPuntoEnvioAction(puntoEnvio);
-            const detallePromise = puntoEnvio === 'all' ? Promise.resolve({ success: true, detalleEnvio: [] }) : getDetalleEnvioByPuntoEnvioAction(puntoEnvio);
 
-            const [ordersResult, stockResult, detalleResult] = await Promise.all([
+            // Cargar estadísticas de cantidad por kilo (mismo que Analytics)
+            const currentYear = new Date().getFullYear();
+            const yearStart = new Date(Date.UTC(currentYear, 0, 1, 0, 0, 0, 0)).toISOString();
+            const yearEnd = new Date(Date.UTC(currentYear, 11, 31, 23, 59, 59, 999)).toISOString();
+            const quantityStatsPromise = getQuantityStatsByMonthAction(yearStart, yearEnd, puntoEnvio === 'all' ? undefined : puntoEnvio);
+
+            const [ordersResult, stockResult, quantityStatsResult] = await Promise.all([
                 ordersPromise,
                 stockPromise,
-                detallePromise,
+                quantityStatsPromise,
             ]);
 
             if (ordersResult.success) {
@@ -630,8 +635,8 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                     localStockValuesRef.current = initialValues;
                 }
             }
-            if (detalleResult.success) {
-                setDetalle(detalleResult.detalleEnvio || []);
+            if (quantityStatsResult.success && quantityStatsResult.data) {
+                setQuantityStats(quantityStatsResult.data);
             }
         } catch (error) {
             console.error('Error loading tablas data:', error);
@@ -1394,7 +1399,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                                 {isAdmin && (
                                     <TabsTrigger value="detalle" className="flex items-center gap-2">
                                         <Edit2 className="h-4 w-4" />
-                                        Detalle ({detalle.length})
+                                        Detalle
                                     </TabsTrigger>
                                 )}
                             </TabsList>
@@ -1824,94 +1829,81 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                                     <TabsContent value="detalle" className="mt-6">
                                         {(() => {
                                             // Calcular totales
-                                            const totalEnvios = orders.length; // Usar órdenes filtradas por fecha y punto de envío si es necesario
+                                            const totalEnvios = orders.length;
                                             const totalIngresos = orders.reduce((sum, order) => sum + (order.total || 0), 0);
                                             const totalCostoEnvio = orders.reduce((sum, order) => sum + (order.shippingPrice || 0), 0);
                                             const porcentajeCosto = totalIngresos > 0 ? ((totalCostoEnvio / totalIngresos) * 100).toFixed(1) : '0';
                                             const costoEnvioPromedio = totalEnvios > 0 ? totalCostoEnvio / totalEnvios : 0;
 
                                             return (
-                                                <div className="grid gap-4 md:grid-cols-4 mb-6">
-                                                    <Card>
-                                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                                            <CardTitle className="text-sm font-medium">
-                                                                Cantidad de Envíos
-                                                            </CardTitle>
-                                                            <Package className="h-4 w-4 text-muted-foreground" />
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            <div className="text-2xl font-bold">{totalEnvios}</div>
-                                                        </CardContent>
-                                                    </Card>
-                                                    <Card>
-                                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                                            <CardTitle className="text-sm font-medium">
-                                                                Costo de Envío Total
-                                                            </CardTitle>
-                                                            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            <div className="text-2xl font-bold">
-                                                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(totalCostoEnvio)}
-                                                            </div>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Equivale al {porcentajeCosto}% de los ingresos
-                                                            </p>
-                                                        </CardContent>
-                                                    </Card>
-                                                    <Card>
-                                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                                            <CardTitle className="text-sm font-medium">
-                                                                Costo de Envío Promedio
-                                                            </CardTitle>
-                                                            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            <div className="text-2xl font-bold">
-                                                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(costoEnvioPromedio)}
-                                                            </div>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Por pedido
-                                                            </p>
-                                                        </CardContent>
-                                                    </Card>
-                                                    <Card>
-                                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                                            <CardTitle className="text-sm font-medium">
-                                                                Ingresos Totales
-                                                            </CardTitle>
-                                                            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            <div className="text-2xl font-bold">
-                                                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(totalIngresos)}
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
-                                                </div>
+                                                <>
+                                                    <div className="grid gap-4 md:grid-cols-4 mb-6">
+                                                        <Card>
+                                                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                                <CardTitle className="text-sm font-medium">
+                                                                    Cantidad de Envíos
+                                                                </CardTitle>
+                                                                <Package className="h-4 w-4 text-muted-foreground" />
+                                                            </CardHeader>
+                                                            <CardContent>
+                                                                <div className="text-2xl font-bold">{totalEnvios}</div>
+                                                            </CardContent>
+                                                        </Card>
+                                                        <Card>
+                                                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                                <CardTitle className="text-sm font-medium">
+                                                                    Costo de Envío Total
+                                                                </CardTitle>
+                                                                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                                                            </CardHeader>
+                                                            <CardContent>
+                                                                <div className="text-2xl font-bold">
+                                                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(totalCostoEnvio)}
+                                                                </div>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    Equivale al {porcentajeCosto}% de los ingresos
+                                                                </p>
+                                                            </CardContent>
+                                                        </Card>
+                                                        <Card>
+                                                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                                <CardTitle className="text-sm font-medium">
+                                                                    Costo de Envío Promedio
+                                                                </CardTitle>
+                                                                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                                                            </CardHeader>
+                                                            <CardContent>
+                                                                <div className="text-2xl font-bold">
+                                                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(costoEnvioPromedio)}
+                                                                </div>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    Por pedido
+                                                                </p>
+                                                            </CardContent>
+                                                        </Card>
+                                                        <Card>
+                                                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                                <CardTitle className="text-sm font-medium">
+                                                                    Ingresos Totales
+                                                                </CardTitle>
+                                                                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                                                            </CardHeader>
+                                                            <CardContent>
+                                                                <div className="text-2xl font-bold">
+                                                                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(totalIngresos)}
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </div>
+
+                                                    <QuantityTable
+                                                        data={quantityStats?.sameDay || []}
+                                                        title="Desglose por Producto (KG)"
+                                                        description={`Cantidades mensuales en KG para envíos express en el año ${new Date().getFullYear()}`}
+                                                    />
+                                                </>
                                             );
                                         })()}
-
-                                        {isLoading ? (
-                                            <Card>
-                                                <CardContent className="py-8">
-                                                    <div className="text-center text-muted-foreground">
-                                                        <p>Cargando detalle...</p>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ) : detalle.length === 0 ? (
-                                            <Card>
-                                                <CardContent className="py-8">
-                                                    <div className="text-center text-muted-foreground">
-                                                        <p>No hay datos de detalle disponibles para el punto de envío seleccionado.</p>
-                                                        <p className="text-sm mt-2">Los datos de detalle se generan automáticamente cuando se procesan los envíos.</p>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ) : (
-                                            <DetalleTable data={detalle} />
-                                        )}
                                     </TabsContent>
                                 )
                             }

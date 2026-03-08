@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,6 +10,7 @@ type ProductForStock = any;
 import { ResumenGeneralChart } from './ResumenGeneralChart';
 import { Calendar as CalendarIcon, Filter } from 'lucide-react';
 import { calculateItemWeight } from '@/lib/services/utils/weightUtils';
+import { getQuantityStatsByMonthAction } from '../../analytics/actions';
 
 
 interface ResumenGeneralTablesProps {
@@ -26,6 +25,28 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
     // Si hay un from en la URL, usar ese mes como default
     const defaultMonth = fromFromUrl ? fromFromUrl.substring(0, 7) : 'all';
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultMonth);
+    const [backendStats, setBackendStats] = useState<any>(null);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+    // Fetch accurate stats from backend
+    useEffect(() => {
+        const fetchStats = async () => {
+            setIsLoadingStats(true);
+            try {
+                // Fetch stats for all points (puntoEnvio = 'all')
+                const result = await getQuantityStatsByMonthAction(undefined, undefined, 'all');
+                if (result.success) {
+                    setBackendStats(result.data);
+                }
+            } catch (error) {
+                console.error('Error fetching backend summary stats:', error);
+            } finally {
+                setIsLoadingStats(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
 
     // Sincronizar selectedMonth con el filtro de la URL
     useEffect(() => {
@@ -56,14 +77,8 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
         return result;
     }, [orders]);
 
-    // Set default month to most recent if available and currently 'all' (optional, maybe user wants 'all' by default)
-    // The user requirement says: "que pueda filtrar por meses y que pueda comparar entre meses"
-    // So 'all' allows comparing between months in the chart.
-    // But for the Tables, 'all' means "Total of the period".
-
     // Filter orders based on selection
     const filteredOrders = useMemo(() => {
-        console.log('📈 [ResumenGeneralTables] Filtrando por mes:', selectedMonth);
         if (selectedMonth === 'all') return orders;
         const filtered = orders.filter(order => {
             let orderDate: Date;
@@ -75,7 +90,6 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
             }
             return orderDate.toISOString().substring(0, 7) === selectedMonth;
         });
-        console.log('📈 [ResumenGeneralTables] Órdenes filtradas:', filtered.length);
         return filtered;
     }, [orders, selectedMonth]);
 
@@ -167,26 +181,60 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
             }
         });
 
+        // REEMPLAZAR KILOS CON DATOS DEL BACKEND PARA MAYOR PRECISIÓN
+        if (backendStats?.sameDay) {
+            Object.values(dataByPunto).forEach(puntoData => {
+                // Si es un mes específico
+                if (selectedMonth !== 'all') {
+                    const statsForMonthAndPunto = backendStats.sameDay.find((s: any) =>
+                        s.month === selectedMonth &&
+                        s.puntoEnvio === puntoData.name
+                    );
+                    if (statsForMonthAndPunto) {
+                        puntoData.totalKilos = statsForMonthAndPunto.totalMes;
+                        // Actualizar desgloses de sabores si están disponibles en el objeto s
+                        // (Nota: el objeto s tiene pollo, vaca, etc. pero sumado por puntoEnvio)
+                        puntoData.flavors['POLLO'] = statsForMonthAndPunto.pollo || 0;
+                        puntoData.flavors['VACA'] = statsForMonthAndPunto.vaca || 0;
+                        puntoData.flavors['CERDO'] = statsForMonthAndPunto.cerdo || 0;
+                        puntoData.flavors['CORDERO'] = statsForMonthAndPunto.cordero || 0;
+                        puntoData.flavors['BIG DOG POLLO'] = statsForMonthAndPunto.bigDogPollo || 0;
+                        puntoData.flavors['BIG DOG VACA'] = statsForMonthAndPunto.bigDogVaca || 0;
+                        puntoData.flavors['GATO POLLO'] = statsForMonthAndPunto.gatoPollo || 0;
+                        puntoData.flavors['GATO VACA'] = statsForMonthAndPunto.gatoVaca || 0;
+                        puntoData.flavors['GATO CORDERO'] = statsForMonthAndPunto.gatoCordero || 0;
+                        puntoData.flavors['HUESOS CARNOSOS'] = statsForMonthAndPunto.huesosCarnosos || 0;
+                    }
+                } else {
+                    // Si es "Todo el periodo", sumar los meses del backend para este punto
+                    const statsForPunto = backendStats.sameDay.filter((s: any) => s.puntoEnvio === puntoData.name);
+                    if (statsForPunto.length > 0) {
+                        puntoData.totalKilos = statsForPunto.reduce((sum: number, s: any) => sum + s.totalMes, 0);
+
+                        // Sumar sabores
+                        puntoData.flavors['POLLO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.pollo || 0), 0);
+                        puntoData.flavors['VACA'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.vaca || 0), 0);
+                        puntoData.flavors['CERDO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.cerdo || 0), 0);
+                        puntoData.flavors['CORDERO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.cordero || 0), 0);
+                        puntoData.flavors['BIG DOG POLLO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.bigDogPollo || 0), 0);
+                        puntoData.flavors['BIG DOG VACA'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.bigDogVaca || 0), 0);
+                        puntoData.flavors['GATO POLLO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.gatoPollo || 0), 0);
+                        puntoData.flavors['GATO VACA'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.gatoVaca || 0), 0);
+                        puntoData.flavors['GATO CORDERO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.gatoCordero || 0), 0);
+                        puntoData.flavors['HUESOS CARNOSOS'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.huesosCarnosos || 0), 0);
+                    }
+                }
+            });
+        }
+
         return Object.values(dataByPunto);
-    }, [filteredOrders, puntosEnvio]);
+    }, [filteredOrders, puntosEnvio, backendStats, selectedMonth]);
 
-    // Prepare Data for Chart (All time / Based on user selection capability?)
-    // The chart should ideally show the Evolution over the available months.
-    // So we use ALL orders to build the historical chart, REGARDLESS of the 'selectedMonth' filter used for the Tables?
-    // User asked: "Cuando selecciono todos los puntos de envio sumar un grafico de lineas que muestre la evolucion mes a mes"
-    // Usually charts show the whole history or the range selected in the global filter (from URL).
-    // The 'filteredOrders' above are filtered by 'selectedMonth' local state. 
-    // If 'selectedMonth' is a specific month, the chart would only show 1 point? That renders a line chart useless.
-    // DECISION: The Chart always shows data derived from `orders` (the full set passed to component), 
-    // ignoring the `selectedMonth` filter which applies to the Summary Tables.
+    // Prepare Data for Chart
     const chartData = useMemo(() => {
-        // We need to group by Month AND by Point (for the "Compare" mode in chart)
-        // Structure: { monthName: "Enero 2024", totalKilos: 100, totalOrders: 10, avgShipping: 500, PuntoA_orders: 5, PuntoB_orders: 5, ... }
-
         const dataByMonth: Record<string, any> = {};
 
         orders.forEach(order => {
-            // Determine date 
             let orderDate: Date;
             if (order.deliveryDay) {
                 orderDate = new Date(order.deliveryDay);
@@ -207,13 +255,12 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
                     totalRevenue: 0,
                     totalShippingSum: 0,
                 };
-                // Initialize specific point counters
                 puntosEnvio.forEach(p => {
                     if (p.nombre) {
                         dataByMonth[monthKey][`${p.nombre}_orders`] = 0;
                         dataByMonth[monthKey][`${p.nombre}_kilos`] = 0;
                         dataByMonth[monthKey][`${p.nombre}_revenue`] = 0;
-                        dataByMonth[monthKey][`${p.nombre}_shipping`] = 0; // Sum for average calculation
+                        dataByMonth[monthKey][`${p.nombre}_shipping`] = 0;
                         dataByMonth[monthKey][`${p.nombre}_shippingCount`] = 0;
                     }
                 });
@@ -224,19 +271,14 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
             data.totalRevenue += (order.total || 0);
             data.totalShippingSum += (order.shippingPrice || 0);
 
-            // Point specific
             const pName = order.puntoEnvio || order.deliveryArea?.puntoEnvio;
-
-            if (pName) {
-                if (data[`${pName}_orders`] !== undefined) {
-                    data[`${pName}_orders`] += 1;
-                    data[`${pName}_revenue`] += (order.total || 0);
-                    data[`${pName}_shipping`] += (order.shippingPrice || 0);
-                    data[`${pName}_shippingCount`] += 1;
-                }
+            if (pName && data[`${pName}_orders`] !== undefined) {
+                data[`${pName}_orders`] += 1;
+                data[`${pName}_revenue`] += (order.total || 0);
+                data[`${pName}_shipping`] += (order.shippingPrice || 0);
+                data[`${pName}_shippingCount`] += 1;
             }
 
-            // Kilos
             if (order.items && Array.isArray(order.items)) {
                 let orderKilos = 0;
                 order.items.forEach((item: any) => {
@@ -245,7 +287,6 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
                     const weight = calculateItemWeight(productName, item.options?.[0]?.name || '');
                     if (weight > 0) orderKilos += (weight * qty);
                 });
-
                 data.totalKilos += orderKilos;
                 if (pName && data[`${pName}_kilos`] !== undefined) {
                     data[`${pName}_kilos`] += orderKilos;
@@ -253,32 +294,37 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
             }
         });
 
-        // Calculate averages and finalize array
-        return Object.values(dataByMonth)
-            .sort((a: any, b: any) => a.month.localeCompare(b.month))
-            .map((item: any) => {
-                const processed = { ...item };
-                // Global Average Shipping
-                processed.avgShipping = item.totalOrders > 0 ? Math.round(item.totalShippingSum / item.totalOrders) : 0;
-
-                // Point Averages
-                puntosEnvio.forEach(p => {
-                    if (p.nombre) {
-                        const count = item[`${p.nombre}_shippingCount`];
-                        const sum = item[`${p.nombre}_shipping`];
-                        processed[`${p.nombre}_shipping`] = count > 0 ? Math.round(sum / count) : 0;
-
-                        // Copy kilos/orders to match expected chart keys (e.g. "PuntoA_kilos")
-                        // Our Chart expects `${puntoName}_${metric}`. 
-                        // We already populated `${p.nombre}_kilos` and `${p.nombre}_orders`.
-                        // Just need to ensure `_shipping` is the average, which we just did.
-                    }
-                });
-                return processed;
+        // REEMPLAZAR KILOS DEL CHART CON DATOS DEL BACKEND
+        if (backendStats?.sameDay) {
+            Object.values(dataByMonth).forEach(monthData => {
+                const statsForThisMonth = backendStats.sameDay.filter((s: any) => s.month === monthData.month);
+                if (statsForThisMonth.length > 0) {
+                    monthData.totalKilos = statsForThisMonth.reduce((sum: number, s: any) => sum + s.totalMes, 0);
+                    puntosEnvio.forEach(p => {
+                        if (p.nombre) {
+                            const pStats = statsForThisMonth.find((s: any) => s.puntoEnvio === p.nombre);
+                            if (pStats) {
+                                monthData[`${p.nombre}_kilos`] = pStats.totalMes;
+                            }
+                        }
+                    });
+                }
             });
+        }
 
-    }, [orders, puntosEnvio]);
-
+        return Object.values(dataByMonth).sort((a: any, b: any) => a.month.localeCompare(b.month)).map((item: any) => {
+            const processed = { ...item };
+            processed.avgShipping = item.totalOrders > 0 ? Math.round(item.totalShippingSum / item.totalOrders) : 0;
+            puntosEnvio.forEach(p => {
+                if (p.nombre) {
+                    const count = item[`${p.nombre}_shippingCount`];
+                    const sum = item[`${p.nombre}_shipping`];
+                    processed[`${p.nombre}_shipping`] = count > 0 ? Math.round(sum / count) : 0;
+                }
+            });
+            return processed;
+        });
+    }, [orders, puntosEnvio, backendStats]);
 
     // Calculate totals for footer
     const totals = useMemo(() => {

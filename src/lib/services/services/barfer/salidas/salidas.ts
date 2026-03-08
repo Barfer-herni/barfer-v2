@@ -322,3 +322,12 @@ export async function getSalidasOverviewAnalyticsMongo(startDate?: Date, endDate
         throw error;
     }
 }
+
+export async function getSalidasStatsByMonthMongo(year: number, month: number) {
+    try {
+        const result = await apiClient.get(`/salidas/stats?year=${year}&month=${month}`);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}

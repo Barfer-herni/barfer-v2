@@ -1,8 +1,7 @@
-'use client';
-
-import { useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Order } from '@/lib/services';
+import { getQuantityStatsByMonthAction } from '../../analytics/actions';
 
 interface MonthlyMetricsTableProps {
     orders: Order[];
@@ -10,8 +9,34 @@ interface MonthlyMetricsTableProps {
 }
 
 export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTableProps) {
+    const [backendStats, setBackendStats] = useState<any>(null);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
 
-    // Process orders to group by month
+    // Fetch accurate stats from backend
+    useEffect(() => {
+        const fetchStats = async () => {
+            setIsLoadingStats(true);
+            try {
+                // We fetch without specific dates to get the full history or we could pass the range if needed
+                // But usually this table shows the history related to the orders passed or general.
+                // Since orders are already filtered by the parent, we'll try to match the range if possible
+                // or just fetch all for this puntoEnvio.
+                const result = await getQuantityStatsByMonthAction(undefined, undefined, puntoEnvioName);
+                if (result.success) {
+                    setBackendStats(result.data);
+                }
+            } catch (error) {
+                console.error('Error fetching backend monthly stats:', error);
+            } finally {
+                setIsLoadingStats(false);
+            }
+        };
+
+        fetchStats();
+    }, [puntoEnvioName]);
+
+    // Process orders to group by month for orders/revenue/shipping
+    // But take Kilos from backendStats if available
     const monthlyData = useMemo(() => {
         const dataByMonth: Record<string, {
             monthKey: string; // YYYY-MM
@@ -22,16 +47,12 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
         }> = {};
 
         orders.forEach(order => {
-            // Filter by Punto Envio if specified (though orders passed might already be filtered)
             if (puntoEnvioName && order.puntoEnvio !== puntoEnvioName && puntoEnvioName !== 'all') {
                 return;
             }
 
-            // Determine date (using the Argentina Timezone logic)
             let orderDate: Date;
             if (order.deliveryDay) {
-                // deliveryDay is likely UTC but represents the local date string 00:00
-                // simple substring is safer for consistency with other parts
                 orderDate = new Date(order.deliveryDay);
             } else {
                 const createdAt = new Date(order.createdAt);
@@ -55,8 +76,8 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
             data.totalRevenue += (order.total || 0);
             data.totalShipping += (order.shippingPrice || 0);
 
-            // Calculate Weight
-            // Reusing the logic from ResumenGeneralTables roughly
+            // We still keep the local kilos calculation as fallback, 
+            // but the Table will prioritize backend stats if present.
             if (order.items && Array.isArray(order.items)) {
                 order.items.forEach((item: any) => {
                     const productName = (item.name || '').toUpperCase().trim();
@@ -81,17 +102,27 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
             }
         });
 
-        // Convert to array and sort descending by date
-        const result = Object.values(dataByMonth).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
-
+        // Convert to array and sort
+        const result = Object.values(dataByMonth).map(item => {
+            // Overwrite kilos with backend data if available
+            if (backendStats?.sameDay) {
+                const backendMonth = backendStats.sameDay.find((m: any) => m.month === item.monthKey);
+                if (backendMonth) {
+                    return {
+                        ...item,
+                        totalKilos: backendMonth.totalMes // Use the accurate weight from backend
+                    };
+                }
+            }
+            return item;
+        }).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
 
         return result;
-    }, [orders, puntoEnvioName]);
+    }, [orders, puntoEnvioName, backendStats]);
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
     const formatNumber = (val: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(val);
 
-    // Helper to format month name
     const formatMonthKey = (key: string) => {
         const [year, month] = key.split('-');
         const date = new Date(parseInt(year), parseInt(month) - 1);
@@ -101,7 +132,10 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Historial Mensual</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                    <span>Historial Mensual</span>
+                    {isLoadingStats && <span className="text-xs font-normal text-muted-foreground animate-pulse">Sincronizando kilos...</span>}
+                </CardTitle>
                 <CardDescription>
                     {puntoEnvioName ? `Métricas detalladas para ${puntoEnvioName}` : 'Métricas generales por mes'}
                 </CardDescription>
@@ -130,7 +164,10 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
                                     <tr key={row.monthKey} className="border-b hover:bg-muted/50 transition-colors">
                                         <td className="p-3 font-medium capitalize">{formatMonthKey(row.monthKey)}</td>
                                         <td className="p-3 text-center">{row.totalOrders}</td>
-                                        <td className="p-3 text-center font-bold text-blue-600">{formatNumber(row.totalKilos)} kg</td>
+                                        <td className="p-3 text-center font-bold text-blue-600">
+                                            {formatNumber(row.totalKilos)} kg
+                                            {backendStats && <span className="ml-1 text-[10px] text-green-600" title="Verificado desde el backend">✓</span>}
+                                        </td>
                                         <td className="p-3 text-center font-medium text-green-600">{formatCurrency(row.totalRevenue)}</td>
                                         <td className="p-3 text-center text-orange-600">
                                             {formatCurrency(row.totalOrders > 0 ? row.totalShipping / row.totalOrders : 0)}

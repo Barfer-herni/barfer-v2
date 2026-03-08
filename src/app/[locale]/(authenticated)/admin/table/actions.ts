@@ -11,6 +11,7 @@ import {
     calculatePrice,
     getProductsFromPrices,
 } from '@/lib/services/services/barfer';
+import { getPuntosVentaMongo } from '@/lib/services/services/barfer/puntos-ventas/puntos-ventas';
 import { revalidatePath } from 'next/cache';
 import { validateAndNormalizePhone } from './helpers';
 
@@ -143,7 +144,15 @@ export async function getBackupsCountAction() {
 // Acción para buscar mayoristas desde puntos_venta
 export async function searchMayoristasAction(searchTerm: string) {
     'use server';
-    return { success: false, error: 'Servicio no disponible - migrando a backend API', puntosVenta: [] };
+    try {
+        const result = await getPuntosVentaMongo({ search: searchTerm, activo: true, pageSize: 20 });
+        if (!result.success) {
+            return { success: false, error: result.message, puntosVenta: [] };
+        }
+        return { success: true, puntosVenta: result.data || [] };
+    } catch (error) {
+        return { success: false, error: 'Error al buscar puntos de venta', puntosVenta: [] };
+    }
 }
 
 // Acción para calcular el precio automáticamente

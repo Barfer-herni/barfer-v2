@@ -44,15 +44,42 @@ export function PaymentsProgressChart({
     compareFilter
 }: PaymentsProgressChartProps) {
 
+    const formatDisplayDate = (item: any, periodType: string) => {
+        const period = item.period || item.date || '';
+        if (!period) return '';
+
+        if (periodType === 'monthly') {
+            if (period.includes('-')) {
+                const [year, month] = period.split('-');
+                if (month) {
+                    const date = new Date(Number(year), Number(month) - 1, 1);
+                    if (!isNaN(date.getTime())) return date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+                }
+            }
+            return period.split(' ')[0] || period;
+        } else if (periodType === 'weekly') {
+            if (period.includes('-W')) {
+                const [year, week] = period.split('-W');
+                return `Semana ${week}, ${year}`;
+            }
+            return period;
+        } else {
+            if (period.includes('-')) {
+                const parts = period.split('-');
+                if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
+            } else if (period.includes('/')) {
+                const parts = period.split('/');
+                if (parts.length >= 2) return `${parts[0]}/${parts[1]}`;
+            }
+            return period;
+        }
+    };
+
     // Preparar datos para el gráfico principal
     const chartData = useMemo(() => {
         return data.map(item => ({
             ...item,
-            displayDate: periodType === 'monthly' ?
-                item.date.split(' ')[0] : // Solo mes/año 
-                periodType === 'weekly' ?
-                    `S${item.period.split('-W')[1]}` : // Solo número de semana
-                    item.date.split('/')[0] + '/' + item.date.split('/')[1] // Solo día/mes
+            displayDate: formatDisplayDate(item, periodType)
         }));
     }, [data, periodType]);
 
@@ -64,11 +91,7 @@ export function PaymentsProgressChart({
 
         return compareData.map(item => ({
             ...item,
-            displayDate: periodType === 'monthly' ?
-                item.date.split(' ')[0] : // Solo mes/año 
-                periodType === 'weekly' ?
-                    `S${item.period.split('-W')[1]}` : // Solo número de semana
-                    item.date.split('/')[0] + '/' + item.date.split('/')[1], // Solo día/mes
+            displayDate: formatDisplayDate(item, periodType),
             // Renombrar para evitar conflictos
             compareEfectivoOrders: item.efectivoOrders,
             compareEfectivoRevenue: item.efectivoRevenue,
@@ -216,13 +239,22 @@ export function PaymentsProgressChart({
                                             ]}
                                             labelFormatter={(label, payload) => {
                                                 const point = payload?.[0]?.payload;
-                                                if (point && point.date && periodType === 'daily') {
-                                                    const parts = point.date.split('/');
-                                                    if (parts.length === 3) {
-                                                        const date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                                                        if (!isNaN(date.getTime())) {
-                                                            return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+                                                const periodStr = point?.period || point?.date;
+                                                if (periodStr && periodType === 'daily') {
+                                                    let dateObj: Date | null = null;
+                                                    if (periodStr.includes('-')) {
+                                                        const parts = periodStr.split('-');
+                                                        if (parts.length === 3) {
+                                                            dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
                                                         }
+                                                    } else if (periodStr.includes('/')) {
+                                                        const parts = periodStr.split('/');
+                                                        if (parts.length === 3) {
+                                                            dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                                                        }
+                                                    }
+                                                    if (dateObj && !isNaN(dateObj.getTime())) {
+                                                        return dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
                                                     }
                                                 }
                                                 return `${getPeriodLabel()}: ${label}`;
@@ -304,13 +336,22 @@ export function PaymentsProgressChart({
                                         ]}
                                         labelFormatter={(label, payload) => {
                                             const point = payload?.[0]?.payload;
-                                            if (point && point.date && periodType === 'daily') {
-                                                const parts = point.date.split('/');
-                                                if (parts.length === 3) {
-                                                    const date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                                                    if (!isNaN(date.getTime())) {
-                                                        return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+                                            const periodStr = point?.period || point?.date;
+                                            if (periodStr && periodType === 'daily') {
+                                                let dateObj: Date | null = null;
+                                                if (periodStr.includes('-')) {
+                                                    const parts = periodStr.split('-');
+                                                    if (parts.length === 3) {
+                                                        dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
                                                     }
+                                                } else if (periodStr.includes('/')) {
+                                                    const parts = periodStr.split('/');
+                                                    if (parts.length === 3) {
+                                                        dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                                                    }
+                                                }
+                                                if (dateObj && !isNaN(dateObj.getTime())) {
+                                                    return dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
                                                 }
                                             }
                                             return `${getPeriodLabel()}: ${label}`;
@@ -362,13 +403,22 @@ export function PaymentsProgressChart({
                                             ]}
                                             labelFormatter={(label, payload) => {
                                                 const point = payload?.[0]?.payload;
-                                                if (point && point.date && periodType === 'daily') {
-                                                    const parts = point.date.split('/');
-                                                    if (parts.length === 3) {
-                                                        const date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                                                        if (!isNaN(date.getTime())) {
-                                                            return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+                                                const periodStr = point?.period || point?.date;
+                                                if (periodStr && periodType === 'daily') {
+                                                    let dateObj: Date | null = null;
+                                                    if (periodStr.includes('-')) {
+                                                        const parts = periodStr.split('-');
+                                                        if (parts.length === 3) {
+                                                            dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
                                                         }
+                                                    } else if (periodStr.includes('/')) {
+                                                        const parts = periodStr.split('/');
+                                                        if (parts.length === 3) {
+                                                            dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                                                        }
+                                                    }
+                                                    if (dateObj && !isNaN(dateObj.getTime())) {
+                                                        return dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
                                                     }
                                                 }
                                                 return `${getPeriodLabel()}: ${label}`;

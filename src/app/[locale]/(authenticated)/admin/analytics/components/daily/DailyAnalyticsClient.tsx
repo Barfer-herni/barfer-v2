@@ -247,8 +247,8 @@ export function DailyAnalyticsClient({
                     <CardContent>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                             {sortedAllOrders.length > 0 ? (
-                                sortedAllOrders.map((day) => (
-                                    <div key={day.date} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
+                                sortedAllOrders.map((day, index) => (
+                                    <div key={`${day.date}-${index}`} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
                                         <span className="text-sm font-medium">{day.date}</span>
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <Badge variant="secondary">
@@ -285,8 +285,8 @@ export function DailyAnalyticsClient({
                     <CardContent>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                             {sortedConfirmedOrders.length > 0 ? (
-                                sortedConfirmedOrders.map((day) => (
-                                    <div key={day.date} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
+                                sortedConfirmedOrders.map((day, index) => (
+                                    <div key={`${day.date}-${index}`} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
                                         <span className="text-sm font-medium">{day.date}</span>
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <Badge variant="default">
@@ -326,8 +326,8 @@ export function DailyAnalyticsClient({
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2 max-h-96 overflow-y-auto">
-                                {sortedCompareAllOrders.map((day) => (
-                                    <div key={day.date} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
+                                {sortedCompareAllOrders.map((day, index) => (
+                                    <div key={`${day.date}-${index}`} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
                                         <span className="text-sm font-medium">{day.date}</span>
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <Badge variant="outline">
@@ -357,8 +357,8 @@ export function DailyAnalyticsClient({
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2 max-h-96 overflow-y-auto">
-                                {sortedCompareConfirmedOrders.map((day) => (
-                                    <div key={day.date} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
+                                {sortedCompareConfirmedOrders.map((day, index) => (
+                                    <div key={`${day.date}-${index}`} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded gap-2">
                                         <span className="text-sm font-medium">{day.date}</span>
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <Badge variant="outline">

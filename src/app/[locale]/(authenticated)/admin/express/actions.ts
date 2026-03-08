@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 import {
     createStockMongo,
     getStockByPuntoEnvioMongo,
-    getDetalleEnvioByPuntoEnvioMongo,
     createPuntoEnvioMongo,
     getAllPuntosEnvioMongo,
     deletePuntoEnvioMongo,
@@ -91,35 +90,6 @@ export async function getStockByPuntoEnvioAction(puntoEnvio: string) {
     }
 }
 
-export async function getDetalleEnvioByPuntoEnvioAction(puntoEnvio: string) {
-    try {
-        // Validar que el usuario tenga permiso para ver este punto de envío
-        const userWithPermissions = await getCurrentUserWithPermissions();
-        const isAdmin = userWithPermissions?.isAdmin || false;
-
-        // Si no es admin, validar que el punto esté en sus puntos asignados
-        if (!isAdmin) {
-            const userPuntosEnvio = Array.isArray(userWithPermissions?.puntoEnvio)
-                ? userWithPermissions.puntoEnvio
-                : (userWithPermissions?.puntoEnvio ? [userWithPermissions.puntoEnvio] : []);
-
-            if (userPuntosEnvio.length === 0 || !userPuntosEnvio.includes(puntoEnvio)) {
-                return {
-                    success: true,
-                    detalleEnvio: [],
-                };
-            }
-        }
-
-        return await getDetalleEnvioByPuntoEnvioMongo(puntoEnvio);
-    } catch (error) {
-        console.error('Error getting detalle:', error);
-        return {
-            success: false,
-            detalleEnvio: [],
-        };
-    }
-}
 
 export async function createPuntoEnvioAction(data: { nombre: string; cutoffTime?: string }) {
     try {

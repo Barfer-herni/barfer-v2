@@ -36,6 +36,7 @@ import {
     getSalidasTypeAnalyticsMongo,
     getSalidasMonthlyAnalyticsMongo,
     getSalidasOverviewAnalyticsMongo,
+    getSalidasStatsByMonthMongo,
     // Servicios adicionales
     getSalidaByIdMongo,
     // getSalidasByCategoryMongo, no quiero usar mas esta api
@@ -227,10 +228,9 @@ export async function initializeMetodosPagoAction() {
 // ==========================================
 
 // Obtener estadísticas de salidas por mes
-// export async function getSalidasStatsByMonthAction(year: number, month: number) {
-//     const { getSalidasStatsByMonthMongo } = await import('@/lib/services');
-//     return await getSalidasStatsByMonthMongo(year, month);
-// }
+export async function getSalidasStatsByMonthAction(year: number, month: number) {
+    return await getSalidasStatsByMonthMongo(year, month);
+}
 
 // ==========================================
 // ACCIONES DE ANALYTICS (PostgreSQL/Prisma)

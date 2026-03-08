@@ -7,7 +7,8 @@ import {
     updatePuntoVentaMongo,
     deletePuntoVentaMongo,
     addKilosMesMongo,
-    getVentasPorZonaMongo
+    getVentasPorZonaMongo,
+    getPuntosVentaStatsMongo,
 } from '@/lib/services/services/barfer/puntos-ventas/puntos-ventas';
 import { CreatePuntoVentaData, UpdatePuntoVentaData } from '@/lib/services/types/barfer';
 
@@ -94,8 +95,11 @@ export async function getVentasPorZonaAction() {
 
 export async function getPuntosVentaStatsAction(from?: string, to?: string) {
     'use server';
-    // Mantenemos como placeholder si no hay endpoint de stats generales aún
-    return { success: false, error: 'Estadísticas no implementadas aún', stats: [] };
+    const result = await getPuntosVentaStatsMongo(from, to);
+    if (!result.success) {
+        return { success: false, error: result.message, stats: [] };
+    }
+    return { success: true, stats: result.stats };
 }
 
 export async function getProductosMatrixAction(from?: string, to?: string) {

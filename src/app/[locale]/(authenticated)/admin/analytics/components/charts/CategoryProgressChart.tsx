@@ -24,7 +24,8 @@ const CATEGORY_KEYS = {
     'COMPLEMENTOS': { quantity: 'complementosQuantity', revenue: 'complementosRevenue', color: '#f1c40f' }
 };
 
-function parseDateString(dateString: string): Date {
+function parseDateString(dateString: string | undefined): Date {
+    if (!dateString) return new Date(NaN);
     if (dateString.includes('/')) {
         const parts = dateString.split('/'); // DD/MM/YYYY
         if (parts.length === 3) {
@@ -51,19 +52,20 @@ export function CategoryProgressChart({
         if (!data) return [];
         return data.map(item => {
             let displayDate;
+            const dateStr = item.period || item.date;
             if (periodType === 'daily') {
-                const date = parseDateString(item.date);
-                displayDate = date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                const date = parseDateString(dateStr);
+                displayDate = !isNaN(date.getTime()) ? date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : dateStr;
             } else if (periodType === 'weekly') {
-                displayDate = `S${item.period.split('-W')[1]}`;
+                displayDate = dateStr && dateStr.includes('-W') ? `S${dateStr.split('-W')[1]}` : dateStr;
             } else { // monthly
-                const date = parseDateString(item.date);
-                displayDate = date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+                const date = parseDateString(dateStr);
+                displayDate = !isNaN(date.getTime()) ? date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }) : dateStr;
             }
             return {
                 ...item,
                 displayDate,
-                fullDate: item.date,
+                fullDate: dateStr,
             };
         }).sort((a, b) => parseDateString(a.fullDate).getTime() - parseDateString(b.fullDate).getTime());
     }, [data, periodType]);
@@ -88,7 +90,7 @@ export function CategoryProgressChart({
                         );
                     }
                     if (periodType === 'weekly') {
-                        return `Semana ${point.period.split('-W')[1]}`;
+                        return `Semana ${point.fullDate.includes('-W') ? point.fullDate.split('-W')[1] : point.fullDate}`;
                     }
                     if (periodType === 'monthly') {
                         return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });

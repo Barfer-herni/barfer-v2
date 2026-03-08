@@ -175,8 +175,6 @@ export async function getVentasPorZonaMongo(): Promise<{
     message?: string;
 }> {
     try {
-        // Similar al anterior, el controlador no tiene este endpoint explícito aún.
-        // Pero el service sí. Lo implemento anticipando el endpoint.
         const result = await apiClient.get('/puntos-venta/stats/por-zona');
         return {
             success: true,
@@ -189,3 +187,29 @@ export async function getVentasPorZonaMongo(): Promise<{
         };
     }
 }
+
+export async function getPuntosVentaStatsMongo(from?: string, to?: string): Promise<{
+    success: boolean;
+    stats?: any[];
+    message?: string;
+}> {
+    try {
+        const params = new URLSearchParams();
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+
+        const queryString = params.toString();
+        const result = await apiClient.get(`/puntos-venta/stats${queryString ? `?${queryString}` : ''}`);
+
+        return {
+            success: true,
+            stats: result.stats || [],
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error al obtener estadísticas de puntos de venta',
+        };
+    }
+}
+
