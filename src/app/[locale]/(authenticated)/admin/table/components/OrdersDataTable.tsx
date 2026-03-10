@@ -488,11 +488,11 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
 
             // Mapear paymentMethod del frontend al formato del backend
             const paymentMethodMap: Record<string, string> = {
-                'cash': 'efectivo',
+                'efectivo': 'cash',
+                'cash': 'cash',
                 'mercado-pago': 'mercado-pago',
-                'efectivo': 'efectivo',
                 'mercado_pago': 'mercado-pago',
-                'transferencia': 'transferencia',
+                'transferencia': 'mercado-pago',
             };
             const mappedPaymentMethod = paymentMethodMap[editValues.paymentMethod] || editValues.paymentMethod;
 

@@ -803,17 +803,12 @@ function renderEditableCell(cell: any, index: number, editValues: any, onEditVal
                     value={editValues.paymentMethod}
                     onChange={e => onEditValueChange('paymentMethod', e.target.value)}
                     className={`w-full p-1 ${fontSize} border border-gray-300 rounded-md text-center`}
-                    disabled={!!(isExpressContext || editValues.puntoEnvio || (cell.row.original as any).puntoEnvio)}
                 >
-                    {(isExpressContext || editValues.puntoEnvio || (cell.row.original as any).puntoEnvio) ? (
-                        <option value="mercado-pago">Mercado Pago</option>
-                    ) : (
-                        PAYMENT_METHOD_OPTIONS.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))
-                    )}
+                    {PAYMENT_METHOD_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
                 </select>
             </TableCell>
         );
