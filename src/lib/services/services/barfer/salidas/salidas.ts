@@ -180,7 +180,6 @@ export async function getAllSalidasMongo(): Promise<{
 }> {
     try {
         const result = await apiClient.get('/salidas');
-        console.log(result);
         return {
             success: true,
             salidas: result.salidas || result || [],

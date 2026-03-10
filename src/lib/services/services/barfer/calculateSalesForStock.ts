@@ -11,43 +11,23 @@ export function calculateSalesFromOrders(product: { product: string; section: st
     const sectionUpper = (product.section || '').toUpperCase();
     let productName = (product.product || '').toUpperCase().trim();
 
-    console.log(`\n🔍 [calculateSalesFromOrders] Starting calculation for:`, {
-        originalProduct: product.product,
-        section: product.section,
-        weight: product.weight,
-        ordersCount: orders.length
-    });
-
     // Si el nombre del producto ya contiene la sección al principio (formato de la BD actual),
     // intentamos limpiarlo para el matching contra los items de la orden (que no suelen tenerlo)
     if (sectionUpper && productName.startsWith(sectionUpper)) {
         const originalProductName = productName;
         productName = productName.substring(sectionUpper.length).trim();
-        console.log(`   🔧 Cleaned product name: "${originalProductName}" -> "${productName}"`);
     }
 
     const productWeight = product.weight ? (product.weight || '').toUpperCase().trim().replace(/\s+/g, '') : null;
-    console.log(`   📦 Normalized weight: ${productWeight}`);
 
     orders.forEach((order, orderIndex) => {
         if (!order.items) return;
-
-        console.log(`\n   📋 Order ${orderIndex + 1}/${orders.length} (ID: ${order._id}):`, {
-            puntoEnvio: order.puntoEnvio,
-            deliveryDay: order.deliveryDay,
-            itemsCount: order.items?.length || 0
-        });
 
         order.items.forEach((item: any, itemIndex) => {
             const itemProductBase = (item.name || '').toUpperCase().trim();
             const itemOption = (item.options?.[0]?.name || '').toUpperCase().trim();
             const isBigDogItem = itemProductBase.includes('BIG DOG');
             const isBigDogStock = productName.includes('BIG DOG');
-
-            console.log(`      🔸 Item ${itemIndex + 1}: "${item.name}"`, {
-                options: item.options?.map((o: any) => o.name),
-                isBigDog: isBigDogItem
-            });
 
             // 1. Validación de sección (Perro vs Gato)
             if (!sectionUpper.includes('OTROS')) {
@@ -185,13 +165,8 @@ export function calculateSalesFromOrders(product: { product: string; section: st
             if (isMatch) {
                 const quantity = item.quantity || item.options?.[0]?.quantity || 1;
                 totalQuantity += quantity;
-                console.log(`         ✅ MATCH! Quantity: ${quantity}, Total so far: ${totalQuantity}`);
-            } else {
-                console.log(`         ❌ No match`);
             }
         });
     });
-
-    console.log(`\n   🎯 FINAL RESULT: ${totalQuantity} units for "${product.product}" (${product.weight || 'no weight'})\n`);
     return totalQuantity;
 }

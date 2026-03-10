@@ -144,7 +144,7 @@ export async function deletePuntoEnvioAction(id: string) {
     try {
         const userWithPermissions = await getCurrentUserWithPermissions();
         const isAdmin = userWithPermissions?.isAdmin || false;
-        const canDelete = userWithPermissions?.permissions?.includes('express:delete') || false;
+        const canDelete = userWithPermissions?.permissions?.includes('stock:delete') || false;
 
         if (!isAdmin && !canDelete) {
             return {

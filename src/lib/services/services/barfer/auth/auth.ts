@@ -65,11 +65,12 @@ type Permission =
     | 'mayoristas:delete'
     | 'mayoristas:view_statistics'
     | 'mayoristas:view_matrix'
-    // Express
-    | 'express:view'
-    | 'express:create'
-    | 'express:edit'
-    | 'express:delete'
+    // Stock / Express
+    | 'stock:view'
+    | 'stock:create'
+    | 'stock:edit'
+    | 'stock:delete'
+    | 'stock:view_statistics'
 
 // Permisos por defecto para admins (siempre tienen todos)
 const ADMIN_PERMISSIONS: Permission[] = [
@@ -113,10 +114,11 @@ const ADMIN_PERMISSIONS: Permission[] = [
     'mayoristas:delete',
     'mayoristas:view_statistics',
     'mayoristas:view_matrix',
-    'express:view',
-    'express:create',
-    'express:edit',
-    'express:delete',
+    'stock:view',
+    'stock:create',
+    'stock:edit',
+    'stock:delete',
+    'stock:view_statistics',
 ];
 
 
@@ -389,30 +391,22 @@ export async function canViewSalidaCategory(categoryName: string): Promise<boole
         return false;
     }
 
-    // Log temporal para debug
-    console.log(`🔍 Verificando categoría "${categoryName}" para usuario ${userWithPermissions.name}`);
-    console.log(`  Permisos: ${userWithPermissions.permissions.join(', ')}`);
-
     // Los admins pueden ver todo
     if (userWithPermissions.isAdmin) {
-        console.log(`  ✅ Admin - puede ver todo`);
         return true;
     }
 
     // Verificar si tiene el permiso general para ver todas las categorías
     if (userWithPermissions.permissions.includes('outputs:view_all_categories')) {
-        console.log(`  ✅ Tiene permiso para ver todas las categorías`);
         return true;
     }
 
     // Verificar permisos específicos por categoría
     const categoryPermission = `outputs:view_category:${categoryName.toUpperCase()}`;
     if (userWithPermissions.permissions.includes(categoryPermission)) {
-        console.log(`  ✅ Tiene permiso específico: ${categoryPermission}`);
         return true;
     }
 
     // Si no tiene permisos específicos para esta categoría, no puede verla
-    console.log(`  ❌ No tiene permisos para esta categoría`);
     return false;
 }

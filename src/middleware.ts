@@ -27,7 +27,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/admin/outputs': ['outputs:view'],
   '/admin/salidas': ['outputs:view'],
   '/admin/prices': ['prices:view'],
-  '/admin/express': ['express:view'],
+  '/admin/express': ['stock:view'],
   '/admin/repartos': ['table:view'],
   '/admin/mayoristas': ['mayoristas:view'],
 };

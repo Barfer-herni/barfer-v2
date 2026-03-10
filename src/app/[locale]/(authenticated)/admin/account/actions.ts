@@ -124,19 +124,13 @@ export async function createUser(formData: FormData) {
             puntoEnvio: puntoEnvio,
         };
 
-        console.log('🟡 Datos parseados:', { ...data, password: data.password ? '[REDACTED]' : undefined });
-
         const validated = userSchema.safeParse(data);
         if (!validated.success) {
-            console.log('❌ Validación falló:', validated.error.errors);
             return { success: false, message: validated.error.errors[0].message };
         }
         if (!validated.data.password) {
-            console.log('❌ Password faltante');
             return { success: false, message: "La contraseña es requerida para nuevos usuarios." };
         }
-
-        console.log('🟢 Llamando a createUserService');
 
         const result = await createUserService({
             ...validated.data,
@@ -144,8 +138,6 @@ export async function createUser(formData: FormData) {
             password: validated.data.password,
             puntoEnvio: validated.data.puntoEnvio || undefined
         });
-
-        console.log('🟣 Resultado de createUserService:', { success: result.success, message: result.message });
 
         if (!result.success) {
             return { success: false, message: result.message || 'Error al crear el usuario' };
@@ -155,7 +147,6 @@ export async function createUser(formData: FormData) {
         return { success: true, message: 'Usuario creado exitosamente' };
 
     } catch (error) {
-        console.error('🔴 Error creating user:', error);
         return { success: false, message: error instanceof Error ? error.message : 'Error al crear el usuario' };
     }
 }

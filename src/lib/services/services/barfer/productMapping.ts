@@ -13,25 +13,14 @@ export interface ProductMapping {
  * @returns Objeto con el nombre y opción en formato DB
  */
 export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping {
-    console.log(`🔍 [BACKEND] mapSelectOptionToDBFormat - INPUT: "${selectOption}"`);
-
     // NUEVO: Manejar formato de productos desde la base de datos (ej: "PERRO - BIG DOG VACA - 15KG")
     if (selectOption.includes(' - ')) {
         const parts = selectOption.split(' - ');
-        console.log(`🔍 [BACKEND] Split parts:`, parts);
 
         if (parts.length >= 2) {
             const section = parts[0]; // PERRO, GATO, OTROS
             const product = parts[1]; // VACA, POLLO, BIG DOG VACA, etc.
             const weight = parts[2] || null; // 10KG, 5KG, etc.
-
-            console.log(`🔄 [BACKEND] Mapeando producto desde BD:`, {
-                original: selectOption,
-                section,
-                product,
-                weight,
-                isBigDog: product.trim().toUpperCase().startsWith('BIG DOG')
-            });
 
             // Normalizar para comparación
             const productNormalized = product.trim().toUpperCase();
@@ -43,23 +32,19 @@ export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping 
                     // Extraer el sabor del nombre del producto
                     const sabor = productNormalized.replace('BIG DOG', '').trim();
                     const result = { name: 'BIG DOG (15kg)', option: sabor };
-                    console.log(`🐕 [BACKEND] ES BIG DOG! Resultado:`, result);
                     return result;
                 } else {
                     // Es un BOX PERRO normal
                     const cleanName = product.startsWith('BOX ') ? product : `BOX PERRO ${product}`;
                     const result = { name: cleanName, option: weight || '' };
-                    console.log(`📦 [BACKEND] BOX PERRO normal. Resultado:`, result);
                     return result;
                 }
             } else if (section === 'GATO') {
                 const cleanName = product.startsWith('BOX ') ? product : `BOX GATO ${product}`;
                 const result = { name: cleanName, option: weight || '' };
-                console.log(`🐱 [BACKEND] BOX GATO. Resultado:`, result);
                 return result;
             } else if (section === 'RAW') {
                 const result = { name: product, option: weight || '' };
-                console.log(`🥩 [BACKEND] RAW. Resultado:`, result);
                 return result;
             } else if (section === 'OTROS') {
                 // Caso especial: si la sección es "OTROS" y el producto es "BOX DE COMPLEMENTOS"
@@ -68,18 +53,10 @@ export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping 
                         name: 'BOX DE COMPLEMENTOS',
                         option: weight || '1 U'
                     };
-                    console.log(`✅ [BACKEND] [OTROS] BOX DE COMPLEMENTOS detectado:`, {
-                        result,
-                        section: `"${section}"`,
-                        product: `"${product}"`,
-                        weight: `"${weight}"`,
-                        timestamp: new Date().toISOString()
-                    });
                     return result;
                 }
 
                 const result = { name: product, option: weight || '' };
-                console.log(`🔧 [BACKEND] OTROS. Resultado:`, result);
                 return result;
             } else if (section === 'BOX DE COMPLEMENTOS') {
                 // Caso especial: si la primera parte es "BOX DE COMPLEMENTOS", es un formato especial
@@ -87,17 +64,9 @@ export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping 
                     name: 'BOX DE COMPLEMENTOS',
                     option: product || '1 U' // "1 U" es la segunda parte
                 };
-                console.log(`✅ [BACKEND] [ESPECIAL] BOX DE COMPLEMENTOS detectado:`, {
-                    result,
-                    section: `"${section}"`,
-                    product: `"${product}"`,
-                    weight: `"${weight}"`,
-                    timestamp: new Date().toISOString()
-                });
                 return result;
             } else {
                 const result = { name: product, option: weight || '' };
-                console.log(`❓ [BACKEND] Sección desconocida. Resultado:`, result);
                 return result;
             }
         }
@@ -105,17 +74,6 @@ export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping 
 
     // Si no es el formato de BD, usar la lógica antigua (texto normalizado)
     const normalizedSelect = selectOption.toLowerCase().trim();
-    console.log(`⚠️ [BACKEND] No es formato BD, usando lógica antigua con texto normalizado: "${normalizedSelect}"`);
-
-    // Debug específico para CORNALITOS
-    if (normalizedSelect.includes('cornalitos')) {
-        console.log(`🌽 DEBUG MAPEO CORNALITOS (productMapping):`, {
-            original: selectOption,
-            normalized: normalizedSelect,
-            contains30grs: normalizedSelect.includes('30grs'),
-            contains200grs: normalizedSelect.includes('200grs')
-        });
-    }
 
     // Mapear productos GATO directamente (sin BOX)
     if (normalizedSelect.includes('gato') && !normalizedSelect.includes('barfer box')) {
@@ -316,8 +274,6 @@ export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping 
         if (normalizedSelect.includes('200grs') || normalizedSelect.includes('200 grs') || normalizedSelect.includes('200gr')) {
             return { name: 'CORNALITOS', option: '200GRS' };
         }
-        // Si no se encuentra peso específico, devolver sin opción para debug
-        console.warn(`⚠️ CORNALITOS sin peso específico detectado: "${selectOption}"`);
         return { name: 'CORNALITOS', option: '' };
     }
 
@@ -326,9 +282,6 @@ export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping 
             return { name: 'GARRAS', option: '300GRS' };
         }
     }
-
-    // Si no se encuentra mapeo, devolver el nombre original
-    console.warn(`No se encontró mapeo inverso para: ${selectOption}`);
     return { name: selectOption.toUpperCase(), option: '' };
 }
 
@@ -338,22 +291,12 @@ export function mapSelectOptionToDBFormat(selectOption: string): ProductMapping 
  * @returns Array de items procesados
  */
 export function processOrderItems(items: any[]): any[] {
-    console.log(`🔍 [DEBUG] BACKEND processOrderItems - INPUT:`, {
-        items,
-        itemsCount: items?.length,
-        timestamp: new Date().toISOString()
-    });
 
     if (!items || !Array.isArray(items)) {
-        console.log(`⚠️ [DEBUG] BACKEND processOrderItems - Items inválidos, devolviendo tal como están`);
         return items;
     }
 
     return items.map((item: any, index: number) => {
-        console.log(`🔍 [DEBUG] BACKEND processOrderItems - Procesando item ${index}:`, {
-            item,
-            timestamp: new Date().toISOString()
-        });
         // Si el item tiene fullName (texto del select), convertirlo al formato de la DB
         let itemName = item.name;
         let itemId = item.id;
@@ -389,17 +332,7 @@ export function processOrderItems(items: any[]): any[] {
             item.name.toLowerCase().includes('complementos')
         );
 
-        // Debug para el caso específico de BOX DE COMPLEMENTOS
-        if (item.name && item.name.includes('COMPLEMENTOS')) {
-            console.log(`🔍 [DEBUG] BACKEND - Procesando item con COMPLEMENTOS:`, {
-                itemName: item.name,
-                isAlreadyDBFormat,
-                isSelectText,
-                fullName: item.fullName,
-                options: item.options,
-                timestamp: new Date().toISOString()
-            });
-        }
+
 
         if (item.fullName && item.fullName !== item.name) {
             // El fullName es diferente al name, significa que viene del select
@@ -454,16 +387,6 @@ export function processOrderItems(items: any[]): any[] {
                 quantity: option.quantity || 1
             }));
         }
-
-        console.log(`✅ [DEBUG] BACKEND processOrderItems - Item ${index} procesado:`, {
-            originalItem: item,
-            cleanItem,
-            itemName: `"${itemName}"`,
-            itemId: `"${itemId}"`,
-            itemOptions,
-            timestamp: new Date().toISOString()
-        });
-
         return cleanItem;
     });
 }

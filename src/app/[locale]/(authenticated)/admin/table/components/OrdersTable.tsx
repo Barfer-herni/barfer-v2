@@ -413,53 +413,31 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
                                                                     const itemFullName = item.fullName || item.name;
                                                                     const itemName = item.name;
 
-                                                                    console.log(`🔍 [PDF EDIT] Buscando precio para item:`, {
-                                                                        itemName,
-                                                                        itemFullName
-                                                                    });
 
                                                                     // Estrategia de búsqueda múltiple para encontrar el precio correcto
                                                                     let priceInfo = priceResult.itemPrices?.find((ip: any) => {
                                                                         // 1. Coincidencia exacta con fullName
                                                                         if (ip.name === itemFullName) {
-                                                                            console.log(`✅ Match exacto por fullName: ${ip.name} === ${itemFullName}`);
                                                                             return true;
                                                                         }
 
                                                                         // 2. Coincidencia exacta con name
                                                                         if (ip.name === itemName) {
-                                                                            console.log(`✅ Match exacto por name: ${ip.name} === ${itemName}`);
                                                                             return true;
                                                                         }
 
                                                                         // 3. El precio contiene el fullName del item
                                                                         if (itemFullName && ip.name.includes(itemFullName)) {
-                                                                            console.log(`✅ Match parcial: ${ip.name} contiene ${itemFullName}`);
                                                                             return true;
                                                                         }
 
                                                                         // 4. El fullName del item contiene el nombre del precio
                                                                         if (itemFullName && itemFullName.includes(ip.name)) {
-                                                                            console.log(`✅ Match parcial inverso: ${itemFullName} contiene ${ip.name}`);
                                                                             return true;
                                                                         }
 
                                                                         return false;
                                                                     });
-
-                                                                    if (!priceInfo) {
-                                                                        console.error(`❌ [PDF EDIT] No se encontró precio para:`, {
-                                                                            itemName,
-                                                                            itemFullName,
-                                                                            availablePrices: priceResult.itemPrices?.map((p: any) => p.name)
-                                                                        });
-                                                                    } else {
-                                                                        console.log(`✅ [PDF EDIT] Precio encontrado:`, {
-                                                                            item: itemFullName || itemName,
-                                                                            price: priceInfo.unitPrice,
-                                                                            priceEntry: priceInfo.name
-                                                                        });
-                                                                    }
 
                                                                     return {
                                                                         ...item,
@@ -1060,12 +1038,7 @@ function renderEditableCell(cell: any, index: number, editValues: any, onEditVal
                     <Input
                         placeholder="Dirección"
                         value={editValues.address?.address || ''}
-                        onChange={e => {
-                            console.log('🔥 DIRECCION onChange - new value:', e.target.value);
-                            console.log('🔥 DIRECCION onChange - current editValues.address:', editValues.address);
-                            console.log('🔥 DIRECCION onChange - will call onEditValueChange with:', { ...editValues.address, address: e.target.value });
-                            onEditValueChange('address', { ...editValues.address, address: e.target.value });
-                        }}
+                        onChange={e => onEditValueChange('address', { ...editValues.address, address: e.target.value })}
                         className={`w-full p-1 ${fontSize}`}
                     />
                     <Input

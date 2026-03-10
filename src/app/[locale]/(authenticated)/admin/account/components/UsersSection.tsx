@@ -110,29 +110,22 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
     };
 
     const handleUserSubmit = async () => {
-        console.log('🔵 handleUserSubmit llamado', { editingUser: !!editingUser, userForm });
 
         // Validaciones básicas del lado del cliente para UX
         if (!userForm.name || !userForm.lastName || !userForm.email) {
-            console.log('❌ Validación fallida: nombre, apellido o email faltante');
             toast({ title: "Error", description: "Nombre, apellido y email son requeridos", variant: "destructive" });
             return;
         }
         if (!editingUser && !userForm.password) {
-            console.log('❌ Validación fallida: contraseña faltante para nuevo usuario');
             toast({ title: "Error", description: "La contraseña es requerida para nuevos usuarios", variant: "destructive" });
             return;
         }
         if (userForm.password && userForm.password.length < 6) {
-            console.log('❌ Validación fallida: contraseña muy corta', { passwordLength: userForm.password.length });
             toast({ title: "Error", description: "La contraseña debe tener al menos 6 caracteres", variant: "destructive" });
             return;
         }
 
-        console.log('✅ Todas las validaciones pasaron, procediendo con startTransition');
-
         startTransition(async () => {
-            console.log('🟡 startTransition ejecutado');
             try {
                 const formData = new FormData();
                 formData.append('name', userForm.name);
@@ -146,16 +139,9 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                     formData.append('puntoEnvio', JSON.stringify(userForm.puntoEnvio));
                 }
 
-                console.log('🟢 Llamando a createUser/updateUser', {
-                    isEditing: !!editingUser,
-                    formDataEntries: Array.from(formData.entries())
-                });
-
                 const result = editingUser
                     ? await updateUser(editingUser.id, formData)
                     : await createUser(formData);
-
-                console.log('🟣 Resultado recibido', result);
 
                 if (result.success) {
                     toast({
@@ -172,7 +158,6 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                     });
                 }
             } catch (error) {
-                console.error('🔴 Error en handleUserSubmit:', error);
                 toast({
                     title: "Error",
                     description: error instanceof Error ? error.message : 'Error desconocido',
@@ -601,6 +586,52 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                             />
                                             <Label className="text-sm">Editar precios</Label>
                                         </div>
+
+                                        {/* Permisos de Stock */}
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('stock:view')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'stock:view'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'stock:view') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Ver Stock / Express</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('stock:edit')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'stock:edit'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'stock:edit') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Editar Stock / Express</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('stock:delete')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'stock:delete'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'stock:delete') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Eliminar Stock / Puntos Envío</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('stock:view_statistics')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'stock:view_statistics'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'stock:view_statistics') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Ver Detalle / Estadísticas Stock</Label>
+                                        </div>
                                         <div className="flex items-center space-x-2">
                                             <Switch
                                                 checked={userForm.permissions.includes('balance:view')}
@@ -671,58 +702,6 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                 </div>
 
                                 {/* Permisos de Express */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 rounded-full bg-teal-500"></div>
-                                        <Label className="text-sm font-medium text-teal-700 dark:text-teal-400">Permisos de Express</Label>
-                                    </div>
-                                    <div className="ml-4 space-y-2">
-                                        <div className="flex items-center space-x-2">
-                                            <Switch
-                                                checked={userForm.permissions.includes('express:view')}
-                                                onCheckedChange={(checked) => {
-                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'express:view'] }));
-                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'express:view') }));
-                                                }}
-                                                disabled={isPending}
-                                            />
-                                            <Label className="text-sm">Ver Express</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Switch
-                                                checked={userForm.permissions.includes('express:create')}
-                                                onCheckedChange={(checked) => {
-                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'express:create'] }));
-                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'express:create') }));
-                                                }}
-                                                disabled={isPending}
-                                            />
-                                            <Label className="text-sm">Crear Express</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Switch
-                                                checked={userForm.permissions.includes('express:edit')}
-                                                onCheckedChange={(checked) => {
-                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'express:edit'] }));
-                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'express:edit') }));
-                                                }}
-                                                disabled={isPending}
-                                            />
-                                            <Label className="text-sm">Editar Express</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Switch
-                                                checked={userForm.permissions.includes('express:delete')}
-                                                onCheckedChange={(checked) => {
-                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'express:delete'] }));
-                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'express:delete') }));
-                                                }}
-                                                disabled={isPending}
-                                            />
-                                            <Label className="text-sm">Eliminar Express</Label>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 {/* Permisos de Puntos de Venta */}
                                 <div className="space-y-3">

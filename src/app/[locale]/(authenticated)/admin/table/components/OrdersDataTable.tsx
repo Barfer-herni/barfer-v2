@@ -280,43 +280,18 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             shippingPrice: row.original.shippingPrice || 0,
             deliveryAreaSchedule: normalizeScheduleTime(row.original.deliveryArea?.schedule || ''),
             items: (row.original.items || []).map((item: any, index: number) => {
-                console.log(`🔍 [DEBUG] Procesando item ${index} para edición:`, {
-                    item,
-                    hasFullName: !!item.fullName,
-                    timestamp: new Date().toISOString()
-                });
-
-                // Si el item no tiene fullName, generarlo desde el formato de la DB
                 if (!item.fullName) {
-                    console.log(`🔍 [DEBUG] Generando fullName para item ${index}:`, {
-                        name: `"${item.name || ''}"`,
-                        option: `"${item.options?.[0]?.name || ''}"`
-                    });
 
                     const selectOption = mapDBProductToSelectOption(
                         item.name || '',
                         item.options?.[0]?.name || ''
                     );
 
-                    console.log(`✅ [DEBUG] fullName generado para item ${index}:`, {
-                        originalName: `"${item.name || ''}"`,
-                        originalOption: `"${item.options?.[0]?.name || ''}"`,
-                        generatedFullName: `"${selectOption}"`,
-                        timestamp: new Date().toISOString()
-                    });
-
                     return {
                         ...item,
                         fullName: selectOption
                     };
                 }
-
-                console.log(`✅ [DEBUG] Item ${index} ya tiene fullName:`, {
-                    name: `"${item.name}"`,
-                    fullName: `"${item.fullName}"`,
-                    timestamp: new Date().toISOString()
-                });
-
                 return item;
             }),
             deliveryDay: row.original.deliveryDay || '',
@@ -458,29 +433,12 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                         }]
                     };
 
-                    console.log(`✅ [DEBUG] GUARDADO - Item ${index} procesado:`, {
-                        originalItem: item,
-                        dbFormat,
-                        processedItem,
-                        timestamp: new Date().toISOString()
-                    });
-
                     return processedItem;
                 }
 
-                console.log(`✅ [DEBUG] GUARDADO - Item ${index} no necesita procesamiento:`, {
-                    item,
-                    reason: !itemToProcess ? 'no fullName' :
-                        itemToProcess === item.name ? 'fullName igual a name' :
-                            !itemToProcess.includes(' - ') ? 'no contiene -' : 'otro',
-                    timestamp: new Date().toISOString()
-                });
-
-                // Si no es una opción del select, mantener el item tal como está
                 return item;
             });
 
-            // Limpiar fullName de los items antes de enviar al backend
             const cleanedItems = processedItems.map(item => {
                 const { fullName, ...cleanItem } = item;
                 return cleanItem;

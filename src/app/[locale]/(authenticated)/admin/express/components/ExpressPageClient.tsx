@@ -53,12 +53,13 @@ import { QuantityTable } from '../../analytics/components/quantity/QuantityTable
 interface ExpressPageClientProps {
     dictionary: Dictionary;
     initialPuntosEnvio: PuntoEnvio[];
+    userPuntosEnvio?: string[]; // Array de nombres de puntos asignados al usuario (no-admin)
     canEdit: boolean;
     canDelete: boolean;
     isAdmin?: boolean;
 }
 
-export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, canDelete, isAdmin = true }: ExpressPageClientProps) {
+export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEnvio = [], canEdit, canDelete, isAdmin = true }: ExpressPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
@@ -534,8 +535,27 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
         const { getAllPuntosEnvioAction } = await import('../actions');
         const result = await getAllPuntosEnvioAction();
         if (result.success && result.puntosEnvio) {
-            setPuntosEnvio(result.puntosEnvio);
-            return result.puntosEnvio;
+            let refreshed = result.puntosEnvio;
+            // Si no es admin, filtrar solo los puntos asignados al usuario
+            if (!isAdmin && userPuntosEnvio.length > 0) {
+                const normalizedUserPuntos = userPuntosEnvio.map(p => (p || '').trim().toUpperCase());
+                refreshed = result.puntosEnvio.filter(p => {
+                    if (!p.nombre) return false;
+                    return normalizedUserPuntos.includes(p.nombre.trim().toUpperCase());
+                });
+                // Fallback: si no coincide nada, crear objetos sintéticos
+                if (refreshed.length === 0) {
+                    refreshed = userPuntosEnvio.map(nombre => ({
+                        _id: nombre,
+                        nombre,
+                        cutoffTime: undefined,
+                        createdAt: '',
+                        updatedAt: '',
+                    }));
+                }
+            }
+            setPuntosEnvio(refreshed);
+            return refreshed;
         }
         return [];
     };
@@ -556,7 +576,10 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
     // Si no es admin y hay puntos de envío, seleccionar automáticamente si no hay selección (URL o estado)
     useEffect(() => {
         if (!isAdmin && puntosEnvio.length > 0 && !selectedPuntoEnvio) {
+            // Intentar encontrar el punto que coincida con el almacenado en la URL (si vino parcial)
+            // o simplemente tomar el primero disponible para el usuario
             const firstPunto = puntosEnvio[0].nombre || '';
+            console.log('🤖 Auto-seleccionando punto para no-admin:', firstPunto);
             handlePuntoEnvioChange(firstPunto);
         }
     }, [isAdmin, puntosEnvio, selectedPuntoEnvio]);
@@ -1328,7 +1351,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, canEdit, can
                                         </SelectItem>
                                     ) : (
                                         puntosEnvio.map((punto) => (
-                                            <SelectItem key={String(punto._id)} value={punto.nombre}>
+                                            <SelectItem key={String(punto._id)} value={punto.nombre || ''}>
                                                 {punto.nombre}
                                             </SelectItem>
                                         ))

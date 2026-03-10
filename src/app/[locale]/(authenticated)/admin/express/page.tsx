@@ -12,7 +12,7 @@ export default async function GestionEnvioExpressStockPage({
     const { locale } = await params;
 
     // Verificar permiso de acceso
-    await requirePermission('express:view');
+    await requirePermission('stock:view');
 
     const dictionary = await getDictionary(locale);
     const puntosEnvioResult = await getAllPuntosEnvioAction();
@@ -20,27 +20,40 @@ export default async function GestionEnvioExpressStockPage({
 
     // Obtener permisos del usuario
     const userWithPermissions = await getCurrentUserWithPermissions();
-    const canEdit = userWithPermissions?.permissions.includes('express:edit') || false;
-    const canDelete = userWithPermissions?.permissions.includes('express:delete') || false;
+    const canEdit = userWithPermissions?.permissions.includes('stock:edit') || false;
+    const canDelete = userWithPermissions?.permissions.includes('stock:delete') || false;
     const isAdmin = userWithPermissions?.isAdmin || false;
+
+    // Obtener los puntos de envío asignados al usuario como array de strings
+    const rawUserPuntosEnvio: string[] = !isAdmin && userWithPermissions?.puntoEnvio
+        ? (Array.isArray(userWithPermissions.puntoEnvio)
+            ? userWithPermissions.puntoEnvio
+            : [userWithPermissions.puntoEnvio])
+        : [];
 
     // Filtrar puntos de envío: si no es admin, solo mostrar los asignados al usuario
     let filteredPuntosEnvio = puntosEnvio;
-    if (!isAdmin && userWithPermissions?.puntoEnvio) {
-        const userPuntosEnvio = Array.isArray(userWithPermissions.puntoEnvio)
-            ? userWithPermissions.puntoEnvio
-            : [userWithPermissions.puntoEnvio]; // Retrocompatibilidad: convertir string a array
-
+    if (!isAdmin && rawUserPuntosEnvio.length > 0) {
         // Normalizar nombres para comparación (trim y case-insensitive)
-        const normalizedUserPuntos = userPuntosEnvio.map(p => (p || '').trim().toUpperCase());
+        const normalizedUserPuntos = rawUserPuntosEnvio.map(p => (p || '').trim().toUpperCase());
 
         filteredPuntosEnvio = puntosEnvio.filter(p => {
             if (!p.nombre) return false;
             const puntoNombreNormalized = p.nombre.trim().toUpperCase();
-            const matches = normalizedUserPuntos.includes(puntoNombreNormalized);
-            return matches;
+            return normalizedUserPuntos.includes(puntoNombreNormalized);
         });
 
+        // Fallback: si no se encontró ningún punto en la DB que coincida con los asignados al usuario,
+        // crear objetos sintéticos para que el select al menos muestre las opciones del usuario.
+        if (filteredPuntosEnvio.length === 0) {
+            filteredPuntosEnvio = rawUserPuntosEnvio.map(nombre => ({
+                _id: nombre, // usar el nombre como ID sintético
+                nombre,
+                cutoffTime: undefined,
+                createdAt: '',
+                updatedAt: '',
+            }));
+        }
     } else if (!isAdmin) {
         // Si no es admin y no tiene punto de envío asignado, mostrar array vacío
         filteredPuntosEnvio = [];
@@ -50,6 +63,7 @@ export default async function GestionEnvioExpressStockPage({
         <ExpressPageClient
             dictionary={dictionary}
             initialPuntosEnvio={filteredPuntosEnvio}
+            userPuntosEnvio={rawUserPuntosEnvio}
             canEdit={canEdit}
             canDelete={canDelete}
             isAdmin={isAdmin}
