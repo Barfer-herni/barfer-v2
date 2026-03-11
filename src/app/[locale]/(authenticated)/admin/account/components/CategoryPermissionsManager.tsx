@@ -18,7 +18,7 @@ function getCategoryPermission(categoryName: string): string {
 }
 
 function hasAllCategoriesPermission(permissions: string[]): boolean {
-    return permissions.includes('outputs:view_all_categories');
+    return permissions.includes('all') || permissions.includes('outputs:view_all_categories');
 }
 
 function getCategoryPermissionCount(permissions: string[]): number {
@@ -200,8 +200,8 @@ export function CategoryPermissionsManager({
                                     <div
                                         key={user.id}
                                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${selectedUser?.id === user.id
-                                                ? 'border-primary bg-primary/5'
-                                                : 'border-border hover:border-primary/50'
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-border hover:border-primary/50'
                                             }`}
                                         onClick={() => handleUserSelect(user)}
                                     >
@@ -262,7 +262,7 @@ export function CategoryPermissionsManager({
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="all-categories"
-                                        checked={userCategoryPermissions.has('outputs:view_all_categories')}
+                                        checked={userCategoryPermissions.has('all') || userCategoryPermissions.has('outputs:view_all_categories')}
                                         onCheckedChange={(checked) =>
                                             handlePermissionToggle('outputs:view_all_categories', checked as boolean)
                                         }
@@ -288,7 +288,7 @@ export function CategoryPermissionsManager({
                                                 onCheckedChange={(checked) =>
                                                     handlePermissionToggle(category.permission, checked as boolean)
                                                 }
-                                                disabled={userCategoryPermissions.has('outputs:view_all_categories')}
+                                                disabled={userCategoryPermissions.has('all') || userCategoryPermissions.has('outputs:view_all_categories')}
                                             />
                                             <label
                                                 htmlFor={category.permission}

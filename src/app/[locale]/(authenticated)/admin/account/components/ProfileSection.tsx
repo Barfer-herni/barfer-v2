@@ -25,8 +25,11 @@ export function ProfileSection({ currentUser, dictionary }: ProfileSectionProps)
         email: currentUser?.email || '',
     });
 
+    // Verificar si el usuario tiene permisos para cambiar su contraseña
+    const canChangePassword = currentUser?.isAdmin || currentUser?.permissions?.includes('account:change_password') || currentUser?.role === 'admin';
+
     // Verificar si el usuario tiene permisos para editar su perfil
-    const canEditProfile = currentUser?.permissions?.includes('account:edit_own') || currentUser?.role === 'admin';
+    const canEditProfile = currentUser?.isAdmin || currentUser?.permissions?.includes('account:edit_own') || currentUser?.role === 'admin';
 
     const handleProfileUpdate = async () => {
         if (!currentUser) return;
@@ -101,7 +104,7 @@ export function ProfileSection({ currentUser, dictionary }: ProfileSectionProps)
                     <div className="space-y-1">
                         <p className="text-sm font-medium">Rol actual</p>
                         <Badge variant="default" className="capitalize">
-                            {currentUser?.role === 'admin' ? 'Administrador' : 'Usuario'}
+                            {currentUser?.permissions?.includes('all') ? 'Super Admin' : (currentUser?.role === 'admin' ? 'Administrador' : 'Usuario')}
                         </Badge>
                         {!canEditProfile && (
                             <p className="text-xs text-muted-foreground">

@@ -137,14 +137,6 @@ export function EditProductModal({ isOpen, onClose, onProductUpdated, product }:
         setIsUpdating(true);
         try {
             const weight = formData.weight === 'none' ? null : formData.weight;
-
-            console.log('🔧 FRONTEND UPDATE DEBUG:', {
-                originalProduct: product,
-                formData,
-                convertedWeight: weight,
-                weightConversion: `${formData.weight} -> ${weight}`
-            });
-
             // Actualizar datos básicos del producto
             const basicResult = await updateProductAction(
                 product.section,
@@ -156,9 +148,6 @@ export function EditProductModal({ isOpen, onClose, onProductUpdated, product }:
                     weight,
                 }
             );
-
-            console.log('🔧 BASIC RESULT:', basicResult);
-
             // Actualizar tipos de precio si cambiaron
             const priceTypesChanged = JSON.stringify(product.priceTypes.sort()) !== JSON.stringify(formData.priceTypes.sort());
             let priceTypesResult: { success: boolean; addedCount?: number; removedCount?: number; message?: string; error?: string } = {

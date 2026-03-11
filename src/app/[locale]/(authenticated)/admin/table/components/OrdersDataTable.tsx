@@ -392,22 +392,10 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 setLoading(false);
                 return;
             }
-
             // Filtrar items: eliminar los que no tienen nombre o tienen cantidad 0
             const filteredItems = filterValidItems(editValues.items);
-
-            console.log(`🔍 [DEBUG] GUARDADO - Items filtrados:`, {
-                filteredItems,
-                timestamp: new Date().toISOString()
-            });
-
             // Procesar items para convertir fullName de vuelta al formato de la DB
             const processedItems = filteredItems.map((item, index) => {
-                console.log(`🔍 [DEBUG] GUARDADO - Procesando item ${index}:`, {
-                    item,
-                    itemToProcess: item.fullName,
-                    timestamp: new Date().toISOString()
-                });
 
                 // Solo procesar items que fueron modificados (tienen fullName diferente a name)
                 // Items no modificados ya están en formato DB correcto
@@ -415,12 +403,6 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
 
                 // Solo procesar si hay fullName, es diferente del name, y parece ser una opción del select
                 if (itemToProcess && itemToProcess !== item.name && itemToProcess.includes(' - ')) {
-                    console.log(`🔄 [DEBUG] GUARDADO - Procesando item ${index} con mapSelectOptionToDBFormat:`, {
-                        itemToProcess: `"${itemToProcess}"`,
-                        originalName: `"${item.name}"`,
-                        timestamp: new Date().toISOString()
-                    });
-
                     const dbFormat = mapSelectOptionToDBFormat(itemToProcess);
 
                     const processedItem = {
@@ -432,10 +414,8 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                             name: dbFormat.option
                         }]
                     };
-
                     return processedItem;
                 }
-
                 return item;
             });
 
@@ -488,13 +468,6 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 items: cleanedItems,
                 deliveryDay: editValues.deliveryDay,
             };
-
-            console.log(`🔍 [DEBUG] GUARDADO - Datos finales a enviar al backend:`, {
-                updateData,
-                processedItems: cleanedItems,
-                timestamp: new Date().toISOString()
-            });
-
             const result = await updateOrderAction(row.id, updateData);
             if (!result.success) throw new Error(result.error || 'Error al guardar');
 
@@ -704,18 +677,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             if (createFormData.puntoEnvio) {
                 orderDataWithFilteredItems.puntoEnvio = createFormData.puntoEnvio;
             }
-
-            console.log('📦 Datos de orden a enviar:', {
-                orderType: orderDataWithFilteredItems.orderType,
-                punto_de_venta: orderDataWithFilteredItems.punto_de_venta,
-                puntoVentaIdEnForm: puntoVentaId,
-                hasItems: processedItems.length > 0,
-                completeData: orderDataWithFilteredItems
-            });
-
-            console.log('🚀 Llamando createOrderAction...');
             const result = await createOrderAction(orderDataWithFilteredItems);
-            console.log('📨 Resultado de createOrderAction:', JSON.stringify(result));
             if (!result.success) throw new Error(result.error || 'Error al crear');
 
             setShowCreateModal(false);

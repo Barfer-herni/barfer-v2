@@ -23,12 +23,9 @@ export function ProductosMatrix() {
         setIsOpen(true);
         setLoading(true);
         try {
-            console.log('🔄 Cargando matriz de productos...');
             const result = await getProductosMatrixAction();
-            console.log('📊 Resultado:', result);
 
             if (result.success && result.matrix && result.productNames) {
-                console.log(`✅ ${result.matrix.length} puntos de venta, ${result.productNames.length} productos`);
                 setMatrix(result.matrix);
                 setProductNames(result.productNames);
             } else {

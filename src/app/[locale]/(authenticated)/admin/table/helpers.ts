@@ -222,9 +222,6 @@ export const createDefaultOrderData = () => ({
 // Función para extraer el peso del nombre del producto
 export const extractWeightFromProductName = (productName: string): string => {
     if (!productName) return 'Default';
-
-    console.log(`🔍 extractWeightFromProductName: Analizando "${productName}"`);
-
     // Patrones que NO son peso (productos que no necesitan extracción)
     const nonWeightPatterns = [
         /\b\d+\s*x\s*\d+\b/i,        // "traquea x1", "producto x2", etc.
@@ -240,7 +237,6 @@ export const extractWeightFromProductName = (productName: string): string => {
     // Si el producto coincide con patrones que NO son peso, devolver el valor original
     for (const pattern of nonWeightPatterns) {
         if (pattern.test(productName)) {
-            console.log(`🚫 Producto "${productName}" no necesita extracción de peso`);
             return 'Default';
         }
     }

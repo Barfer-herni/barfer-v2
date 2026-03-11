@@ -95,13 +95,9 @@ export async function changePassword(userId: string, formData: FormData) {
 
 export async function createUser(formData: FormData) {
     try {
-        console.log('🔵 createUser action llamado');
-
         if (!await hasPermission('account:manage_users')) {
-            console.log('❌ Sin permisos para crear usuarios');
             return { success: false, message: 'No tienes permisos para crear usuarios.' };
         }
-
         const puntoEnvioRaw = formData.get('puntoEnvio');
         let puntoEnvio: string | string[] | undefined = undefined;
         if (puntoEnvioRaw) {
@@ -113,7 +109,6 @@ export async function createUser(formData: FormData) {
                 puntoEnvio = puntoEnvioRaw as string;
             }
         }
-
         const data = {
             name: formData.get('name'),
             lastName: formData.get('lastName'),

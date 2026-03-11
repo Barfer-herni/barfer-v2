@@ -18,12 +18,8 @@ export function PuntosVentaStats() {
         setIsOpen(true);
         setLoading(true);
         try {
-            console.log('🔄 Cargando estadísticas de puntos de venta...');
             const result = await getPuntosVentaStatsAction();
-            console.log('📊 Resultado:', result);
-
             if (result.success && result.stats) {
-                console.log(`✅ ${result.stats.length} estadísticas cargadas`);
                 setStats(result.stats);
             } else {
                 console.error('❌ Error:', result.error);

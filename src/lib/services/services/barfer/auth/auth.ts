@@ -363,10 +363,12 @@ export async function getCurrentUserWithPermissions() {
 
     // Si es usuario normal, usar sus permisos personalizados
     if (isUser) {
+        // Si tiene el permiso 'all', tratar como admin (super admin)
+        const hasSuperAdminPermission = (user.permissions || []).includes('all');
         return {
             ...user,
             permissions: user.permissions, // Usar permisos del usuario desde la BD
-            isAdmin: false,
+            isAdmin: hasSuperAdminPermission, // 'all' implica acceso de admin
             isUser: true,
         };
     }

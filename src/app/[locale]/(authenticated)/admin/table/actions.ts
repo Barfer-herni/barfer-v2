@@ -54,23 +54,16 @@ export async function deleteOrderAction(id: string) {
 
 export async function createOrderAction(data: any) {
     try {
-        console.log('[createOrderAction] Recibido data:', JSON.stringify(data).slice(0, 500));
-
         // Validar y normalizar el número de teléfono si está presente
         if (data.address?.phone) {
             const normalizedPhone = validateAndNormalizePhone(data.address.phone);
-            console.log('[createOrderAction] Phone validation:', { original: data.address.phone, normalized: normalizedPhone });
             if (normalizedPhone) {
                 data.address.phone = normalizedPhone;
             } else {
-                console.log('[createOrderAction] Phone validation FAILED');
                 return { success: false, error: 'El número de teléfono no es válido. Use el formato: La Plata (221 XXX-XXXX) o CABA/BA (11-XXXX-XXXX / 15-XXXX-XXXX)', order: null };
             }
         }
-
-        console.log('[createOrderAction] Calling createOrder...');
         const result = await createOrder(data);
-        console.log('[createOrderAction] Result:', JSON.stringify(result).slice(0, 500));
         if (!result.success) {
             return { success: false, error: result.error };
         }

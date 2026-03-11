@@ -16,8 +16,9 @@ export async function ClientCategoriesWrapper({ dictionary }: ClientCategoriesWr
 
     // Obtener permisos del usuario actual
     const userWithPermissions = await getCurrentUserWithPermissions();
-    const canSendEmail = userWithPermissions?.permissions.includes('clients:send_email') ?? false;
-    const canSendWhatsApp = userWithPermissions?.permissions.includes('clients:send_whatsapp') ?? false;
+    const isAdmin = userWithPermissions?.isAdmin ?? false;
+    const canSendEmail = isAdmin || (userWithPermissions?.permissions.includes('clients:send_email') ?? false);
+    const canSendWhatsApp = isAdmin || (userWithPermissions?.permissions.includes('clients:send_whatsapp') ?? false);
 
     if (!result.success || !result.data) {
         return null; // O mostrar un estado de error

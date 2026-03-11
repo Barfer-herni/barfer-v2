@@ -35,12 +35,6 @@ export function ProductsChart({
     compareFilter
 }: ProductsChartProps) {
 
-    // Debug: log de datos recibidos (comentado para producción)
-    // console.log('ProductsChart - currentProducts:', currentProducts?.length || 0);
-    // console.log('ProductsChart - compareProducts:', compareProducts?.length || 0);
-    // console.log('ProductsChart - statusFilter:', statusFilter);
-
-    // Preparar datos para el gráfico principal (top 15)
     const chartData = useMemo(() => {
         if (!currentProducts || currentProducts.length === 0) {
             return [];
@@ -65,7 +59,6 @@ export function ProductsChart({
     // Preparar datos para comparación (top 10)
     const comparisonData = useMemo(() => {
         if (!isComparing || !compareProducts.length || !currentProducts.length) {
-            console.log('ProductsChart - No comparison data needed');
             return [];
         }
 
@@ -87,8 +80,6 @@ export function ProductsChart({
                 compareRevenue: compare?.revenue || 0
             };
         });
-
-        console.log('ProductsChart - comparisonData generated:', data.length);
         return data;
     }, [currentProducts, compareProducts, isComparing]);
 

@@ -38,8 +38,9 @@ export default async function TablePage({
 
     // Obtener permisos del usuario para controlar acceso a botones
     const userWithPermissions = await getCurrentUserWithPermissions();
-    const canEdit = userWithPermissions?.permissions.includes('table:edit') || false;
-    const canDelete = userWithPermissions?.permissions.includes('table:delete') || false;
+    const isAdmin = userWithPermissions?.isAdmin || false;
+    const canEdit = isAdmin || userWithPermissions?.permissions.includes('table:edit') || false;
+    const canDelete = isAdmin || userWithPermissions?.permissions.includes('table:delete') || false;
 
     const { orders, pageCount, total } = await getOrders({
         pageIndex: pagination.pageIndex,

@@ -280,7 +280,6 @@ export function CategoriesAnalyticsClient({
                     size="sm"
                     onClick={async () => {
                         const result = await debugBigDogAction();
-                        console.log('Debug result:', result);
                         alert(result.message);
                     }}
                     className="flex items-center gap-2"

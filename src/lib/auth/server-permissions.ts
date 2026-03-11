@@ -6,6 +6,8 @@ import { getCurrentUser } from '@/lib/services/services/barfer';
 
 // Tipos de permisos disponibles
 export type Permission =
+    // === SUPER ADMIN ===
+    | 'all'               // Acceso total a todo (super admin)
     // Analytics
     | 'analytics:view'
     | 'analytics:export'
@@ -41,9 +43,6 @@ export type Permission =
     // Prices
     | 'prices:view'
     | 'prices:edit'
-    // Balance  
-    | 'balance:view'
-    | 'balance:export'
     // Outputs/Salidas
     | 'outputs:view'
     | 'outputs:export'
@@ -67,6 +66,12 @@ export type Permission =
     | 'stock:edit'
     | 'stock:delete'
     | 'stock:view_statistics'
+    // Repartos
+    | 'repartos:view'
+    | 'repartos:create'
+    | 'repartos:edit'
+    | 'repartos:delete'
+    | 'repartos:view_statistics'
 
 // Permisos por defecto para admins (siempre tienen todos)
 export const ADMIN_PERMISSIONS: Permission[] = [
@@ -115,6 +120,11 @@ export const ADMIN_PERMISSIONS: Permission[] = [
     'stock:edit',
     'stock:delete',
     'stock:view_statistics',
+    'repartos:view',
+    'repartos:create',
+    'repartos:edit',
+    'repartos:delete',
+    'repartos:view_statistics',
 ];
 
 /**
@@ -141,10 +151,12 @@ export async function getCurrentUserWithPermissions() {
 
     // Si es usuario normal, usar sus permisos personalizados
     if (isUser) {
+        // Si tiene el permiso 'all', tratar como admin (super admin)
+        const hasSuperAdminPermission = user.permissions.includes('all' as Permission);
         return {
             ...user,
             permissions: user.permissions, // Usar permisos del usuario desde la BD
-            isAdmin: false,
+            isAdmin: hasSuperAdminPermission, // 'all' implica acceso de admin
             isUser: true,
         };
     }
@@ -165,6 +177,9 @@ export async function hasPermission(permission: Permission): Promise<boolean> {
     const userWithPermissions = await getCurrentUserWithPermissions();
     if (!userWithPermissions) return false;
 
+    // El permiso 'all' otorga acceso a cualquier cosa
+    if (userWithPermissions.permissions.includes('all' as Permission)) return true;
+
     return userWithPermissions.permissions.includes(permission);
 }
 
@@ -175,6 +190,9 @@ export async function hasAllPermissions(permissions: Permission[]): Promise<bool
     const userWithPermissions = await getCurrentUserWithPermissions();
     if (!userWithPermissions) return false;
 
+    // El permiso 'all' otorga acceso a cualquier cosa
+    if (userWithPermissions.permissions.includes('all' as Permission)) return true;
+
     return permissions.every(permission => userWithPermissions.permissions.includes(permission));
 }
 
@@ -184,6 +202,9 @@ export async function hasAllPermissions(permissions: Permission[]): Promise<bool
 export async function hasAnyPermission(permissions: Permission[]): Promise<boolean> {
     const userWithPermissions = await getCurrentUserWithPermissions();
     if (!userWithPermissions) return false;
+
+    // El permiso 'all' otorga acceso a cualquier cosa
+    if (userWithPermissions.permissions.includes('all' as Permission)) return true;
 
     return permissions.some(permission => userWithPermissions.permissions.includes(permission));
 }
@@ -374,7 +395,7 @@ export const SIDEBAR_CONFIG: SidebarItem[] = [
         mobileLabel: 'repartosMobile',
         href: '/admin/repartos',
         icon: 'Truck',
-        requiredPermissions: ['table:view'], // Usar el mismo permiso que table por ahora
+        requiredPermissions: ['repartos:view'],
     },
     {
         label: 'mayoristas',
@@ -404,6 +425,12 @@ export async function getAuthorizedSidebarItems(): Promise<SidebarItem[]> {
     for (const item of SIDEBAR_CONFIG) {
         // Si es adminOnly y el usuario no es admin, no incluir
         if (item.adminOnly && !userWithPermissions.isAdmin) {
+            continue;
+        }
+
+        // Si tiene el permiso 'all', tiene acceso a todo
+        if (userWithPermissions.permissions.includes('all' as Permission)) {
+            authorizedItems.push(item);
             continue;
         }
 

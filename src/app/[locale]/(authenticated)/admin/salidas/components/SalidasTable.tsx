@@ -28,7 +28,7 @@ import { Copy } from 'lucide-react';
 
 // Funciones de permisos del cliente (definidas localmente)
 function hasAllCategoriesPermission(permissions: string[]): boolean {
-    return permissions.includes('outputs:view_all_categories');
+    return permissions.includes('all') || permissions.includes('outputs:view_all_categories');
 }
 
 function getCategoryPermissions(permissions: string[]): string[] {
@@ -701,7 +701,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
                                         </TableCell>
                                         <TableCell className="w-[100px]">
                                             <div className="flex items-center justify-center gap-1">
-                                                {userPermissions.includes('outputs:create') && (
+                                                {(userPermissions.includes('all') || userPermissions.includes('outputs:create')) && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
@@ -712,7 +712,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
                                                         <Copy className="h-3 w-3" />
                                                     </Button>
                                                 )}
-                                                {userPermissions.includes('outputs:edit') && (
+                                                {(userPermissions.includes('all') || userPermissions.includes('outputs:edit')) && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
@@ -723,7 +723,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
                                                         <Edit className="h-3 w-3" />
                                                     </Button>
                                                 )}
-                                                {userPermissions.includes('outputs:delete') && (
+                                                {(userPermissions.includes('all') || userPermissions.includes('outputs:delete')) && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
@@ -734,7 +734,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
                                                         <Trash2 className="h-3 w-3" />
                                                     </Button>
                                                 )}
-                                                {!userPermissions.includes('outputs:create') && !userPermissions.includes('outputs:edit') && !userPermissions.includes('outputs:delete') && (
+                                                {!(userPermissions.includes('all') || userPermissions.includes('outputs:create') || userPermissions.includes('outputs:edit') || userPermissions.includes('outputs:delete')) && (
                                                     <span className="text-xs text-muted-foreground">Sin permisos</span>
                                                 )}
                                             </div>

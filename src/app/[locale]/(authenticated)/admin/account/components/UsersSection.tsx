@@ -406,12 +406,37 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                         <div className="space-y-2">
                             <Label>Permisos del Usuario</Label>
                             <div className="max-h-60 overflow-y-auto space-y-4 p-4 border rounded-lg">
-                                {/* Permisos de Vista */}
+                                {/* === SUPER ADMIN === */}
                                 <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                                        <Label className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Acceso Total</Label>
+                                    </div>
+                                    <div className="ml-4 space-y-2">
+                                        <div className={`flex items-center space-x-2 p-2 rounded-md border ${userForm.permissions.includes('all') ? 'bg-yellow-50 dark:bg-yellow-950 border-yellow-300 dark:border-yellow-700' : 'border-transparent'}`}>
+                                            <Switch
+                                                checked={userForm.permissions.includes('all')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions.filter(p => p !== 'all'), 'all'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'all') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <div>
+                                                <Label className="text-sm font-semibold">⚡ Super Admin (acceso total)</Label>
+                                                <p className="text-xs text-muted-foreground">Otorga acceso completo a todas las funciones, equivalente a un administrador.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Permisos de Vista */}
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                                         <Label className="text-sm font-medium text-blue-700 dark:text-blue-400">Permisos de Vista</Label>
                                     </div>
+
                                     <div className="ml-4 space-y-2">
                                         <div className="flex items-center space-x-2">
                                             <Switch
@@ -472,7 +497,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                 </div>
 
                                 {/* Permisos de Edición */}
-                                <div className="space-y-3">
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="h-2 w-2 rounded-full bg-orange-500"></div>
                                         <Label className="text-sm font-medium text-orange-700 dark:text-orange-400">Permisos de Edición</Label>
@@ -504,7 +529,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                 </div>
 
                                 {/* Permisos de Órdenes */}
-                                <div className="space-y-3">
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
                                         <Label className="text-sm font-medium text-green-700 dark:text-green-400">Permisos de Órdenes</Label>
@@ -558,7 +583,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                 </div>
 
                                 {/* Permisos de Gestión */}
-                                <div className="space-y-3">
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="h-2 w-2 rounded-full bg-purple-500"></div>
                                         <Label className="text-sm font-medium text-purple-700 dark:text-purple-400">Permisos de Gestión</Label>
@@ -703,8 +728,51 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
 
                                 {/* Permisos de Express */}
 
+                                {/* Permisos de Repartos */}
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
+                                        <Label className="text-sm font-medium text-indigo-700 dark:text-indigo-400">Permisos de Repartos</Label>
+                                    </div>
+                                    <div className="ml-4 space-y-2">
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('repartos:view')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'repartos:view'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'repartos:view') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Ver repartos</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('repartos:edit')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'repartos:edit'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'repartos:edit') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Editar repartos</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('repartos:delete')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'repartos:delete'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'repartos:delete') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Eliminar repartos</Label>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Permisos de Puntos de Venta */}
-                                <div className="space-y-3">
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="h-2 w-2 rounded-full bg-purple-500"></div>
                                         <Label className="text-sm font-medium text-purple-700 dark:text-purple-400">Permisos de Puntos de Venta</Label>

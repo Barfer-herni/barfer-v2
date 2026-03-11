@@ -25,7 +25,7 @@ export function PasswordSection({ currentUser, dictionary }: PasswordSectionProp
     });
 
     // Verificar si el usuario tiene permisos para cambiar su contraseña
-    const canChangePassword = currentUser?.permissions?.includes('account:change_password') || currentUser?.role === 'admin';
+    const canChangePassword = currentUser?.isAdmin || currentUser?.permissions?.includes('account:change_password') || currentUser?.role === 'admin';
 
     const handlePasswordChange = async () => {
         if (!currentUser) return;

@@ -400,13 +400,6 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
                                                             // Mapear los items con sus precios calculados
                                                             let itemsWithPrices = currentItems;
                                                             if (priceResult.success && priceResult.itemPrices) {
-                                                                console.log('🔍 [PDF EDIT] Mapeando precios:', {
-                                                                    itemsLength: currentItems.length,
-                                                                    pricesLength: priceResult.itemPrices.length,
-                                                                    items: currentItems.map((i: any) => ({ name: i.name, fullName: i.fullName })),
-                                                                    prices: priceResult.itemPrices.map((p: any) => ({ name: p.name, price: p.unitPrice }))
-                                                                });
-
                                                                 // CRÍTICO: Mapear por NOMBRE, no por índice
                                                                 // itemPrices puede tener menos elementos si algunos items no encontraron precio
                                                                 itemsWithPrices = currentItems.map((item: any) => {
@@ -907,16 +900,6 @@ function renderEditableCell(cell: any, index: number, editValues: any, onEditVal
                                     {(item.fullName || item.name) && !availableProducts.includes(item.fullName || item.name) && (
                                         <option key="current-product" value={item.fullName || item.name}>
                                             {(() => {
-                                                console.log('🔍 Item actual para mostrar:', {
-                                                    itemName: item.name,
-                                                    itemFullName: item.fullName,
-                                                    itemOptions: item.options,
-                                                    itemWeight: item.options?.[0]?.name,
-                                                    itemQuantity: item.options?.[0]?.quantity,
-                                                    itemPrice: item.options?.[0]?.price,
-                                                    availableProducts: availableProducts.slice(0, 3) // Solo primeros 3 para no saturar
-                                                });
-
                                                 // Construir el nombre completo con el peso
                                                 const baseName = item.fullName || item.name;
                                                 const weight = item.options?.[0]?.name;

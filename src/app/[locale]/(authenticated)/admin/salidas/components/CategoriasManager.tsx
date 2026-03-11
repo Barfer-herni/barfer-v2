@@ -87,12 +87,7 @@ export function CategoriasManager() {
 
         setIsAddingCategoria(true);
         try {
-            console.log('[CategoriasManager] Attempting to create categoria:', newCategoriaNombre);
-            // Enviar el nombre tal como está (el backend se encarga de normalizarlo)
             const result = await createCategoriaAction(newCategoriaNombre);
-            
-            console.log('[CategoriasManager] Create result:', result);
-
             if (result.success) {
                 toast({
                     title: "Categoría creada",
@@ -101,7 +96,6 @@ export function CategoriasManager() {
                 setNewCategoriaNombre('');
                 loadCategorias(); // Recargar la lista
             } else {
-                console.error('[CategoriasManager] Create failed:', result);
                 toast({
                     title: "Error",
                     description: (result as any).message || (result as any).error || "Error al crear la categoría",

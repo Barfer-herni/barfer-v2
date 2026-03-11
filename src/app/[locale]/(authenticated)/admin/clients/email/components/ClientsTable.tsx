@@ -408,9 +408,6 @@ export function ClientsTable({
                     rangeClientIds.push(paginatedClients[i].id);
                 }
             }
-
-            console.log('Shift+Click rango:', { startIndex, endIndex, rangeClientIds, lastSelectedIndex, currentIndex: index });
-
             // Reemplazar la selección actual con solo el rango seleccionado
             onSelectionChange(rangeClientIds);
         } else if (event.ctrlKey || event.metaKey) {
@@ -606,7 +603,6 @@ export function ClientsTable({
                                         onClick={(event) => {
                                             // Solo seleccionar fila si no se está seleccionando texto
                                             if (window.getSelection()?.toString().length === 0) {
-                                                console.log('Row clicked:', { clientId: client.id, index, clientName: client.name });
                                                 handleRowClick(client.id, index, event);
                                             }
                                         }}

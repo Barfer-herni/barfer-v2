@@ -576,10 +576,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
     // Si no es admin y hay puntos de envío, seleccionar automáticamente si no hay selección (URL o estado)
     useEffect(() => {
         if (!isAdmin && puntosEnvio.length > 0 && !selectedPuntoEnvio) {
-            // Intentar encontrar el punto que coincida con el almacenado en la URL (si vino parcial)
-            // o simplemente tomar el primero disponible para el usuario
             const firstPunto = puntosEnvio[0].nombre || '';
-            console.log('🤖 Auto-seleccionando punto para no-admin:', firstPunto);
             handlePuntoEnvioChange(firstPunto);
         }
     }, [isAdmin, puntosEnvio, selectedPuntoEnvio]);
@@ -670,12 +667,8 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
 
     // Función para manejar duplicación de pedidos
     const handleDuplicate = useCallback(async (row: any) => {
-        console.log('🎯 handleDuplicate llamado con row:', row);
-        console.log('📍 Puntos de envío disponibles:', puntosEnvio.length);
-
         // Si el usuario tiene acceso a más de un punto de envío, mostrar modal
         if (puntosEnvio.length > 1) {
-            console.log('✅ Mostrando modal (múltiples puntos)');
             setOrderToDuplicate(row.id);
             setShowDuplicateModal(true);
         } else if (puntosEnvio.length === 1 || selectedPuntoEnvio) {
@@ -726,20 +719,13 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
     // Función para confirmar la duplicación con el punto de envío seleccionado
     const handleConfirmDuplicate = useCallback(async (targetPuntoEnvio: string) => {
         if (!orderToDuplicate) {
-            console.log('❌ No hay orderToDuplicate');
             return;
         }
-
-        console.log('🔄 Duplicando orden:', orderToDuplicate, 'a punto:', targetPuntoEnvio);
-
         try {
             const result = await duplicateExpressOrderAction(orderToDuplicate, targetPuntoEnvio);
 
-            console.log('📦 Resultado de duplicación:', result);
-
             if (!result.success) {
                 const errorMsg = 'Error al duplicar';
-                console.error('❌ Error del servidor:', errorMsg);
                 throw new Error(errorMsg);
             }
 

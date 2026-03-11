@@ -29,9 +29,6 @@ export async function FrequencyAnalyticsTab({ dateFilter, compareFilter }: Frequ
             getCustomerInsightsAction(dateFilter.from.toISOString(), dateFilter.to.toISOString()),
             getPurchaseFrequencyAction(dateFilter.from.toISOString(), dateFilter.to.toISOString())
         ]);
-
-        console.log('--- FrequencyAnalyticsTab Insights ---', JSON.stringify(customerInsightsResp, null, 2));
-
         // Datos del período de comparación (si está habilitado)
         const defaultInsights: CustomerInsights = {
             averageOrderValue: 0,

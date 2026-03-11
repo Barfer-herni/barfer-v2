@@ -20,9 +20,9 @@ export default async function GestionEnvioExpressStockPage({
 
     // Obtener permisos del usuario
     const userWithPermissions = await getCurrentUserWithPermissions();
-    const canEdit = userWithPermissions?.permissions.includes('stock:edit') || false;
-    const canDelete = userWithPermissions?.permissions.includes('stock:delete') || false;
     const isAdmin = userWithPermissions?.isAdmin || false;
+    const canEdit = isAdmin || userWithPermissions?.permissions.includes('stock:edit') || false;
+    const canDelete = isAdmin || userWithPermissions?.permissions.includes('stock:delete') || false;
 
     // Obtener los puntos de envío asignados al usuario como array de strings
     const rawUserPuntosEnvio: string[] = !isAdmin && userWithPermissions?.puntoEnvio
