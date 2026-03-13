@@ -125,6 +125,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
 
     // Datos de las tablas
     const [orders, setOrders] = useState<Order[]>([]);
+    const [totalOrders, setTotalOrders] = useState(0);
     const [stock, setStock] = useState<Stock[]>([]);
     const [productsForStock, setProductsForStock] = useState<ProductForStock[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -638,6 +639,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
 
             if (ordersResult.success) {
                 setOrders(ordersResult.orders || []);
+                setTotalOrders(ordersResult.total || (ordersResult.orders?.length || 0));
             }
             if (stockResult.success && stockResult.stock) {
                 setStock(stockResult.stock);
@@ -1492,8 +1494,8 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                     handleOrderUpdate // Pasar callback para actualizar orden
                                                 )}
                                                 data={paginatedOrders}
-                                                pageCount={Math.ceil(filteredAndSortedOrders.length / pageSizeFromUrl)}
-                                                total={filteredAndSortedOrders.length}
+                                                pageCount={Math.ceil((totalOrders || filteredAndSortedOrders.length) / pageSizeFromUrl)}
+                                                total={totalOrders || filteredAndSortedOrders.length}
                                                 pagination={{
                                                     pageIndex: pageFromUrl - 1,
                                                     pageSize: pageSizeFromUrl,

@@ -3,23 +3,42 @@ import { apiClient } from '@/lib/api';
 import type { Stock, CreateStockData, UpdateStockData, OrderPriority, CreateOrderPriorityData, UpdateOrderPriorityData, Order } from '../../../types/barfer';
 
 
-export async function getExpressOrders(puntoEnvio?: string, from?: string, to?: string) {
+export async function getExpressOrders(
+    puntoEnvio?: string,
+    from?: string,
+    to?: string,
+    page: number = 1,
+    limit: number = 2000 // Aumentamos el límite por defecto para el front actual
+) {
     try {
         const params = new URLSearchParams();
         if (puntoEnvio) params.append('puntoEnvio', puntoEnvio);
         if (from) params.append('from', from);
         if (to) params.append('to', to);
+        params.append('page', page.toString());
+        params.append('limit', limit.toString());
+
         const query = params.toString() ? `?${params.toString()}` : '';
         const result = await apiClient.get(`/orders/express${query}`);
+
+        // El backend ahora devuelve { orders, total, page, totalPages }
+        // Manejamos ambos formatos por compatibilidad
+        const orders = result.orders || (Array.isArray(result) ? result : []);
+        const total = result.total || orders.length;
+
         return {
             success: true,
-            orders: result || [],
+            orders,
+            total,
+            page: result.page || page,
+            totalPages: result.totalPages || 1,
         };
     } catch (error) {
         return {
             success: false,
             orders: [],
-            message: 'Error al obtener el stock',
+            total: 0,
+            message: 'Error al obtener las órdenes express',
         };
     }
 }

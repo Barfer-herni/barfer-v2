@@ -28,8 +28,14 @@ export async function getDeliveryAreasWithPuntoEnvioAction() {
     }
 }
 
-export async function getExpressOrdersAction(puntoEnvio?: string, from?: string, to?: string) {
-    return await getExpressOrders(puntoEnvio, from, to);
+export async function getExpressOrdersAction(
+    puntoEnvio?: string,
+    from?: string,
+    to?: string,
+    page?: number,
+    limit?: number
+) {
+    return await getExpressOrders(puntoEnvio, from, to, page, limit);
 }
 
 export async function createStockAction(data: {
