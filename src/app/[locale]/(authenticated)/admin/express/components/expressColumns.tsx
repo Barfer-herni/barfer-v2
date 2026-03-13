@@ -186,6 +186,7 @@ export const createExpressColumns = (
                             orderId={orderId}
                             currentNotes={notesOwn}
                             onUpdate={onOrderUpdated}
+                            onOrderUpdate={onOrderUpdate}
                         />
                     </div>
                 );

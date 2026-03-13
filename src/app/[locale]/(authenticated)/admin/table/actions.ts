@@ -32,6 +32,7 @@ export async function updateOrderAction(id: string, data: any) {
             return { success: false, error: result.error, order: null };
         }
         revalidatePath('/admin/table');
+        revalidatePath('/admin/express');
         return { success: true, order: result.order };
     } catch (error) {
         return { success: false, error: (error as Error).message, order: null };
@@ -45,6 +46,7 @@ export async function deleteOrderAction(id: string) {
             return { success: false, error: result.error };
         }
         revalidatePath('/admin/table');
+        revalidatePath('/admin/express');
         return { success: true };
     } catch (error) {
         console.error('Error in deleteOrderAction:', error);
@@ -237,6 +239,7 @@ export async function duplicateOrderAction(id: string): Promise<{ success: boole
             return { success: false, error: result.error };
         }
         revalidatePath('/admin/table');
+        revalidatePath('/admin/express');
         return { success: true, order: result.order, message: result.message };
     } catch (error) {
         console.error('Error in duplicateOrderAction:', error);

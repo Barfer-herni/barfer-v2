@@ -3,14 +3,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { updateOrderAction } from '../../table/actions';
+import type { Order } from '@/lib/services';
 
 interface NotesOwnCellProps {
     orderId: string;
     currentNotes: string;
     onUpdate?: () => void | Promise<void>;
+    onOrderUpdate?: (updatedOrder: Order) => void;
 }
 
-export function NotesOwnCell({ orderId, currentNotes, onUpdate }: NotesOwnCellProps) {
+export function NotesOwnCell({ orderId, currentNotes, onUpdate, onOrderUpdate }: NotesOwnCellProps) {
     const [value, setValue] = useState(currentNotes || '');
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -38,7 +40,7 @@ export function NotesOwnCell({ orderId, currentNotes, onUpdate }: NotesOwnCellPr
 
         setIsSaving(true);
         setIsEditing(false); // Salir del modo edición inmediatamente
-        
+
         try {
             const result = await updateOrderAction(orderId, {
                 notesOwn: newValue
@@ -48,8 +50,15 @@ export function NotesOwnCell({ orderId, currentNotes, onUpdate }: NotesOwnCellPr
                 // Si falla, revertir al valor original
                 setValue(currentNotes || '');
                 alert('Error al guardar las notas');
+            } else if (result.order && onOrderUpdate) {
+                // Notificar al padre con la orden actualizada para actualización quirúrgica
+                onOrderUpdate(result.order);
             }
-            // NO llamar a onUpdate para evitar refresh completo
+
+            // Si hay onUpdate (refresh completo), llamarlo si es necesario
+            if (onUpdate) {
+                await onUpdate();
+            }
         } catch (error) {
             console.error('Error saving notes:', error);
             setValue(currentNotes || '');
