@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Order } from '@/lib/services';
 import { getQuantityStatsByMonthAction } from '../../analytics/actions';
+import { getExpressOrdersMetricsAction } from '../actions';
 
 interface MonthlyMetricsTableProps {
     orders: Order[];
@@ -10,6 +11,7 @@ interface MonthlyMetricsTableProps {
 
 export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTableProps) {
     const [backendStats, setBackendStats] = useState<any>(null);
+    const [extraMetrics, setExtraMetrics] = useState<any[]>([]);
     const [isLoadingStats, setIsLoadingStats] = useState(false);
 
     // Fetch accurate stats from backend
@@ -17,13 +19,20 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
         const fetchStats = async () => {
             setIsLoadingStats(true);
             try {
-                // We fetch without specific dates to get the full history or we could pass the range if needed
-                // But usually this table shows the history related to the orders passed or general.
-                // Since orders are already filtered by the parent, we'll try to match the range if possible
-                // or just fetch all for this puntoEnvio.
-                const result = await getQuantityStatsByMonthAction(undefined, undefined, puntoEnvioName);
-                if (result.success) {
-                    setBackendStats(result.data);
+                // Fetch kilos (existing action)
+                const quantityPromise = getQuantityStatsByMonthAction(undefined, undefined, puntoEnvioName);
+
+                // Fetch other metrics (new action)
+                const metricsPromise = getExpressOrdersMetricsAction(puntoEnvioName === 'all' ? undefined : puntoEnvioName);
+
+                const [quantityResult, metricsResult] = await Promise.all([quantityPromise, metricsPromise]);
+
+                if (quantityResult.success) {
+                    setBackendStats(quantityResult.data);
+                }
+
+                if (metricsResult.success && metricsResult.data?.monthly) {
+                    setExtraMetrics(metricsResult.data.monthly);
                 }
             } catch (error) {
                 console.error('Error fetching backend monthly stats:', error);
@@ -36,7 +45,7 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
     }, [puntoEnvioName]);
 
     // Process orders to group by month for orders/revenue/shipping
-    // But take Kilos from backendStats if available
+    // But take Kilos and accurate metrics from extraMetrics if available
     const monthlyData = useMemo(() => {
         const dataByMonth: Record<string, {
             monthKey: string; // YYYY-MM
@@ -46,6 +55,21 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
             totalShipping: number;
         }> = {};
 
+        // FIRST: Populate with metrics from the specialized backend API
+        if (extraMetrics && extraMetrics.length > 0) {
+            extraMetrics.forEach(m => {
+                dataByMonth[m.month] = {
+                    monthKey: m.month,
+                    totalOrders: m.totalOrders || 0,
+                    totalKilos: 0, // Will be filled from backendStats below
+                    totalRevenue: m.totalRevenue || 0,
+                    totalShipping: m.totalShipping || 0,
+                };
+            });
+        }
+
+        // SECOND: Fallback/Merge with orders passed as props 
+        // (This might be redundant if extraMetrics covers everything, but good for real-time updates)
         orders.forEach(order => {
             if (puntoEnvioName && order.puntoEnvio !== puntoEnvioName && puntoEnvioName !== 'all') {
                 return;
@@ -71,38 +95,17 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
                 };
             }
 
-            const data = dataByMonth[monthKey];
-            data.totalOrders += 1;
-            data.totalRevenue += (order.total || 0);
-            data.totalShipping += (order.shippingPrice || 0);
-
-            // We still keep the local kilos calculation as fallback, 
-            // but the Table will prioritize backend stats if present.
-            if (order.items && Array.isArray(order.items)) {
-                order.items.forEach((item: any) => {
-                    const productName = (item.name || '').toUpperCase().trim();
-                    const qty = item.quantity || item.options?.[0]?.quantity || 1;
-                    let weight = 0;
-
-                    const weightMatch = productName.match(/(\d+)\s*KG/i);
-                    if (weightMatch) {
-                        weight = parseFloat(weightMatch[1]);
-                    } else if (productName.includes('BOX')) {
-                        weight = 10;
-                    } else if (item.options && item.options.length > 0) {
-                        const optName = item.options[0].name || '';
-                        const optMatch = optName.match(/(\d+)\s*KG/i);
-                        if (optMatch) weight = parseFloat(optMatch[1]);
-                    }
-
-                    if (weight > 0) {
-                        data.totalKilos += (weight * qty);
-                    }
-                });
+            // Only add if we don't already have specialized metrics for this month
+            // or if we want to combine them (usually we trust the backend metrics more for historical data)
+            if (!extraMetrics || extraMetrics.length === 0) {
+                const data = dataByMonth[monthKey];
+                data.totalOrders += 1;
+                data.totalRevenue += (order.total || 0);
+                data.totalShipping += (order.shippingPrice || 0);
             }
         });
 
-        // Convert to array and sort
+        // THIRD: Add kilos from backendStats and finalize
         const result = Object.values(dataByMonth).map(item => {
             // Overwrite kilos with backend data if available
             if (backendStats?.sameDay) {
@@ -118,7 +121,7 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
         }).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
 
         return result;
-    }, [orders, puntoEnvioName, backendStats]);
+    }, [orders, puntoEnvioName, backendStats, extraMetrics]);
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
     const formatNumber = (val: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(val);

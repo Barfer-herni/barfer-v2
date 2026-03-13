@@ -11,6 +11,7 @@ import { ResumenGeneralChart } from './ResumenGeneralChart';
 import { Calendar as CalendarIcon, Filter } from 'lucide-react';
 import { calculateItemWeight } from '@/lib/services/utils/weightUtils';
 import { getQuantityStatsByMonthAction } from '../../analytics/actions';
+import { getExpressOrdersMetricsAction } from '../actions';
 
 
 interface ResumenGeneralTablesProps {
@@ -26,6 +27,7 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
     const defaultMonth = fromFromUrl ? fromFromUrl.substring(0, 7) : 'all';
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultMonth);
     const [backendStats, setBackendStats] = useState<any>(null);
+    const [extraMetrics, setExtraMetrics] = useState<any>(null);
     const [isLoadingStats, setIsLoadingStats] = useState(false);
 
     // Fetch accurate stats from backend
@@ -33,10 +35,20 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
         const fetchStats = async () => {
             setIsLoadingStats(true);
             try {
-                // Fetch stats for all points (puntoEnvio = 'all')
-                const result = await getQuantityStatsByMonthAction(undefined, undefined, 'all');
-                if (result.success) {
-                    setBackendStats(result.data);
+                // Fetch kilos (existing action)
+                const quantityPromise = getQuantityStatsByMonthAction(undefined, undefined, 'all');
+
+                // Fetch other metrics (new action)
+                const metricsPromise = getExpressOrdersMetricsAction(undefined);
+
+                const [quantityResult, metricsResult] = await Promise.all([quantityPromise, metricsPromise]);
+
+                if (quantityResult.success) {
+                    setBackendStats(quantityResult.data);
+                }
+
+                if (metricsResult.success && metricsResult.data) {
+                    setExtraMetrics(metricsResult.data);
                 }
             } catch (error) {
                 console.error('Error fetching backend summary stats:', error);
@@ -58,24 +70,30 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
         }
     }, [fromFromUrl]);
 
-    // Derived state: Available months from orders
+    // Derived state: Available months from orders and extraMetrics
     const availableMonths = useMemo(() => {
         const months = new Set<string>();
+
+        // Add months from orders
         orders.forEach(order => {
-            // Determine date (Argentina Timezone logic)
             let orderDate: Date;
-            if (order.deliveryDay) {
-                orderDate = new Date(order.deliveryDay);
-            } else {
-                const createdAt = new Date(order.createdAt);
-                orderDate = new Date(createdAt.getTime() - (3 * 60 * 60 * 1000));
-            }
-            const monthKey = orderDate.toISOString().substring(0, 7); // YYYY-MM
-            months.add(monthKey);
+            if (order.deliveryDay) orderDate = new Date(order.deliveryDay);
+            else orderDate = new Date(new Date(order.createdAt).getTime() - (3 * 60 * 60 * 1000));
+            months.add(orderDate.toISOString().substring(0, 7));
         });
-        const result = Array.from(months).sort().reverse(); // Newest first
-        return result;
-    }, [orders]);
+
+        // Add months from extraMetrics
+        if (extraMetrics?.monthly) {
+            extraMetrics.monthly.forEach((m: any) => months.add(m.month));
+        }
+
+        // Add months from backendStats (kilos)
+        if (backendStats?.sameDay) {
+            backendStats.sameDay.forEach((s: any) => months.add(s.month));
+        }
+
+        return Array.from(months).sort().reverse();
+    }, [orders, extraMetrics, backendStats]);
 
     // Filter orders based on selection
     const filteredOrders = useMemo(() => {
@@ -138,16 +156,40 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
             }
         };
 
+        // FIRST: Populate with metrics from the specialized backend API (More accurate for historical data)
+        if (extraMetrics?.monthly) {
+            extraMetrics.monthly.forEach((m: any) => {
+                // Filter by month if one is selected
+                if (selectedMonth !== 'all' && m.month !== selectedMonth) return;
+
+                let puntoNombre = m.puntoEnvio;
+                if (!puntoNombre || !dataByPunto[puntoNombre]) {
+                    puntoNombre = SIN_PUNTO;
+                }
+                const puntoData = dataByPunto[puntoNombre];
+                puntoData.totalOrders += (m.totalOrders || 0);
+                puntoData.totalRevenue += (m.totalRevenue || 0);
+                puntoData.totalShippingCost += (m.totalShipping || 0);
+            });
+        }
+
+        // SECOND: Process flavors from filteredOrders (since we don't have flavor breakdown in expressMetrics yet)
+        // If we don't have extraMetrics, we also fallback to orders for the main metrics
         filteredOrders.forEach(order => {
             let puntoNombre = order.puntoEnvio || order.deliveryArea?.puntoEnvio;
             if (!puntoNombre || !dataByPunto[puntoNombre]) {
                 puntoNombre = SIN_PUNTO;
             }
             const puntoData = dataByPunto[puntoNombre];
-            puntoData.totalOrders += 1;
-            puntoData.totalRevenue += (order.total || 0);
-            puntoData.totalShippingCost += (order.shippingPrice || 0);
 
+            // Only add main metrics if we didn't get them from the backend specialized API
+            if (!extraMetrics?.monthly || extraMetrics.monthly.length === 0) {
+                puntoData.totalOrders += 1;
+                puntoData.totalRevenue += (order.total || 0);
+                puntoData.totalShippingCost += (order.shippingPrice || 0);
+            }
+
+            // Always process flavors from local orders (fallback if not in backend aggregation)
             if (order.items && Array.isArray(order.items)) {
                 order.items.forEach((item: any) => {
                     const productName = (item.name || '').toUpperCase().trim();
@@ -158,7 +200,11 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
 
                     if (weight > 0) {
                         const totalItemWeight = weight * qty;
-                        puntoData.totalKilos += totalItemWeight;
+
+                        // Kilos are handled by backendStats later, but we still calculate them here for fallback
+                        if (!backendStats?.sameDay) {
+                            puntoData.totalKilos += totalItemWeight;
+                        }
 
                         if (productName.includes('BIG DOG')) {
                             if (fullName.includes('POLLO')) puntoData.flavors['BIG DOG POLLO'] += totalItemWeight;
@@ -234,67 +280,126 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
     const chartData = useMemo(() => {
         const dataByMonth: Record<string, any> = {};
 
-        orders.forEach(order => {
-            let orderDate: Date;
-            if (order.deliveryDay) {
-                orderDate = new Date(order.deliveryDay);
-            } else {
-                const createdAt = new Date(order.createdAt);
-                orderDate = new Date(createdAt.getTime() - (3 * 60 * 60 * 1000));
-            }
-            const monthKey = orderDate.toISOString().substring(0, 7); // YYYY-MM
-
-            if (!dataByMonth[monthKey]) {
-                const dateObj = new Date(parseInt(monthKey.split('-')[0]), parseInt(monthKey.split('-')[1]) - 1);
-                const monthName = format(dateObj, 'MMMM yyyy', { locale: es });
-                dataByMonth[monthKey] = {
-                    month: monthKey,
-                    monthName: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-                    totalOrders: 0,
-                    totalKilos: 0,
-                    totalRevenue: 0,
-                    totalShippingSum: 0,
-                };
-                puntosEnvio.forEach(p => {
-                    if (p.nombre) {
-                        dataByMonth[monthKey][`${p.nombre}_orders`] = 0;
-                        dataByMonth[monthKey][`${p.nombre}_kilos`] = 0;
-                        dataByMonth[monthKey][`${p.nombre}_revenue`] = 0;
-                        dataByMonth[monthKey][`${p.nombre}_shipping`] = 0;
-                        dataByMonth[monthKey][`${p.nombre}_shippingCount`] = 0;
-                    }
-                });
-            }
-
-            const data = dataByMonth[monthKey];
-            data.totalOrders += 1;
-            data.totalRevenue += (order.total || 0);
-            data.totalShippingSum += (order.shippingPrice || 0);
-
-            const pName = order.puntoEnvio || order.deliveryArea?.puntoEnvio;
-            if (pName && data[`${pName}_orders`] !== undefined) {
-                data[`${pName}_orders`] += 1;
-                data[`${pName}_revenue`] += (order.total || 0);
-                data[`${pName}_shipping`] += (order.shippingPrice || 0);
-                data[`${pName}_shippingCount`] += 1;
-            }
-
-            if (order.items && Array.isArray(order.items)) {
-                let orderKilos = 0;
-                order.items.forEach((item: any) => {
-                    const productName = (item.name || '').toUpperCase().trim();
-                    const qty = item.quantity || item.options?.[0]?.quantity || 1;
-                    const weight = calculateItemWeight(productName, item.options?.[0]?.name || '');
-                    if (weight > 0) orderKilos += (weight * qty);
-                });
-                data.totalKilos += orderKilos;
-                if (pName && data[`${pName}_kilos`] !== undefined) {
-                    data[`${pName}_kilos`] += orderKilos;
+        // FIRST: Use extraMetrics if available (Full history)
+        if (extraMetrics?.monthly) {
+            extraMetrics.monthly.forEach((m: any) => {
+                const monthKey = m.month;
+                if (!dataByMonth[monthKey]) {
+                    const [y, mm] = monthKey.split('-');
+                    const dateObj = new Date(parseInt(y), parseInt(mm) - 1);
+                    const monthName = format(dateObj, 'MMMM yyyy', { locale: es });
+                    dataByMonth[monthKey] = {
+                        month: monthKey,
+                        monthName: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+                        totalOrders: 0,
+                        totalKilos: 0,
+                        totalRevenue: 0,
+                        totalShippingSum: 0,
+                    };
+                    // Initialize puntoEnvio specific fields
+                    puntosEnvio.forEach(p => {
+                        if (p.nombre) {
+                            dataByMonth[monthKey][`${p.nombre}_orders`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_kilos`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_revenue`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_shipping`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_shippingCount`] = 0;
+                        }
+                    });
                 }
-            }
-        });
 
-        // REEMPLAZAR KILOS DEL CHART CON DATOS DEL BACKEND
+                const data = dataByMonth[monthKey];
+                data.totalOrders += (m.totalOrders || 0);
+                data.totalRevenue += (m.totalRevenue || 0);
+                data.totalShippingSum += (m.totalShipping || 0);
+
+                const pName = m.puntoEnvio;
+                if (pName && data[`${pName}_orders`] !== undefined) {
+                    data[`${pName}_orders`] += (m.totalOrders || 0);
+                    data[`${pName}_revenue`] += (m.totalRevenue || 0);
+                    data[`${pName}_shipping`] += (m.totalShipping || 0);
+                    data[`${pName}_shippingCount`] += (m.totalOrders || 0);
+                }
+            });
+        }
+
+        // SECOND: Fallback to orders prop only if extraMetrics is missing
+        if (!extraMetrics?.monthly || extraMetrics.monthly.length === 0) {
+            orders.forEach(order => {
+                let orderDate: Date;
+                if (order.deliveryDay) {
+                    orderDate = new Date(order.deliveryDay);
+                } else {
+                    const createdAt = new Date(order.createdAt);
+                    orderDate = new Date(createdAt.getTime() - (3 * 60 * 60 * 1000));
+                }
+                const monthKey = orderDate.toISOString().substring(0, 7); // YYYY-MM
+
+                if (!dataByMonth[monthKey]) {
+                    const dateObj = new Date(parseInt(monthKey.split('-')[0]), parseInt(monthKey.split('-')[1]) - 1);
+                    const monthName = format(dateObj, 'MMMM yyyy', { locale: es });
+                    dataByMonth[monthKey] = {
+                        month: monthKey,
+                        monthName: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+                        totalOrders: 0,
+                        totalKilos: 0,
+                        totalRevenue: 0,
+                        totalShippingSum: 0,
+                    };
+                    puntosEnvio.forEach(p => {
+                        if (p.nombre) {
+                            dataByMonth[monthKey][`${p.nombre}_orders`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_kilos`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_revenue`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_shipping`] = 0;
+                            dataByMonth[monthKey][`${p.nombre}_shippingCount`] = 0;
+                        }
+                    });
+                }
+
+                const data = dataByMonth[monthKey];
+                data.totalOrders += 1;
+                data.totalRevenue += (order.total || 0);
+                data.totalShippingSum += (order.shippingPrice || 0);
+
+                const pName = order.puntoEnvio || order.deliveryArea?.puntoEnvio;
+                if (pName && data[`${pName}_orders`] !== undefined) {
+                    data[`${pName}_orders`] += 1;
+                    data[`${pName}_revenue`] += (order.total || 0);
+                    data[`${pName}_shipping`] += (order.shippingPrice || 0);
+                    data[`${pName}_shippingCount`] += 1;
+                }
+            });
+        }
+
+        // STILL ALWAYS sum kilos locally if not provided by backendStats
+        if (!backendStats?.sameDay) {
+            orders.forEach(order => {
+                let orderDate: Date;
+                if (order.deliveryDay) orderDate = new Date(order.deliveryDay);
+                else orderDate = new Date(new Date(order.createdAt).getTime() - (3 * 60 * 60 * 1000));
+                const monthKey = orderDate.toISOString().substring(0, 7);
+                const data = dataByMonth[monthKey];
+                if (!data) return;
+
+                if (order.items && Array.isArray(order.items)) {
+                    let orderKilos = 0;
+                    order.items.forEach((item: any) => {
+                        const productName = (item.name || '').toUpperCase().trim();
+                        const qty = item.quantity || item.options?.[0]?.quantity || 1;
+                        const weight = calculateItemWeight(productName, item.options?.[0]?.name || '');
+                        if (weight > 0) orderKilos += (weight * qty);
+                    });
+                    data.totalKilos += orderKilos;
+                    const pName = order.puntoEnvio || order.deliveryArea?.puntoEnvio;
+                    if (pName && data[`${pName}_kilos`] !== undefined) {
+                        data[`${pName}_kilos`] += orderKilos;
+                    }
+                }
+            });
+        }
+
+        // REEMPLAZAR KILOS DEL CHART CON DATOS DEL BACKEND (SIEMPRE MÁS FIABLE)
         if (backendStats?.sameDay) {
             Object.values(dataByMonth).forEach(monthData => {
                 const statsForThisMonth = backendStats.sameDay.filter((s: any) => s.month === monthData.month);
@@ -324,7 +429,7 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
             });
             return processed;
         });
-    }, [orders, puntosEnvio, backendStats]);
+    }, [orders, puntosEnvio, backendStats, extraMetrics]);
 
     // Calculate totals for footer
     const totals = useMemo(() => {

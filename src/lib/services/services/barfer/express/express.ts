@@ -43,6 +43,36 @@ export async function getExpressOrders(
     }
 }
 
+/**
+ * Obtener métricas resumidas para el dashboard de envíos express
+ */
+export async function getExpressOrdersMetrics(
+    puntoEnvio?: string,
+    from?: string,
+    to?: string
+) {
+    try {
+        const params = new URLSearchParams();
+        if (puntoEnvio) params.append('puntoEnvio', puntoEnvio);
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        const query = params.toString() ? `?${params.toString()}` : '';
+        const result = await apiClient.get(`/orders/express/metrics${query}`);
+
+        return {
+            success: true,
+            data: result,
+        };
+    } catch (error) {
+        console.error('Error fetching express metrics:', error);
+        return {
+            success: false,
+            message: 'Error al obtener las métricas de envíos express',
+        };
+    }
+}
+
 
 /**
  * Crear un nuevo registro de stock

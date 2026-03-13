@@ -9,6 +9,7 @@ import {
     deletePuntoEnvioMongo,
     updateStockMongo,
     getExpressOrders,
+    getExpressOrdersMetrics,
     duplicateExpressOrder,
     saveOrderPriority,
     getProductsForStock
@@ -36,6 +37,14 @@ export async function getExpressOrdersAction(
     limit?: number
 ) {
     return await getExpressOrders(puntoEnvio, from, to, page, limit);
+}
+
+export async function getExpressOrdersMetricsAction(
+    puntoEnvio?: string,
+    from?: string,
+    to?: string
+) {
+    return await getExpressOrdersMetrics(puntoEnvio, from, to);
 }
 
 export async function createStockAction(data: {
