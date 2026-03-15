@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -132,7 +132,7 @@ export function PaymentsProgressChart({
             <Card>
                 <CardHeader className="pb-4">
                     <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <span className="text-lg">Evolución de Pagos por {getPeriodLabel()}</span>
+                        <span className="text-lg">Evolución de pedidos</span>
                         {isComparing && (
                             <div className="flex flex-col sm:flex-row gap-2 text-xs">
                                 <Badge variant="outline" className="text-blue-600 w-fit">
@@ -283,167 +283,7 @@ export function PaymentsProgressChart({
                 </CardContent>
             </Card>
 
-            {/* Gráfico de Barras - Ingresos por Método de Pago */}
-            <Card>
-                <CardHeader className="pb-4">
-                    <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <span className="text-lg">Ingresos por Método de Pago</span>
-                        {isComparing && (
-                            <div className="flex flex-col sm:flex-row gap-2 text-xs">
-                                <Badge variant="outline" className="text-purple-600 w-fit">Principal</Badge>
-                                <Badge variant="outline" className="text-orange-600 w-fit">Comparación</Badge>
-                            </div>
-                        )}
-                        {!isComparing && dateFilter && (
-                            <Badge variant="outline" className="text-purple-600 w-fit">
-                                {formatDateRange(dateFilter.from, dateFilter.to)}
-                            </Badge>
-                        )}
-                    </CardTitle>
-                    <CardDescription>
-                        Evolución de ingresos por método de pago por {getPeriodLabel()} {isComparing ? 'con comparación' : ''}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className={`grid grid-cols-1 gap-6 ${isComparing ? 'xl:grid-cols-2' : ''}`}>
-                        {/* Gráfico Principal */}
-                        <div>
-                            {isComparing && (
-                                <h4 className="text-sm font-medium mb-3">
-                                    Período Principal {dateFilter && `(${formatDateRange(dateFilter.from, dateFilter.to)})`}
-                                </h4>
-                            )}
-                            <ResponsiveContainer width="100%" height={isComparing ? 320 : 400}>
-                                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis
-                                        dataKey="displayDate"
-                                        tick={{ fontSize: 10 }}
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={80}
-                                    />
-                                    <YAxis
-                                        tick={{ fontSize: 10 }}
-                                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                                    />
-                                    <Tooltip
-                                        formatter={(value: number, name: string) => [
-                                            formatCurrency(value),
-                                            name === 'efectivoRevenue' ? '💵 Efectivo' :
-                                                name === 'transferenciaRevenue' ? '🏦 Transferencia Bancaria' :
-                                                    name === 'tarjetaRevenue' ? '💳 Mercado Pago' : name
-                                        ]}
-                                        labelFormatter={(label, payload) => {
-                                            const point = payload?.[0]?.payload;
-                                            const periodStr = point?.period || point?.date;
-                                            if (periodStr && periodType === 'daily') {
-                                                let dateObj: Date | null = null;
-                                                if (periodStr.includes('-')) {
-                                                    const parts = periodStr.split('-');
-                                                    if (parts.length === 3) {
-                                                        dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-                                                    }
-                                                } else if (periodStr.includes('/')) {
-                                                    const parts = periodStr.split('/');
-                                                    if (parts.length === 3) {
-                                                        dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                                                    }
-                                                }
-                                                if (dateObj && !isNaN(dateObj.getTime())) {
-                                                    return dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
-                                                }
-                                            }
-                                            return `${getPeriodLabel()}: ${label}`;
-                                        }}
-                                    />
-                                    <Legend />
-                                    {visibleKeys.map(key => {
-                                        const config = PAYMENT_KEYS[key as keyof typeof PAYMENT_KEYS];
-                                        return (
-                                            <Bar
-                                                key={key}
-                                                dataKey={config.revenue}
-                                                stackId="a"
-                                                fill={config.color}
-                                                name={`${config.icon} ${key}`}
-                                            />
-                                        );
-                                    })}
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-
-                        {/* Gráfico de Comparación */}
-                        {isComparing && compareChartData.length > 0 && (
-                            <div>
-                                <h4 className="text-sm font-medium mb-3">
-                                    Período de Comparación {compareFilter && `(${formatDateRange(compareFilter.from, compareFilter.to)})`}
-                                </h4>
-                                <ResponsiveContainer width="100%" height={320}>
-                                    <BarChart data={compareChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis
-                                            dataKey="displayDate"
-                                            tick={{ fontSize: 10 }}
-                                            angle={-45}
-                                            textAnchor="end"
-                                            height={80}
-                                        />
-                                        <YAxis
-                                            tick={{ fontSize: 10 }}
-                                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                                        />
-                                        <Tooltip
-                                            formatter={(value: number, name: string) => [
-                                                formatCurrency(value),
-                                                name === 'compareEfectivoRevenue' ? '💵 Efectivo' :
-                                                    name === 'compareTransferenciaRevenue' ? '🏦 Transferencia Bancaria' :
-                                                        name === 'compareTarjetaRevenue' ? '💳 Mercado Pago' : name
-                                            ]}
-                                            labelFormatter={(label, payload) => {
-                                                const point = payload?.[0]?.payload;
-                                                const periodStr = point?.period || point?.date;
-                                                if (periodStr && periodType === 'daily') {
-                                                    let dateObj: Date | null = null;
-                                                    if (periodStr.includes('-')) {
-                                                        const parts = periodStr.split('-');
-                                                        if (parts.length === 3) {
-                                                            dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-                                                        }
-                                                    } else if (periodStr.includes('/')) {
-                                                        const parts = periodStr.split('/');
-                                                        if (parts.length === 3) {
-                                                            dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                                                        }
-                                                    }
-                                                    if (dateObj && !isNaN(dateObj.getTime())) {
-                                                        return dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
-                                                    }
-                                                }
-                                                return `${getPeriodLabel()}: ${label}`;
-                                            }}
-                                        />
-                                        <Legend />
-                                        {visibleKeys.map(key => {
-                                            const config = PAYMENT_KEYS[key as keyof typeof PAYMENT_KEYS];
-                                            return (
-                                                <Bar
-                                                    key={key}
-                                                    dataKey={config.revenue}
-                                                    stackId="a"
-                                                    fill={config.color}
-                                                    name={`${config.icon} ${key}`}
-                                                />
-                                            );
-                                        })}
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Ingresos por método eliminado según solicitud */}
         </div>
     );
 } 

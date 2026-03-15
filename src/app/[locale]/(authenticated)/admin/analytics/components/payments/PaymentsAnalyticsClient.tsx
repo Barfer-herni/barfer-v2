@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { CreditCard, DollarSign, TrendingUp, AlertCircle, Filter } from 'lucide-react';
 import { PaymentsChart } from '../charts/PaymentsChart';
 import { PaymentsProgressChart } from '../charts/PaymentsProgressChart';
+import { RevenueByPaymentChart } from '../charts/RevenueByPaymentChart';
 
 interface PaymentMethod {
     paymentMethod: string;
@@ -120,12 +121,20 @@ export function PaymentsAnalyticsClient({
     const getPaymentIcon = (method: string) => {
         const upperMethod = method.toUpperCase();
 
-        if (upperMethod.includes('EFECTIVO')) return '💵';
-        if (upperMethod.includes('TRANSFERENCIA')) return '🏦';
+        if (upperMethod.includes('EFECTIVO') || upperMethod.includes('CASH')) return '💵';
+        if (upperMethod.includes('TRANSFERENCIA') || upperMethod.includes('BANK')) return '🏦';
         if (upperMethod.includes('TARJETA')) return '💳';
         if (upperMethod.includes('DEBITO')) return '🏧';
         if (upperMethod.includes('CREDITO')) return '💳';
-        if (upperMethod.includes('MERCADO PAGO')) return '💙';
+        if (upperMethod.includes('MERCADO PAGO') || upperMethod.includes('MERCADO-PAGO')) {
+            return (
+                <img
+                    src="/mercadopago-logo.png"
+                    alt="Mercado Pago"
+                    className="h-6 object-contain inline-block"
+                />
+            );
+        }
         if (upperMethod.includes('PAYPAL')) return '🅿️';
 
         return '💰';
@@ -440,6 +449,15 @@ export function PaymentsAnalyticsClient({
                     )}
                 </CardContent>
             </Card>
+
+            <RevenueByPaymentChart
+                data={progressData || []}
+                compareData={compareProgressData}
+                isComparing={isComparing}
+                periodType={getPeriodType()}
+                dateFilter={dateFilter}
+                compareFilter={compareFilter}
+            />
 
             <PaymentsChart
                 currentPayments={paymentMethods.map(method => ({
