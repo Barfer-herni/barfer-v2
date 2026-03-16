@@ -11,6 +11,7 @@ import { subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface AnalyticsPageProps {
     searchParams: Promise<{
+        tab?: string;
         from?: string;
         to?: string;
         preset?: string;
@@ -24,6 +25,7 @@ interface AnalyticsPageProps {
 export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
     // Await searchParams ya que es una promesa en Next.js 15
     const params = await searchParams;
+    const activeTab = params.tab || 'daily';
 
     // Convertir searchParams a fechas o usar un rango más amplio por defecto
     const dateFilter = params.from && params.to ? {
@@ -70,15 +72,16 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             {/* Filtro de fechas global */}
             <AnalyticsDateFilter />
 
-            <AnalyticsTabsWrapper
-                dailyTab={<DailyAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
-                monthlyTab={<MonthlyAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
-                productsTab={<ProductsAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
-                categoriesTab={<CategoriesAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
-                paymentsTab={<PaymentsAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
-                frequencyTab={<FrequencyAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
-                quantityTab={<QuantityAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} selectedYear={params.quantityYear ? parseInt(params.quantityYear) : undefined} />}
-            />
+            <AnalyticsTabsWrapper activeTab={activeTab}>
+                {activeTab === 'daily' && <DailyAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
+                {activeTab === 'monthly' && <MonthlyAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
+                {activeTab === 'products' && <ProductsAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
+                {activeTab === 'categories' && <CategoriesAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
+                {activeTab === 'payments' && <PaymentsAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
+                {activeTab === 'frequency' && <FrequencyAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} />}
+                {activeTab === 'quantity' && <QuantityAnalyticsTab dateFilter={dateFilter} compareFilter={compareFilter} selectedYear={params.quantityYear ? parseInt(params.quantityYear) : undefined} />}
+            </AnalyticsTabsWrapper>
         </div>
     );
-} 
+}
+ 
