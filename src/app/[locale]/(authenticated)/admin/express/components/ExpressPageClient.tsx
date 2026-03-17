@@ -134,9 +134,9 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
     // Estado para forzar re-render cuando se actualiza el orden de prioridad
     const [orderPriorityVersion, setOrderPriorityVersion] = useState(0);
     // Estado local para los valores editados (sin necesidad de modo edición)
-    const [localStockValues, setLocalStockValues] = useState<Record<string, { stockInicial: number; llevamos: number }>>({});
+    const [localStockValues, setLocalStockValues] = useState<Record<string, { stockInicial: number; llevamos: number; ajuste: number }>>({});
     // Ref para mantener los valores actuales del estado (para acceder sin setState)
-    const localStockValuesRef = useRef<Record<string, { stockInicial: number; llevamos: number }>>({});
+    const localStockValuesRef = useRef<Record<string, { stockInicial: number; llevamos: number; ajuste: number }>>({});
     // Refs para los timeouts de debounce - usar stockId como clave (no stockId-field)
     const saveTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
     // Refs para flags que previenen creación duplicada
@@ -645,12 +645,13 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 setStock(stockResult.stock);
                 // Inicializar valores locales con los datos del servidor
                 if (!skipLocalUpdate) {
-                    const initialValues: Record<string, { stockInicial: number; llevamos: number }> = {};
+                    const initialValues: Record<string, { stockInicial: number; llevamos: number; ajuste: number }> = {};
                     stockResult.stock.forEach(s => {
                         const key = String(s._id);
                         initialValues[key] = {
                             stockInicial: s.stockInicial,
                             llevamos: s.llevamos,
+                            ajuste: (s as any).ajuste ?? 0,
                         };
                     });
                     setLocalStockValues(initialValues);
@@ -1020,7 +1021,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
     }, [selectedPuntoEnvio, orders, searchParams]);
 
     // Función para guardar automáticamente con debounce
-    const saveStockValue = useCallback((stockId: string, field: 'stockInicial' | 'llevamos', value: number, product?: ProductForStock) => {
+    const saveStockValue = useCallback((stockId: string, field: 'stockInicial' | 'llevamos' | 'ajuste', value: number, product?: ProductForStock) => {
         // Limpiar timeout anterior si existe (usar solo stockId como clave)
         if (saveTimeouts.current[stockId]) {
             clearTimeout(saveTimeouts.current[stockId]);
@@ -1043,10 +1044,10 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
             setStock(prevStock => {
                 const stockItem = prevStock.find(s => String(s._id) === stockId);
                 if (stockItem) {
-                    const currentValues = updated[stockId] || { stockInicial: stockItem.stockInicial, llevamos: stockItem.llevamos };
+                    const currentValues = updated[stockId] || { stockInicial: stockItem.stockInicial, llevamos: stockItem.llevamos, ajuste: (stockItem as any).ajuste ?? 0 };
                     return prevStock.map(s =>
                         String(s._id) === stockId
-                            ? { ...s, [field]: value, stockFinal: currentValues.stockInicial + currentValues.llevamos - (s.pedidosDelDia || 0) }
+                            ? { ...s, [field]: value, stockFinal: currentValues.stockInicial + currentValues.llevamos + (currentValues.ajuste ?? 0) - (s.pedidosDelDia || 0) }
                             : s
                     );
                 }
@@ -1068,6 +1069,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 const currentValues = localStockValuesRef.current[stockId] || {};
                 const currentStockInicial = currentValues.stockInicial ?? 0;
                 const currentLlevamos = currentValues.llevamos ?? 0;
+                const currentAjuste = currentValues.ajuste ?? 0;
 
                 // Marcar como guardando
                 savingFlags.current[stockId] = true;
@@ -1093,8 +1095,8 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                     currentPedidosDelDia = currentStock?.pedidosDelDia || 0;
                 }
 
-                // Fórmula: stockInicial + llevamos - pedidosDelDia = stockFinal
-                const stockFinal = currentStockInicial + currentLlevamos - currentPedidosDelDia;
+                // Fórmula: stockInicial + llevamos + ajuste - pedidosDelDia = stockFinal
+                const stockFinal = currentStockInicial + currentLlevamos + currentAjuste - currentPedidosDelDia;
 
                 // Guardar en servidor
                 try {
@@ -1114,6 +1116,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                             peso: targetProduct.weight || undefined,
                             stockInicial: currentStockInicial,
                             llevamos: currentLlevamos,
+                            ajuste: currentAjuste,
                             stockFinal,
                             pedidosDelDia: pedidosDelDiaCalculado,
                             section: targetProduct.section,
@@ -1126,7 +1129,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                             const newId = String(result.stock._id);
                             setLocalStockValues(prevLocal => {
                                 const { [stockId]: _, ...rest } = prevLocal;
-                                const updated = { ...rest, [newId]: { stockInicial: result.stock!.stockInicial, llevamos: result.stock!.llevamos } };
+                                const updated = { ...rest, [newId]: { stockInicial: result.stock!.stockInicial, llevamos: result.stock!.llevamos, ajuste: (result.stock as any).ajuste ?? 0 } };
                                 localStockValuesRef.current = updated;
                                 return updated;
                             });
@@ -1137,6 +1140,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                         const updateData: any = {
                             stockInicial: currentStockInicial,
                             llevamos: currentLlevamos,
+                            ajuste: currentAjuste,
                             stockFinal,
                         };
 
@@ -1173,6 +1177,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                 [stockId]: {
                                     stockInicial: result.stock!.stockInicial,
                                     llevamos: result.stock!.llevamos,
+                                    ajuste: (result.stock as any).ajuste ?? 0,
                                 }
                             }));
                             localStockValuesRef.current = {
@@ -1180,6 +1185,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                 [stockId]: {
                                     stockInicial: result.stock!.stockInicial,
                                     llevamos: result.stock!.llevamos,
+                                    ajuste: (result.stock as any).ajuste ?? 0,
                                 }
                             };
                         }
@@ -1614,6 +1620,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                             <th className="text-left p-2 font-semibold">Peso/Sabor</th>
                                                             <th className="text-right p-2 font-semibold">Stock Inicial</th>
                                                             <th className="text-right p-2 font-semibold">Llevamos</th>
+                                                            <th className="text-right p-2 font-semibold">Ajuste</th>
                                                             <th className="text-center p-2 font-semibold">Pedidos del Día</th>
                                                             <th className="text-center p-2 font-semibold">Stock Final</th>
                                                         </tr>
@@ -1655,10 +1662,11 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                             // Si no hay registros, mostrar una fila vacía con campos siempre editables
                                                             if (!uniqueStockRecord) {
                                                                 const emptyId = `new-${product.section}-${product.product}-${product.weight || 'no-weight'}`;
-                                                                const localValues = localStockValues[emptyId] || { stockInicial: 0, llevamos: 0 };
+                                                                const localValues = localStockValues[emptyId] || { stockInicial: 0, llevamos: 0, ajuste: 0 };
                                                                 const stockInicial = localValues.stockInicial ?? 0;
                                                                 const llevamos = localValues.llevamos ?? 0;
-                                                                const stockFinalCalculado = stockInicial + llevamos - pedidosDelDia;
+                                                                const ajuste = localValues.ajuste ?? 0;
+                                                                const stockFinalCalculado = stockInicial + llevamos + ajuste - pedidosDelDia;
 
                                                                 return (
                                                                     <tr key={`${product.section}-${product.product}-${product.weight || 'no-weight'}`} className={`border-b ${rowColorClass}`}>
@@ -1729,6 +1737,29 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                                                 />
                                                                             </div>
                                                                         </td>
+                                                                        <td className="p-2 text-right">
+                                                                            <div className="flex justify-end">
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    value={ajuste}
+                                                                                    onChange={(e) => {
+                                                                                        const inputValue = e.target.value;
+                                                                                        if (inputValue === '') return;
+                                                                                        const newValue = Number(inputValue);
+                                                                                        if (!isNaN(newValue)) {
+                                                                                            saveStockValue(emptyId, 'ajuste', newValue, product);
+                                                                                        }
+                                                                                    }}
+                                                                                    onBlur={(e) => {
+                                                                                        const inputValue = e.target.value;
+                                                                                        if (inputValue === '' || isNaN(Number(inputValue))) {
+                                                                                            saveStockValue(emptyId, 'ajuste', 0, product);
+                                                                                        }
+                                                                                    }}
+                                                                                    className="w-20 text-right h-8 font-bold border-blue-200"
+                                                                                />
+                                                                            </div>
+                                                                        </td>
                                                                         <td className="p-2 text-center">
                                                                             <span className="font-semibold text-gray-700">{pedidosDelDia}</span>
                                                                         </td>
@@ -1743,11 +1774,13 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                             const stockId = String(uniqueStockRecord._id);
                                                             const localValues = localStockValues[stockId] || {
                                                                 stockInicial: uniqueStockRecord.stockInicial,
-                                                                llevamos: uniqueStockRecord.llevamos
+                                                                llevamos: uniqueStockRecord.llevamos,
+                                                                ajuste: (uniqueStockRecord as any).ajuste ?? 0
                                                             };
                                                             const stockInicial = localValues.stockInicial ?? uniqueStockRecord.stockInicial ?? 0;
                                                             const llevamos = localValues.llevamos ?? uniqueStockRecord.llevamos ?? 0;
-                                                            const displayStockFinal = stockInicial + llevamos - pedidosDelDia;
+                                                            const ajuste = localValues.ajuste ?? (uniqueStockRecord as any).ajuste ?? 0;
+                                                            const displayStockFinal = stockInicial + llevamos + ajuste - pedidosDelDia;
 
                                                             return (
                                                                 <tr key={`${product.section}-${product.product}-${product.weight || 'no-weight'}-${stockId}`} className={`border-b ${rowColorClass}`}>
@@ -1815,6 +1848,29 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                                                     }
                                                                                 }}
                                                                                 className="w-20 text-right h-8 font-bold"
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="p-2 text-right">
+                                                                        <div className="flex justify-end">
+                                                                            <Input
+                                                                                type="number"
+                                                                                value={ajuste}
+                                                                                onChange={(e) => {
+                                                                                    const inputValue = e.target.value;
+                                                                                    const newValue = inputValue === '' ? 0 : (parseInt(inputValue, 10) || 0);
+                                                                                    if (!isNaN(newValue)) {
+                                                                                        saveStockValue(stockId, 'ajuste', newValue, product);
+                                                                                    }
+                                                                                }}
+                                                                                onBlur={(e) => {
+                                                                                    const inputValue = e.target.value;
+                                                                                    const finalValue = inputValue === '' || isNaN(Number(inputValue)) ? 0 : parseInt(inputValue, 10);
+                                                                                    if (!isNaN(finalValue)) {
+                                                                                        saveStockValue(stockId, 'ajuste', finalValue, product);
+                                                                                    }
+                                                                                }}
+                                                                                className="w-20 text-right h-8 font-bold border-blue-200"
                                                                             />
                                                                         </div>
                                                                     </td>

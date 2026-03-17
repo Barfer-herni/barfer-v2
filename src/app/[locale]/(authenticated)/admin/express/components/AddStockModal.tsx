@@ -44,6 +44,7 @@ export function AddStockModal({
         peso: '',
         stockInicial: 0,
         llevamos: 0,
+        ajuste: 0,
         pedidosDelDia: 0,
         fecha: defaultDate || new Date(),
     });
@@ -125,8 +126,9 @@ export function AddStockModal({
                 peso: formData.peso.trim() || undefined,
                 stockInicial: formData.stockInicial,
                 llevamos: formData.llevamos,
+                ajuste: formData.ajuste,
                 pedidosDelDia: formData.pedidosDelDia,
-                stockFinal: formData.stockInicial - formData.llevamos,
+                stockFinal: formData.stockInicial + formData.llevamos + formData.ajuste - formData.pedidosDelDia,
                 fecha: format(formData.fecha, 'yyyy-MM-dd'),
             });
 
@@ -142,6 +144,7 @@ export function AddStockModal({
                     peso: '',
                     stockInicial: 0,
                     llevamos: 0,
+                    ajuste: 0,
                     pedidosDelDia: 0,
                     fecha: new Date(),
                 });
@@ -172,7 +175,7 @@ export function AddStockModal({
         }
     };
 
-    const stockFinal = formData.stockInicial - formData.llevamos;
+    const stockFinal = formData.stockInicial + formData.llevamos + formData.ajuste - formData.pedidosDelDia;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -274,6 +277,21 @@ export function AddStockModal({
                                     <span className="text-red-500 text-sm">{errors.llevamos}</span>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Ajuste */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="ajuste">Ajuste <span className="text-xs text-gray-500 font-normal">(positivo o negativo)</span></Label>
+                            <Input
+                                id="ajuste"
+                                type="number"
+                                value={formData.ajuste}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, ajuste: Number(e.target.value) });
+                                }}
+                                disabled={isLoading}
+                            />
+                            <span className="text-xs text-gray-500">Corrección manual de inventario. Ej: -2 si faltaron 2 unidades</span>
                         </div>
 
                         {/* Pedidos del Día y Fecha */}

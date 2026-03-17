@@ -54,6 +54,7 @@ export async function createStockAction(data: {
     peso?: string;
     stockInicial: number;
     llevamos: number;
+    ajuste?: number;
     pedidosDelDia: number;
     stockFinal?: number;
     fecha?: string;
@@ -221,6 +222,7 @@ export async function updateStockAction(
         section?: string;
         stockInicial?: number;
         llevamos?: number;
+        ajuste?: number;
         pedidosDelDia?: number;
         stockFinal?: number;
     }

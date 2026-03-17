@@ -484,8 +484,9 @@ export interface Stock {
     peso?: string; // Peso del producto (ej: "5KG", "10KG")
     stockInicial: number; // Stock inicial del día
     llevamos: number; // Cantidad que llevamos/vendimos
+    ajuste: number; // Ajuste manual de inventario (puede ser negativo)
     pedidosDelDia: number; // Pedidos del día
-    stockFinal: number; // Stock final calculado (stockInicial - llevamos)
+    stockFinal: number; // Stock final calculado (stockInicial + llevamos + ajuste - pedidosDelDia)
     fecha: string; // Fecha del registro de stock
     createdAt: string;
     updatedAt: string;
@@ -498,8 +499,9 @@ export interface CreateStockData {
     peso?: string;
     stockInicial: number;
     llevamos: number;
+    ajuste?: number; // Ajuste manual de inventario (puede ser negativo), default 0
     pedidosDelDia: number;
-    stockFinal?: number; // Si no se proporciona, se calcula como stockInicial - llevamos
+    stockFinal?: number; // Si no se proporciona, se calcula como stockInicial + llevamos + ajuste - pedidosDelDia
     fecha?: string; // Si no se proporciona, usa la fecha actual
 }
 
@@ -510,6 +512,7 @@ export interface UpdateStockData {
     peso?: string;
     stockInicial?: number;
     llevamos?: number;
+    ajuste?: number; // Ajuste manual de inventario (puede ser negativo)
     pedidosDelDia?: number;
     stockFinal?: number;
     fecha?: string;
