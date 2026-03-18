@@ -1741,11 +1741,10 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                                             <div className="flex justify-end">
                                                                                 <Input
                                                                                     type="number"
-                                                                                    value={ajuste}
+                                                                                    value={Number.isNaN(Number(ajuste)) ? '' : ajuste === 0 ? '' : ajuste}
                                                                                     onChange={(e) => {
                                                                                         const inputValue = e.target.value;
-                                                                                        if (inputValue === '') return;
-                                                                                        const newValue = Number(inputValue);
+                                                                                        const newValue = inputValue === '' ? 0 : Number(inputValue);
                                                                                         if (!isNaN(newValue)) {
                                                                                             saveStockValue(emptyId, 'ajuste', newValue, product);
                                                                                         }
@@ -1855,7 +1854,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                                         <div className="flex justify-end">
                                                                             <Input
                                                                                 type="number"
-                                                                                value={ajuste}
+                                                                                value={Number.isNaN(Number(ajuste)) ? '' : ajuste === 0 ? '' : ajuste}
                                                                                 onChange={(e) => {
                                                                                     const inputValue = e.target.value;
                                                                                     const newValue = inputValue === '' ? 0 : (parseInt(inputValue, 10) || 0);
