@@ -234,7 +234,8 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 const fullName = `${order.user?.name || ''} ${order.user?.lastName || ''}`.toLowerCase().trim();
 
                 // Normalizar teléfono para búsqueda
-                const phoneNormalized = (order.address?.phone || '').replace(/[\s\-()]/g, '');
+                const phoneNormalized = (order.address?.phone || '').toString().replace(/[\s\-()]/g, '');
+                const userPhoneNormalized = (order.user?.phoneNumber || '').toString().replace(/[\s\-()]/g, '');
 
                 return (
                     // Búsqueda por nombre completo (nombre + apellido)
@@ -247,8 +248,10 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                     (order.user?.email || '').toLowerCase().includes(searchLower) ||
                     // Búsqueda por teléfono (normalizado sin espacios ni guiones)
                     phoneNormalized.includes(searchNormalized) ||
+                    userPhoneNormalized.includes(searchNormalized) ||
                     // Búsqueda por teléfono (formato original)
-                    (order.address?.phone || '').toLowerCase().includes(searchLower) ||
+                    (order.address?.phone || '').toString().toLowerCase().includes(searchLower) ||
+                    (order.user?.phoneNumber || '').toString().toLowerCase().includes(searchLower) ||
                     // Búsqueda por total
                     (order.total?.toString() || '').includes(searchLower) ||
                     // Búsqueda por ID
