@@ -294,7 +294,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 }
                 return item;
             }),
-            deliveryDay: row.original.deliveryDay || '',
+            deliveryDay: row.original.deliveryDay ? createLocalDate(row.original.deliveryDay) : '',
         };
 
         setEditValues(editValuesData);
@@ -466,7 +466,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                     sameDayDelivery: row.original.deliveryArea?.sameDayDelivery || false
                 },
                 items: cleanedItems,
-                deliveryDay: editValues.deliveryDay,
+                deliveryDay: editValues.deliveryDay ? createLocalDate(editValues.deliveryDay) : undefined,
             };
             const result = await updateOrderAction(row.id, updateData);
             if (!result.success) throw new Error(result.error || 'Error al guardar');
