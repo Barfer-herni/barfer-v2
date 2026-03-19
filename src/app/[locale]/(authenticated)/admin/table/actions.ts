@@ -20,7 +20,7 @@ export async function updateOrderAction(id: string, data: any) {
         // Validar y normalizar el número de teléfono si está presente
         if (data.address?.phone) {
             const normalizedPhone = validateAndNormalizePhone(data.address.phone);
-            if (normalizedPhone) {
+            if (normalizedPhone !== null) {
                 data.address.phone = normalizedPhone;
             } else {
                 return { success: false, error: 'El número de teléfono no es válido. Use el formato: La Plata (221 XXX-XXXX) o CABA/BA (11-XXXX-XXXX / 15-XXXX-XXXX)', order: null };
@@ -59,7 +59,7 @@ export async function createOrderAction(data: any) {
         // Validar y normalizar el número de teléfono si está presente
         if (data.address?.phone) {
             const normalizedPhone = validateAndNormalizePhone(data.address.phone);
-            if (normalizedPhone) {
+            if (normalizedPhone !== null) {
                 data.address.phone = normalizedPhone;
             } else {
                 return { success: false, error: 'El número de teléfono no es válido. Use el formato: La Plata (221 XXX-XXXX) o CABA/BA (11-XXXX-XXXX / 15-XXXX-XXXX)', order: null };

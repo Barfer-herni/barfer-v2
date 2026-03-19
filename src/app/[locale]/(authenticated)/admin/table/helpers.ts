@@ -932,6 +932,11 @@ export const validateAndNormalizePhone = (phone: string): string | null => {
     // Convertir a string y limpiar espacios
     let cleanPhone = phone.toString().trim();
 
+    // Si es un marcador de posición común, tratarlo como vacío (pero no nulo para evitar error de validación)
+    if (cleanPhone.toUpperCase() === 'N/A' || cleanPhone === '—' || cleanPhone === '-') {
+        return '';
+    }
+
     // Eliminar todos los caracteres no numéricos excepto guiones
     cleanPhone = cleanPhone.replace(/[^\d-]/g, '');
 
@@ -940,7 +945,7 @@ export const validateAndNormalizePhone = (phone: string): string | null => {
 
     // Eliminar prefijos comunes de Argentina
     const prefixesToRemove = [
-        '549', '54', '0', '0221'
+        '549', '54', '0'
     ];
 
     // Buscar y eliminar prefijos al inicio
@@ -951,13 +956,29 @@ export const validateAndNormalizePhone = (phone: string): string | null => {
         }
     }
 
+    // Si después de limpiar prefijos todavía empieza con 0221 (muy común), quitar el 0
+    if (digitsOnly.startsWith('0221')) {
+        digitsOnly = digitsOnly.substring(1);
+    }
+
     // Si el número empieza con 9 después de eliminar prefijos, eliminarlo también
     if (digitsOnly.startsWith('9')) {
         digitsOnly = digitsOnly.substring(1);
     }
 
-    // Validar que tengamos un número válido (mínimo 7 dígitos, máximo 10)
-    if (digitsOnly.length < 7 || digitsOnly.length > 10) {
+    // CASO ESPECIAL: Si tenemos algo como 22115... o 1115... (11 o 12 dígitos)
+    // En Argentina es común que guarden el prefijo de área + el 15.
+    // Lo normalizamos quitando el 15 si antes está el 221 o 11.
+    if (digitsOnly.length >= 11) {
+        if (digitsOnly.startsWith('22115')) {
+            digitsOnly = '221' + digitsOnly.substring(5);
+        } else if (digitsOnly.startsWith('1115')) {
+            digitsOnly = '11' + digitsOnly.substring(4);
+        }
+    }
+
+    // Validar longitud final (mínimo 7 dígitos, máximo 15 para permitir internacionales o formatos largos)
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
         return null;
     }
 
@@ -976,13 +997,14 @@ export const validateAndNormalizePhone = (phone: string): string | null => {
         return '11' + digitsOnly;
     }
 
-    // Si llegamos aquí y tenemos 10 dígitos, lo aceptamos (ya sea con 221, 11 o 15)
-    if (digitsOnly.length === 10) {
+    // Si llegamos aquí y tenemos entre 10 y 15 dígitos, lo aceptamos tal cual (otras provincias o internacionales)
+    if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
         return digitsOnly;
     }
 
-    // Si no coincide con ningún patrón conocido, devolver null
-    return null;
+    // Si no coincide con ningún patrón conocido pero tiene una longitud válida, devolver el número limpio en lugar de null 
+    // para evitar bloquear al usuario en la edición de pedidos
+    return digitsOnly;
 };
 
 // Nueva función para calcular precio usando valores exactos de la DB
