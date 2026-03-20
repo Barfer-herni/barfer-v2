@@ -215,7 +215,7 @@ export function CategoriasManager() {
             </Card>
 
             {/* Lista de categorías inactivas */}
-            {categoriasInactivas.length > 0 && (
+            {/* {categoriasInactivas.length > 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Categorías Inactivas</CardTitle>
@@ -251,7 +251,7 @@ export function CategoriasManager() {
                         </div>
                     </CardContent>
                 </Card>
-            )}
+            )} */}
 
             {/* Diálogo de confirmación para eliminar */}
             {categoriaToDelete && (
