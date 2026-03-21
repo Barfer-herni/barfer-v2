@@ -74,8 +74,8 @@ export function ProductsAnalyticsClient({
 
     const productOptions = useMemo(() => {
         const products = allProducts.map((p, index) => ({
-            value: `${p.productId}-${p.optionName}`,
-            label: `${p.productName} (${p.optionName})`,
+            value: `${p.productId}-${p.optionName || ''}`,
+            label: p.optionName ? `${p.productName} (${p.optionName})` : p.productName,
         }));
         return [{ value: 'all', label: 'Todos los productos' }, ...products];
     }, [allProducts]);
@@ -86,7 +86,7 @@ export function ProductsAnalyticsClient({
         }
 
         return data.map(point => {
-            const product = point.products.find(p => `${p.productId}-${p.optionName}` === productFilter);
+            const product = point.products.find(p => `${p.productId}-${p.optionName || ''}` === productFilter);
             if (product) {
                 return {
                     period: point.period,
@@ -137,7 +137,7 @@ export function ProductsAnalyticsClient({
                     <CardHeader><CardTitle className="flex items-center gap-2"><Package className="h-5 w-5" /> Ranking (Período Actual)</CardTitle></CardHeader>
                     <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
                         {currentProducts.map((p, i) => (
-                            <div key={`current-${p.productId}-${p.optionName}-${i}`} className="flex items-center justify-between p-2 border rounded-md"><div className="flex items-center gap-3"><Badge variant="outline">#{i + 1}</Badge><div><p className="font-medium text-sm">{p.productName} ({p.optionName})</p><p className="text-xs text-muted-foreground">{p.orders} órdenes</p></div></div><div className="text-right"><p className="font-bold text-sm">{p.quantity} un.</p>{p.totalWeight && <p className="font-bold text-sm text-blue-600">{p.totalWeight.toLocaleString('es-AR')} kg</p>}<p className="text-xs text-muted-foreground">{currencyFormatter(p.revenue)}</p></div></div>
+                            <div key={`current-${p.productId}-${p.optionName || ''}-${i}`} className="flex items-center justify-between p-2 border rounded-md"><div className="flex items-center gap-3"><Badge variant="outline">#{i + 1}</Badge><div><p className="font-medium text-sm">{p.optionName ? `${p.productName} (${p.optionName})` : p.productName}</p><p className="text-xs text-muted-foreground">{p.orders} órdenes</p></div></div><div className="text-right"><p className="font-bold text-sm">{p.quantity} un.</p>{p.totalWeight && <p className="font-bold text-sm text-blue-600">{p.totalWeight.toLocaleString('es-AR')} kg</p>}<p className="text-xs text-muted-foreground">{currencyFormatter(p.revenue)}</p></div></div>
                         ))}
                         {currentProducts.length === 0 && <p className="text-center text-muted-foreground py-4">No hay productos.</p>}
                     </CardContent>
@@ -147,7 +147,7 @@ export function ProductsAnalyticsClient({
                         <CardHeader><CardTitle className="flex items-center gap-2"><Package className="h-5 w-5" /> Ranking (Comparación)</CardTitle></CardHeader>
                         <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
                             {compareProducts.map((p, i) => (
-                                <div key={`compare-${p.productId}-${p.optionName}-${i}`} className="flex items-center justify-between p-2 border rounded-md"><div className="flex items-center gap-3"><Badge variant="outline">#{i + 1}</Badge><div><p className="font-medium text-sm">{p.productName} ({p.optionName})</p><p className="text-xs text-muted-foreground">{p.orders} órdenes</p></div></div><div className="text-right"><p className="font-bold text-sm">{p.quantity} un.</p>{p.totalWeight && <p className="font-bold text-sm text-blue-600">{p.totalWeight.toLocaleString('es-AR')} kg</p>}<p className="text-xs text-muted-foreground">{currencyFormatter(p.revenue)}</p></div></div>
+                                <div key={`compare-${p.productId}-${p.optionName || ''}-${i}`} className="flex items-center justify-between p-2 border rounded-md"><div className="flex items-center gap-3"><Badge variant="outline">#{i + 1}</Badge><div><p className="font-medium text-sm">{p.optionName ? `${p.productName} (${p.optionName})` : p.productName}</p><p className="text-xs text-muted-foreground">{p.orders} órdenes</p></div></div><div className="text-right"><p className="font-bold text-sm">{p.quantity} un.</p>{p.totalWeight && <p className="font-bold text-sm text-blue-600">{p.totalWeight.toLocaleString('es-AR')} kg</p>}<p className="text-xs text-muted-foreground">{currencyFormatter(p.revenue)}</p></div></div>
                             ))}
                             {compareProducts.length === 0 && <p className="text-center text-muted-foreground py-4">No hay productos para comparar.</p>}
                         </CardContent>
