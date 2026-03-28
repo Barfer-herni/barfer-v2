@@ -120,25 +120,48 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
     };
 
     const handleAddRow = async (weekKey: string, dayKey: string) => {
-        const result = await addRowToDayAction(weekKey, dayKey);
-        if (result.success) {
-            // Recargar datos después de agregar fila
-            const dataResult = await getRepartosDataAction();
-            if (dataResult.success && dataResult.data) {
-                setWeeksData(dataResult.data);
-            }
-        }
+        const currentWeekData = weeksData[weekKey] || {};
+        const currentDayArr = currentWeekData[dayKey] || [];
+        const newRow = { 
+            id: Date.now().toString() + Math.random().toString(36).substring(2, 9), 
+            text: '', 
+            isCompleted: false 
+        };
+        const newWeekData = {
+            ...currentWeekData,
+            [dayKey]: [...currentDayArr, newRow]
+        };
+
+        // Actualizar estado local inmediatamente para no perder datos en edición
+        setWeeksData(prev => ({
+            ...prev,
+            [weekKey]: newWeekData
+        }));
+
+        // Mandar los datos de toda la semana al servidor en background (así nos aseguramos de no perder lo que escribió el usuario)
+        startTransition(async () => {
+            await saveRepartosWeekAction(weekKey, newWeekData);
+        });
     };
 
     const handleRemoveRow = async (weekKey: string, dayKey: string, rowIndex: number) => {
-        const result = await removeRowFromDayAction(weekKey, dayKey, rowIndex);
-        if (result.success) {
-            // Recargar datos después de eliminar fila
-            const dataResult = await getRepartosDataAction();
-            if (dataResult.success && dataResult.data) {
-                setWeeksData(dataResult.data);
-            }
-        }
+        const currentWeekData = weeksData[weekKey] || {};
+        const currentDayArr = currentWeekData[dayKey] || [];
+        const newWeekData = {
+            ...currentWeekData,
+            [dayKey]: currentDayArr.filter((_, idx) => idx !== rowIndex)
+        };
+
+        // Actualizar estado local inmediatamente
+        setWeeksData(prev => ({
+            ...prev,
+            [weekKey]: newWeekData
+        }));
+
+        // Mandar los datos de toda la semana al servidor en background
+        startTransition(async () => {
+            await saveRepartosWeekAction(weekKey, newWeekData);
+        });
     };
 
     const days = ['1', '2', '3', '4', '5', '6']; // Usar números como en el backend
