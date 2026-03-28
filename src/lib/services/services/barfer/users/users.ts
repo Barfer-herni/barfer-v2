@@ -317,3 +317,35 @@ export async function getClientsLost() {
 export async function getClientsUnderFollowUp() {
     return await apiClient.get('/users/clients-under-follow-up');
 }
+
+export async function getClientsForWhatsapp(params?: {
+    category?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
+}): Promise<{
+    clients: {
+        id: string;
+        email: string;
+        name: string;
+        phoneNumber: string | null;
+        orderCount: number;
+        lastOrderDate: string | null;
+        behaviorCategory: string;
+        spendingCategory: string;
+    }[];
+    pagination: {
+        totalCount: number;
+        totalPages: number;
+        currentPage: number;
+        hasMore: boolean;
+    };
+}> {
+    const queryParams = new URLSearchParams();
+    if (params?.category) queryParams.set('category', params.category);
+    if (params?.type) queryParams.set('type', params.type);
+    if (params?.page) queryParams.set('page', String(params.page));
+    if (params?.limit) queryParams.set('limit', String(params.limit));
+    const qs = queryParams.toString();
+    return await apiClient.get(`/users/clients-for-whatsapp${qs ? `?${qs}` : ''}`);
+}

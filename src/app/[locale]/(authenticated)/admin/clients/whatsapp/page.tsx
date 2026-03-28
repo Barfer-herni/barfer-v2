@@ -1,8 +1,7 @@
 import { getDictionary } from '@/config/i18n';
 import { WhatsAppClientsViewServer } from './components/WhatsAppClientsViewServer';
 import { PermissionGate } from '@/lib/auth/components/PermissionGate';
-
-// TODO: Migrar a backend API
+import { getClientsForWhatsapp } from '@/lib/services/services/barfer/users/users';
 
 interface WhatsAppPageProps {
     params: Promise<{
@@ -22,11 +21,25 @@ export default async function WhatsAppPage({ params, searchParams }: WhatsAppPag
 
     const page = parseInt(pageParam || '1', 10);
 
-    // TODO: Migrar a backend API
-    const clients: any[] = [];
-    const whatsappTemplates: any[] = [];
-
     const dictionary = await getDictionary(locale);
+
+    let clients: any[] = [];
+    let paginationInfo = {
+        totalCount: 0,
+        totalPages: 0,
+        currentPage: page,
+        hasMore: false,
+    };
+
+    try {
+        const result = await getClientsForWhatsapp({ category, type, page, limit: 50 });
+        clients = result.clients;
+        paginationInfo = result.pagination;
+    } catch (error) {
+        console.error('[WhatsAppPage] Error fetching clients:', error);
+    }
+
+    const whatsappTemplates: any[] = [];
 
     return (
         <PermissionGate
@@ -46,13 +59,8 @@ export default async function WhatsAppPage({ params, searchParams }: WhatsAppPag
                 dictionary={dictionary}
                 clients={clients}
                 whatsappTemplates={whatsappTemplates}
-                paginationInfo={{
-                    totalCount: 0,
-                    totalPages: 0,
-                    currentPage: page,
-                    hasMore: false
-                }}
+                paginationInfo={paginationInfo}
             />
         </PermissionGate>
     );
-} 
+}
