@@ -330,7 +330,9 @@ export const createExpressColumns = (
             header: 'Notas',
             cell: ({ row }: CellContext<Order, unknown>) => {
                 const address = row.original.address as Order['address'];
-                const notes = row.original.notes || '';
+                // Intentar obtener las notas de varias formas para mayor robustez
+                const notesValue = row.getValue('notes') as string;
+                const notes = notesValue || row.original.notes || '';
 
                 let addressInfo = '';
                 if (address) {

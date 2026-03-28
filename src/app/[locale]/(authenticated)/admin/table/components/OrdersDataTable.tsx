@@ -463,7 +463,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 deliveryArea: {
                     ...row.original.deliveryArea,
                     schedule: normalizeScheduleTime(editValues.deliveryAreaSchedule),
-                    sameDayDelivery: row.original.deliveryArea?.sameDayDelivery || false
+                    sameDayDelivery: isExpressContext ? true : (row.original.deliveryArea?.sameDayDelivery || false)
                 },
                 items: cleanedItems,
                 deliveryDay: editValues.deliveryDay ? createLocalDate(editValues.deliveryDay) : undefined,
@@ -663,7 +663,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 deliveryArea: {
                     ...createFormData.deliveryArea,
                     schedule: normalizeScheduleTime(createFormData.deliveryArea.schedule),
-                    sameDayDelivery: false
+                    sameDayDelivery: isExpressContext
                 }
             };
 

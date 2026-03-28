@@ -78,24 +78,6 @@ export async function createStockAction(data: {
 
 export async function getStockByPuntoEnvioAction(puntoEnvio: string) {
     try {
-        // // Validar que el usuario tenga permiso para ver este punto de envío
-        // const userWithPermissions = await getCurrentUserWithPermissions();
-        // const isAdmin = userWithPermissions?.isAdmin || false;
-
-        // Si no es admin, validar que el punto esté en sus puntos asignados
-
-        // const userPuntosEnvio = Array.isArray(userWithPermissions?.puntoEnvio)
-        //     ? userWithPermissions.puntoEnvio
-        //     : (userWithPermissions?.puntoEnvio ? [userWithPermissions.puntoEnvio] : []);
-
-        // if (userPuntosEnvio.length === 0 || !userPuntosEnvio.includes(puntoEnvio)) {
-        //     return {
-        //         success: true,
-        //         stock: [],
-        //     };
-        // }
-
-
         return await getStockByPuntoEnvioMongo(puntoEnvio);
     } catch (error) {
         console.error('Error getting stock:', error);
