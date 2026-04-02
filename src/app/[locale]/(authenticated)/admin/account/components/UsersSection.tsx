@@ -84,6 +84,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                 'outputs:edit',        // Editar salidas
                 'outputs:delete',      // Eliminar salidas
                 'outputs:view_statistics', // Ver estadísticas de salidas
+                'surveys:view',        // Ver encuestas
             ], // Permisos básicos por defecto para usuarios normales
             puntoEnvio: [],
         });
@@ -582,11 +583,11 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                     </div>
                                 </div>
 
-                                {/* Permisos de Gestión */}
+                                {/* Permisos de Precios */}
                                 <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 rounded-full bg-purple-500"></div>
-                                        <Label className="text-sm font-medium text-purple-700 dark:text-purple-400">Permisos de Gestión</Label>
+                                        <div className="h-2 w-2 rounded-full bg-pink-500"></div>
+                                        <Label className="text-sm font-medium text-pink-700 dark:text-pink-400">Permisos de Precios</Label>
                                     </div>
                                     <div className="ml-4 space-y-2">
                                         <div className="flex items-center space-x-2">
@@ -611,8 +612,16 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                             />
                                             <Label className="text-sm">Editar precios</Label>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        {/* Permisos de Stock */}
+                                {/* Permisos de Stock / Express */}
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-cyan-500"></div>
+                                        <Label className="text-sm font-medium text-cyan-700 dark:text-cyan-400">Permisos de Stock / Express</Label>
+                                    </div>
+                                    <div className="ml-4 space-y-2">
                                         <div className="flex items-center space-x-2">
                                             <Switch
                                                 checked={userForm.permissions.includes('stock:view')}
@@ -657,6 +666,16 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                             />
                                             <Label className="text-sm">Ver Detalle / Estadísticas Stock</Label>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Permisos de Balance */}
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                                        <Label className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Permisos de Balance</Label>
+                                    </div>
+                                    <div className="ml-4 space-y-2">
                                         <div className="flex items-center space-x-2">
                                             <Switch
                                                 checked={userForm.permissions.includes('balance:view')}
@@ -668,6 +687,16 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                             />
                                             <Label className="text-sm">Ver balance financiero</Label>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Permisos de Salidas */}
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-rose-500"></div>
+                                        <Label className="text-sm font-medium text-rose-700 dark:text-rose-400">Permisos de Salidas</Label>
+                                    </div>
+                                    <div className="ml-4 space-y-2">
                                         <div className="flex items-center space-x-2">
                                             <Switch
                                                 checked={userForm.permissions.includes('outputs:view')}
@@ -843,6 +872,60 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                                 disabled={isPending}
                                             />
                                             <Label className="text-sm">Ver matriz de productos</Label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Permisos de Encuestas (Surveys) */}
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-teal-500"></div>
+                                        <Label className="text-sm font-medium text-teal-700 dark:text-teal-400">Permisos de Encuestas (Surveys)</Label>
+                                    </div>
+                                    <div className="ml-4 space-y-2">
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('surveys:view')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'surveys:view'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'surveys:view') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Ver encuestas</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('surveys:create')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'surveys:create'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'surveys:create') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Crear encuestas</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('surveys:edit')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'surveys:edit'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'surveys:edit') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Editar encuestas</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('surveys:delete')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'surveys:delete'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'surveys:delete') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Eliminar encuestas</Label>
                                         </div>
                                     </div>
                                 </div>

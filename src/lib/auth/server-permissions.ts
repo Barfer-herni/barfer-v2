@@ -72,6 +72,11 @@ export type Permission =
     | 'repartos:edit'
     | 'repartos:delete'
     | 'repartos:view_statistics'
+    // Surveys
+    | 'surveys:create'
+    | 'surveys:view'
+    | 'surveys:edit'
+    | 'surveys:delete'
 
 // Permisos por defecto para admins (siempre tienen todos)
 export const ADMIN_PERMISSIONS: Permission[] = [
@@ -125,6 +130,10 @@ export const ADMIN_PERMISSIONS: Permission[] = [
     'repartos:edit',
     'repartos:delete',
     'repartos:view_statistics',
+    'surveys:view',
+    'surveys:create',
+    'surveys:edit',
+    'surveys:delete',
 ];
 
 /**
@@ -410,6 +419,13 @@ export const SIDEBAR_CONFIG: SidebarItem[] = [
         href: '/admin/express',
         icon: 'Bike',
         requiredPermissions: ['stock:view'],
+    },
+    {
+        label: 'surveys',
+        mobileLabel: 'surveysMobile',
+        href: '/admin/surveys',
+        icon: 'ClipboardList',
+        requiredPermissions: ['surveys:view'],
     },
 ];
 

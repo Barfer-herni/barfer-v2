@@ -18,6 +18,7 @@
         "repartos": "Control de Repartos",
         "mayoristas": "Puntos de Venta Mayoristas",
         "gestionEnvioExpressStock": "Gestión Envío Express y Stock",
+        "surveys": "Encuestas",
         "accountMobile": "Cuenta",
         "analyticsMobile": "KPIs",
         "clientsMobile": "Clientes",
@@ -27,7 +28,8 @@
         "outputsMobile": "Salidas",
         "repartosMobile": "Repartos",
         "mayoristasMobile": "Mayoristas",
-        "gestionEnvioExpressStockMobile": "Envío Express"
+        "gestionEnvioExpressStockMobile": "Envío Express",
+        "surveysMobile": "Encuestas"
       },
       "repartos": {
         "title": "Control de Repartos",
