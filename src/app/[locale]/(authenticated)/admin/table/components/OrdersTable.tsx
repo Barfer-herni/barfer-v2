@@ -388,49 +388,33 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
 
                                                             const currentOrderType = editValues.orderType || rowData.orderType || 'mayorista';
                                                             const currentPaymentMethod = editValues.paymentMethod || rowData.paymentMethod || '';
+                                                            const currentDeliveryDay = editValues.deliveryDay || rowData.deliveryDay;
+
+                                                            // Procesar items para que tengan el formato correcto que espera el backend (id/name sin prefijos)
+                                                            const { processSingleItem } = await import('../helpers');
+                                                            const processedItems = currentItems.map(item => processSingleItem(item));
 
                                                             // Calcular precios de cada item usando la action
                                                             const { calculatePriceAction } = await import('../actions');
                                                             const priceResult = await calculatePriceAction(
-                                                                currentItems,
+                                                                processedItems,
                                                                 currentOrderType,
-                                                                currentPaymentMethod
+                                                                currentPaymentMethod,
+                                                                currentDeliveryDay
                                                             );
 
                                                             // Mapear los items con sus precios calculados
-                                                            let itemsWithPrices = currentItems;
+                                                            // Usar processedItems para el PDF para asegurar consistencia con el modal de creación
+                                                            let itemsWithPrices = processedItems;
                                                             if (priceResult.success && priceResult.itemPrices) {
-                                                                // CRÍTICO: Mapear por NOMBRE, no por índice
-                                                                // itemPrices puede tener menos elementos si algunos items no encontraron precio
-                                                                itemsWithPrices = currentItems.map((item: any) => {
-                                                                    const itemFullName = item.fullName || item.name;
+                                                                itemsWithPrices = processedItems.map((item: any) => {
                                                                     const itemName = item.name;
+                                                                    const itemFullName = item.fullName;
 
-
-                                                                    // Estrategia de búsqueda múltiple para encontrar el precio correcto
-                                                                    let priceInfo = priceResult.itemPrices?.find((ip: any) => {
-                                                                        // 1. Coincidencia exacta con fullName
-                                                                        if (ip.name === itemFullName) {
-                                                                            return true;
-                                                                        }
-
-                                                                        // 2. Coincidencia exacta con name
-                                                                        if (ip.name === itemName) {
-                                                                            return true;
-                                                                        }
-
-                                                                        // 3. El precio contiene el fullName del item
-                                                                        if (itemFullName && ip.name.includes(itemFullName)) {
-                                                                            return true;
-                                                                        }
-
-                                                                        // 4. El fullName del item contiene el nombre del precio
-                                                                        if (itemFullName && itemFullName.includes(ip.name)) {
-                                                                            return true;
-                                                                        }
-
-                                                                        return false;
-                                                                    });
+                                                                    // Buscar el precio usando el nombre canónico (name) o el nombre completo (fullName)
+                                                                    const priceInfo = priceResult.itemPrices!.find((ip: any) =>
+                                                                        ip.name === itemName || ip.name === itemFullName
+                                                                    );
 
                                                                     return {
                                                                         ...item,

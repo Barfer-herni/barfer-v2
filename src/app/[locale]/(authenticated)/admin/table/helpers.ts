@@ -647,7 +647,8 @@ export const mapDBProductToSelectOption = (dbProductName: string, dbOptionName: 
             product = dbProductName;
         }
     } else if (dbProductName.startsWith('HUESOS RECREATIVOS') ||
-        dbProductName.startsWith('BOX DE COMPLEMENTOS')) {
+        dbProductName.startsWith('BOX DE COMPLEMENTOS') ||
+        dbProductName.includes('CALDO')) {
         section = 'OTROS';
         product = dbProductName;
         // Estos productos no tienen peso adicional
@@ -668,7 +669,6 @@ export const mapDBProductToSelectOption = (dbProductName: string, dbOptionName: 
         dbProductName.includes('TRAQUEA') ||
         dbProductName.includes('GARRAS') ||
         dbProductName.includes('CORNALITOS') ||
-        dbProductName.includes('CALDO') ||
         dbProductName.includes('HIGADO') ||
         (dbProductName.includes('POLLO') && (dbProductName.includes('40GRS') || dbProductName.includes('100GRS')))) {
         section = 'RAW';
