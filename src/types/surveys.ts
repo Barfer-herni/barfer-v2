@@ -38,4 +38,5 @@ export interface SurveyResponse {
   // Populated fields (if any)
   userEmail?: string;
   userName?: string;
+  shippingType?: string;
 }

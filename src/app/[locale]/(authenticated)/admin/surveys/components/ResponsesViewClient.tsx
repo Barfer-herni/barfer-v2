@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { 
   ChevronLeft, 
+  ChevronRight,
   User, 
   Calendar, 
   BarChart3,
@@ -48,6 +49,8 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   const formatValue = (value: any) => {
     if (Array.isArray(value)) {
@@ -123,6 +126,23 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
+  const totalPages = Math.ceil(filteredResponses.length / itemsPerPage);
+  const paginatedResponses = filteredResponses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (statId: string, val: string) => {
+    setFilters(prev => ({ ...prev, [statId]: val }));
+    setCurrentPage(1);
+  };
+  
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="space-y-8 pb-10">
       {/* Header */}
@@ -179,7 +199,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
               <Select 
                 key={stat.id} 
                 value={filters[stat.id] || "all"} 
-                onValueChange={(val) => setFilters(prev => ({ ...prev, [stat.id]: val }))}
+                onValueChange={(val) => handleFilterChange(stat.id, val)}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder={stat.text.length > 20 ? stat.text.substring(0, 20) + "..." : stat.text} />
@@ -198,7 +218,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                 placeholder="Buscar usuario..."
                 className="pl-8"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
             </div>
           </div>
@@ -215,6 +235,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
                       <TableHead className="w-[200px]">Usuario</TableHead>
+                      <TableHead className="w-[120px]">Envío</TableHead>
                       <TableHead className="w-[180px]">
                         <Button 
                           variant="ghost" 
@@ -233,14 +254,14 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredResponses.length === 0 ? (
+                    {paginatedResponses.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={survey.questions.length + 2} className="h-24 text-center">
+                        <TableCell colSpan={survey.questions.length + 3} className="h-24 text-center">
                           No se encontraron resultados.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredResponses.map((response) => (
+                      paginatedResponses.map((response) => (
                         <TableRow key={response._id} className="group">
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
@@ -249,6 +270,14 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                                 {renderId(response.userId)}
                               </span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
+                              response.shippingType === 'Express' ? 'bg-amber-100 text-amber-800' : 
+                              response.shippingType === 'Programado' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {response.shippingType || 'Desconocido'}
+                            </span>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             <div className="flex items-center gap-1">
@@ -269,6 +298,37 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                     )}
                   </TableBody>
                 </Table>
+              </div>
+            </div>
+          )}
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-2 pt-4">
+              <p className="text-sm text-muted-foreground">
+                Mostrando {Math.min((currentPage - 1) * itemsPerPage + 1, filteredResponses.length)} a {Math.min(currentPage * itemsPerPage, filteredResponses.length)} de {filteredResponses.length} resultados
+              </p>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="sr-only">Anterior</span>
+                </Button>
+                <div className="text-sm font-medium">
+                  Página {currentPage} de {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="sr-only">Siguiente</span>
+                </Button>
               </div>
             </div>
           )}

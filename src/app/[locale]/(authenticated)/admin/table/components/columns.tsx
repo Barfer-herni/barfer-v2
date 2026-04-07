@@ -175,11 +175,11 @@ export const columns: ColumnDef<Order>[] = [
                         }
 
                         const itemName = item.name || '';
-                        
+
                         // Caso especial: BIG DOG - SIEMPRE mostrar el sabor (opción)
                         // El nombre es "BIG DOG (15kg)" y la opción es el sabor (VACA, POLLO, etc.)
                         const isBigDog = /BIG\s+DOG/i.test(itemName);
-                        
+
                         // Si el item.name ya contiene el peso (como "GATO VACA 5KG"), no mostrar displayOption
                         // para evitar duplicación, EXCEPTO para BIG DOG que necesita mostrar el sabor
                         const hasWeightInName = /\d+KG|\d+GRS|\d+G/i.test(itemName);
