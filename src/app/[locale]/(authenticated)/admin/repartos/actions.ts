@@ -33,6 +33,7 @@ export async function updateRepartoEntryAction(
 ) {
     try {
         const success = await repartosService.updateRepartoEntry(weekKey, dayKey, rowIndex, entry);
+        if (success) revalidateTag('repartos');
         return { success };
     } catch (error) {
         return { success: false, error: 'Error al actualizar la entrada' };
@@ -47,6 +48,7 @@ export async function toggleRepartoCompletionAction(
 ) {
     try {
         const success = await repartosService.toggleRepartoCompletion(weekKey, dayKey, rowIndex);
+        if (success) revalidateTag('repartos');
         return { success };
     } catch (error) {
         return { success: false, error: 'Error al cambiar estado de completado' };
@@ -75,6 +77,7 @@ export async function cleanupOldWeeksAction() {
 export async function addRowToDayAction(weekKey: string, dayKey: string) {
     try {
         const success = await repartosService.addRowToDay(weekKey, dayKey);
+        if (success) revalidateTag('repartos');
         return { success };
     } catch (error) {
         return { success: false, error: 'Error al agregar fila' };
@@ -85,6 +88,7 @@ export async function addRowToDayAction(weekKey: string, dayKey: string) {
 export async function removeRowFromDayAction(weekKey: string, dayKey: string, rowIndex: number) {
     try {
         const success = await repartosService.removeRowFromDay(weekKey, dayKey, rowIndex);
+        if (success) revalidateTag('repartos');
         return { success };
     } catch (error) {
         return { success: false, error: 'Error al eliminar fila' };

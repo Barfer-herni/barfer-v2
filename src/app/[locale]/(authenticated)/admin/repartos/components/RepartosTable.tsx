@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Save, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { getWeeksOfMonth, formatWeekTitle } from '../utils/dateUtils';
 import {
     saveRepartosWeekAction,
@@ -28,7 +28,7 @@ interface RepartosTableProps {
 export function RepartosTable({ data: initialData, dictionary }: RepartosTableProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [weeksData, setWeeksData] = useState<RepartosData>(initialData);
-    const [isEditing, setIsEditing] = useState(false);
+    const [lastInputTime, setLastInputTime] = useState(0);
     const [isPending, startTransition] = useTransition();
 
     // Obtener las semanas del mes actual
@@ -46,7 +46,25 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
         loadData();
     }, [currentMonth]);
 
+    // Polling: Refresco automático cada 5 segundos
+    useEffect(() => {
+        const fetchLatestData = async () => {
+            // Evitamos refrescar si el usuario tipeó hace menos de 2.5 segundos
+            // o si hay un guadado en progreso.
+            if (Date.now() - lastInputTime < 2500 || isPending) return;
+            
+            const result = await getRepartosDataAction();
+            if (result.success && result.data) {
+                setWeeksData(result.data);
+            }
+        };
+
+        const intervalId = setInterval(fetchLatestData, 5000);
+        return () => clearInterval(intervalId);
+    }, [lastInputTime, isPending]);
+
     const handleTextChange = (weekKey: string, dayKey: string, rowIndex: number, value: string) => {
+        setLastInputTime(Date.now());
         // Actualizar estado local inmediatamente
         setWeeksData(prev => ({
             ...prev,
@@ -65,6 +83,7 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
     };
 
     const handleCheckboxChange = (weekKey: string, dayKey: string, rowIndex: number, checked: boolean) => {
+        setLastInputTime(Date.now());
         // Actualizar estado local inmediatamente
         setWeeksData(prev => ({
             ...prev,
@@ -106,20 +125,8 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
         }
     };
 
-    const saveData = () => {
-        startTransition(async () => {
-            // Guardar todas las semanas del mes actual
-            for (const week of weeks) {
-                const weekData = weeksData[week.weekKey];
-                if (weekData) {
-                    await saveRepartosWeekAction(week.weekKey, weekData);
-                }
-            }
-            setIsEditing(false);
-        });
-    };
-
     const handleAddRow = async (weekKey: string, dayKey: string) => {
+        setLastInputTime(Date.now());
         const currentWeekData = weeksData[weekKey] || {};
         const currentDayArr = currentWeekData[dayKey] || [];
         const newRow = { 
@@ -138,13 +145,14 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
             [weekKey]: newWeekData
         }));
 
-        // Mandar los datos de toda la semana al servidor en background (así nos aseguramos de no perder lo que escribió el usuario)
+        // Usar la acción parcial para no sobreescribir cambios concurrentes (condición de carrera)
         startTransition(async () => {
-            await saveRepartosWeekAction(weekKey, newWeekData);
+            await addRowToDayAction(weekKey, dayKey);
         });
     };
 
     const handleRemoveRow = async (weekKey: string, dayKey: string, rowIndex: number) => {
+        setLastInputTime(Date.now());
         const currentWeekData = weeksData[weekKey] || {};
         const currentDayArr = currentWeekData[dayKey] || [];
         const newWeekData = {
@@ -158,9 +166,9 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
             [weekKey]: newWeekData
         }));
 
-        // Mandar los datos de toda la semana al servidor en background
+        // Usar la acción parcial para quitar la fila específica
         startTransition(async () => {
-            await saveRepartosWeekAction(weekKey, newWeekData);
+            await removeRowFromDayAction(weekKey, dayKey, rowIndex);
         });
     };
 
@@ -215,42 +223,6 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
                         {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                         <span className="text-xs sm:text-sm">Inicializar</span>
                     </Button>
-
-                    {isEditing ? (
-                        <>
-                            <Button
-                                size="sm"
-                                onClick={saveData}
-                                className="flex items-center gap-2 flex-1 sm:flex-initial"
-                                disabled={isPending}
-                            >
-                                {isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Save className="h-4 w-4" />
-                                )}
-                                <span className="text-xs sm:text-sm">{isPending ? 'Guardando...' : (dictionary.app?.admin?.repartos?.save || 'Guardar')}</span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setIsEditing(false)}
-                                disabled={isPending}
-                                className="flex-1 sm:flex-initial"
-                            >
-                                <span className="text-xs sm:text-sm">{dictionary.app?.admin?.repartos?.cancel || 'Cancelar'}</span>
-                            </Button>
-                        </>
-                    ) : (
-                        <Button
-                            size="sm"
-                            onClick={() => setIsEditing(true)}
-                            className="flex items-center gap-2 flex-1 sm:flex-initial"
-                        >
-                            <Plus className="h-4 w-4" />
-                            <span className="text-xs sm:text-sm">{dictionary.app?.admin?.repartos?.edit || 'Editar'}</span>
-                        </Button>
-                    )}
                 </div>
             </div>
 
@@ -305,7 +277,6 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
                                                                 value={entry.text}
                                                                 onChange={(e) => handleTextChange(week.weekKey, dayKey, rowIndex, e.target.value)}
                                                                 placeholder={`${dayLabels[dayIndex]} ${rowIndex + 1}`}
-                                                                disabled={!isEditing}
                                                                 className="text-xs h-8 flex-1"
                                                             />
 
@@ -315,12 +286,11 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
                                                                 onCheckedChange={(checked) =>
                                                                     handleCheckboxChange(week.weekKey, dayKey, rowIndex, checked as boolean)
                                                                 }
-                                                                disabled={!isEditing}
                                                                 className="shrink-0"
                                                             />
 
                                                             {/* Botón de eliminar fila */}
-                                                            {isEditing && weekData[dayKey].length > 1 && (
+                                                            {weekData[dayKey].length > 1 && (
                                                                 <Button
                                                                     variant="outline"
                                                                     size="sm"
@@ -346,18 +316,16 @@ export function RepartosTable({ data: initialData, dictionary }: RepartosTablePr
                                                         )}
 
                                                     {/* Botón para agregar filas - ahora abajo de las filas */}
-                                                    {isEditing && (
-                                                        <div className="flex justify-center space-x-1 mt-2">
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => handleAddRow(week.weekKey, dayKey)}
-                                                                className="h-6 w-6 p-0"
-                                                            >
-                                                                <Plus className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
-                                                    )}
+                                                    <div className="flex justify-center space-x-1 mt-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleAddRow(week.weekKey, dayKey)}
+                                                            className="h-6 w-6 p-0"
+                                                        >
+                                                            <Plus className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
