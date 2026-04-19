@@ -45,7 +45,8 @@ interface WhatsAppClientsTableProps {
 type SortField = 'totalSpent' | 'lastOrder' | null;
 type SortDirection = 'asc' | 'desc';
 
-const formatCurrency = (amount: number): string => {
+const formatCurrency = (amount: number | null | undefined): string => {
+    if (amount === null || amount === undefined) return '$0';
     return new Intl.NumberFormat('es-AR', {
         style: 'currency',
         currency: 'ARS',
@@ -53,8 +54,10 @@ const formatCurrency = (amount: number): string => {
     }).format(amount);
 };
 
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return '-';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('es-AR', {
         day: '2-digit',
         month: '2-digit',
@@ -104,8 +107,8 @@ export function WhatsAppClientsTable({
     };
 
     const filteredClients = clients.filter(client =>
-        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone.includes(searchTerm)
+        (client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        (client.phone?.includes(searchTerm) ?? false)
     );
 
     // Aplicar ordenamiento
@@ -316,7 +319,7 @@ export function WhatsAppClientsTable({
                         ) : (
                             paginatedClients.map((client, index) => {
                                 const isSelected = selectedClients.includes(client.id);
-                                const isHidden = hiddenClients.has(client.email);
+                                const isHidden = client.email ? hiddenClients.has(client.email) : false;
 
                                 return (
                                     <TableRow
