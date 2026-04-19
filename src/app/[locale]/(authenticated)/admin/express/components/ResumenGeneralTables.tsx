@@ -201,10 +201,8 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
                     if (weight > 0) {
                         const totalItemWeight = weight * qty;
 
-                        // Kilos are handled by backendStats later, but we still calculate them here for fallback
-                        if (!backendStats?.sameDay) {
-                            puntoData.totalKilos += totalItemWeight;
-                        }
+                        // Se suma siempre localmente como base/fallback
+                        puntoData.totalKilos += totalItemWeight;
 
                         if (productName.includes('BIG DOG')) {
                             if (fullName.includes('POLLO')) puntoData.flavors['BIG DOG POLLO'] += totalItemWeight;
@@ -227,48 +225,51 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
             }
         });
 
-        // REEMPLAZAR KILOS CON DATOS DEL BACKEND PARA MAYOR PRECISIÓN
-        if (backendStats?.sameDay) {
-            Object.values(dataByPunto).forEach(puntoData => {
-                // Si es un mes específico
-                if (selectedMonth !== 'all') {
-                    const statsForMonthAndPunto = backendStats.sameDay.find((s: any) =>
-                        s.month === selectedMonth &&
-                        s.puntoEnvio === puntoData.name
-                    );
-                    if (statsForMonthAndPunto) {
-                        puntoData.totalKilos = statsForMonthAndPunto.totalMes;
-                        // Actualizar desgloses de sabores si están disponibles en el objeto s
-                        // (Nota: el objeto s tiene pollo, vaca, etc. pero sumado por puntoEnvio)
-                        puntoData.flavors['POLLO'] = statsForMonthAndPunto.pollo || 0;
-                        puntoData.flavors['VACA'] = statsForMonthAndPunto.vaca || 0;
-                        puntoData.flavors['CERDO'] = statsForMonthAndPunto.cerdo || 0;
-                        puntoData.flavors['CORDERO'] = statsForMonthAndPunto.cordero || 0;
-                        puntoData.flavors['BIG DOG POLLO'] = statsForMonthAndPunto.bigDogPollo || 0;
-                        puntoData.flavors['BIG DOG VACA'] = statsForMonthAndPunto.bigDogVaca || 0;
-                        puntoData.flavors['GATO POLLO'] = statsForMonthAndPunto.gatoPollo || 0;
-                        puntoData.flavors['GATO VACA'] = statsForMonthAndPunto.gatoVaca || 0;
-                        puntoData.flavors['GATO CORDERO'] = statsForMonthAndPunto.gatoCordero || 0;
-                        puntoData.flavors['HUESOS CARNOSOS'] = statsForMonthAndPunto.huesosCarnosos || 0;
-                    }
-                } else {
-                    // Si es "Todo el periodo", sumar los meses del backend para este punto
-                    const statsForPunto = backendStats.sameDay.filter((s: any) => s.puntoEnvio === puntoData.name);
-                    if (statsForPunto.length > 0) {
-                        puntoData.totalKilos = statsForPunto.reduce((sum: number, s: any) => sum + s.totalMes, 0);
+        // REEMPLAZAR KILOS CON DATOS DEL BACKEND PARA MAYOR PRECISIÓN (SOLO SI EXISTEN)
+        // Helper: match backend puntoEnvio to frontend puntoData.name
+        // Backend uses empty string '' for orders without a punto, frontend uses 'Sin punto de venta'
+        const matchesPuntoEnvio = (backendPunto: string | undefined, frontendName: string) => {
+            const normalizedBackend = (backendPunto || '').trim().toUpperCase();
+            const normalizedFrontend = frontendName.trim().toUpperCase();
 
-                        // Sumar sabores
-                        puntoData.flavors['POLLO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.pollo || 0), 0);
-                        puntoData.flavors['VACA'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.vaca || 0), 0);
-                        puntoData.flavors['CERDO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.cerdo || 0), 0);
-                        puntoData.flavors['CORDERO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.cordero || 0), 0);
-                        puntoData.flavors['BIG DOG POLLO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.bigDogPollo || 0), 0);
-                        puntoData.flavors['BIG DOG VACA'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.bigDogVaca || 0), 0);
-                        puntoData.flavors['GATO POLLO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.gatoPollo || 0), 0);
-                        puntoData.flavors['GATO VACA'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.gatoVaca || 0), 0);
-                        puntoData.flavors['GATO CORDERO'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.gatoCordero || 0), 0);
-                        puntoData.flavors['HUESOS CARNOSOS'] = statsForPunto.reduce((sum: number, s: any) => sum + (s.huesosCarnosos || 0), 0);
+            if (frontendName === SIN_PUNTO) {
+                return !backendPunto || backendPunto === '';
+            }
+            return normalizedBackend === normalizedFrontend;
+        };
+
+        if (backendStats?.sameDay && backendStats.sameDay.length > 0) {
+            Object.values(dataByPunto).forEach(puntoData => {
+                const applyStats = (statsEntries: any[]) => {
+                    if (statsEntries.length === 0) return;
+                    
+                    // Solo sobreescribimos si el backend devolvió kilos para este punto específico
+                    const totalKilosBackend = statsEntries.reduce((sum: number, s: any) => sum + (s.totalMes || 0), 0);
+                    if (totalKilosBackend > 0) {
+                        puntoData.totalKilos = totalKilosBackend;
+                        puntoData.flavors['POLLO'] = statsEntries.reduce((sum: number, s: any) => sum + (s.pollo || 0), 0);
+                        puntoData.flavors['VACA'] = statsEntries.reduce((sum: number, s: any) => sum + (s.vaca || 0), 0);
+                        puntoData.flavors['CERDO'] = statsEntries.reduce((sum: number, s: any) => sum + (s.cerdo || 0), 0);
+                        puntoData.flavors['CORDERO'] = statsEntries.reduce((sum: number, s: any) => sum + (s.cordero || 0), 0);
+                        puntoData.flavors['BIG DOG POLLO'] = statsEntries.reduce((sum: number, s: any) => sum + (s.bigDogPollo || 0), 0);
+                        puntoData.flavors['BIG DOG VACA'] = statsEntries.reduce((sum: number, s: any) => sum + (s.bigDogVaca || 0), 0);
+                        puntoData.flavors['GATO POLLO'] = statsEntries.reduce((sum: number, s: any) => sum + (s.gatoPollo || 0), 0);
+                        puntoData.flavors['GATO VACA'] = statsEntries.reduce((sum: number, s: any) => sum + (s.gatoVaca || 0), 0);
+                        puntoData.flavors['GATO CORDERO'] = statsEntries.reduce((sum: number, s: any) => sum + (s.gatoCordero || 0), 0);
+                        puntoData.flavors['HUESOS CARNOSOS'] = statsEntries.reduce((sum: number, s: any) => sum + (s.huesosCarnosos || 0), 0);
                     }
+                };
+
+                if (selectedMonth !== 'all') {
+                    const matching = backendStats.sameDay.filter((s: any) =>
+                        s.month === selectedMonth && matchesPuntoEnvio(s.puntoEnvio, puntoData.name)
+                    );
+                    applyStats(matching);
+                } else {
+                    const matching = backendStats.sameDay.filter((s: any) =>
+                        matchesPuntoEnvio(s.puntoEnvio, puntoData.name)
+                    );
+                    applyStats(matching);
                 }
             });
         }
