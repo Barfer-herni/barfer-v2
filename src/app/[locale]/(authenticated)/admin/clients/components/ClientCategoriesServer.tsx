@@ -68,18 +68,51 @@ export function ClientCategoriesServer({
                 </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="behavior" className="mt-6">
-                <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {sortedBehaviorCategories.map((category) => (
-                        <ClientCategoryCard
-                            key={category.category}
-                            category={category}
-                            type="behavior"
-                            dictionary={dictionary}
-                            canSendEmail={canSendEmail}
-                            canSendWhatsApp={canSendWhatsApp}
-                        />
-                    ))}
+            <TabsContent value="behavior" className="mt-6 space-y-8">
+                {/* Section 1: Nuevos Clientes */}
+                <div className="space-y-4">
+                    <h2 className="text-lg font-semibold tracking-tight">
+                        {dictionary.app.admin.clients.categories.sections?.newClients || 'Nuevos Clientes'}
+                    </h2>
+                    <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {['new', 'tracking', 'recompra', 'no-recompra'].map((catKey) => {
+                            const category = behaviorCategories.find(c => c.category === catKey);
+                            if (!category) return null;
+                            return (
+                                <ClientCategoryCard
+                                    key={category.category}
+                                    category={category}
+                                    type="behavior"
+                                    dictionary={dictionary}
+                                    canSendEmail={canSendEmail}
+                                    canSendWhatsApp={canSendWhatsApp}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Section 2: Clientes Recurrentes */}
+                <div className="space-y-4">
+                    <h2 className="text-lg font-semibold tracking-tight">
+                        {dictionary.app.admin.clients.categories.sections?.recurringClients || 'Clientes Recurrentes'}
+                    </h2>
+                    <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {['active', 'possible-inactive', 'lost', 'recovered'].map((catKey) => {
+                            const category = behaviorCategories.find(c => c.category === catKey);
+                            if (!category) return null;
+                            return (
+                                <ClientCategoryCard
+                                    key={category.category}
+                                    category={category}
+                                    type="behavior"
+                                    dictionary={dictionary}
+                                    canSendEmail={canSendEmail}
+                                    canSendWhatsApp={canSendWhatsApp}
+                                />
+                            );
+                        })}
+                    </div>
                 </div>
             </TabsContent>
 

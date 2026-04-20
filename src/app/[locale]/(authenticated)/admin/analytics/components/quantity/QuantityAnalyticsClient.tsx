@@ -87,6 +87,36 @@ export function QuantityAnalyticsClient({
         return `${format(from, 'dd/MM/yyyy', { locale: es })} - ${format(to, 'dd/MM/yyyy', { locale: es })}`;
     };
 
+    // Función para consolidar datos por mes sumando entradas duplicadas (por ejemplo, múltiples puntoEnvio)
+    const consolidateByMonth = (data: ProductQuantity[]): ProductQuantity[] => {
+        const monthMap = new Map<string, ProductQuantity>();
+
+        data.forEach(item => {
+            const existing = monthMap.get(item.month);
+            if (existing) {
+                // Sumar todos los valores si ya existe una entrada para este mes
+                existing.pollo += item.pollo;
+                existing.vaca += item.vaca;
+                existing.cerdo += item.cerdo;
+                existing.cordero += item.cordero;
+                existing.bigDogPollo += item.bigDogPollo;
+                existing.bigDogVaca += item.bigDogVaca;
+                existing.totalPerro += item.totalPerro;
+                existing.gatoPollo += item.gatoPollo;
+                existing.gatoVaca += item.gatoVaca;
+                existing.gatoCordero += item.gatoCordero;
+                existing.totalGato += item.totalGato;
+                existing.huesosCarnosos += item.huesosCarnosos;
+                existing.totalMes += item.totalMes;
+            } else {
+                // Primera entrada para este mes
+                monthMap.set(item.month, { ...item });
+            }
+        });
+
+        return Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+    };
+
     // Función para calcular los totales generales sumando todos los tipos de pedidos
     const getTotalData = (stats?: QuantityStatsByType): ProductQuantity[] => {
         if (!stats) return [];
@@ -104,28 +134,51 @@ export function QuantityAnalyticsClient({
 
         return Array.from(allMonths).sort().map(month => {
             const minoristaMonth = minorista.find(m => m.month === month);
-            const sameDayMonth = sameDay.find(m => m.month === month);
+            // Para sameDay, necesitamos sumar TODAS las entradas del mismo mes (puede haber múltiples puntoEnvio)
+            const sameDayMonths = sameDay.filter(m => m.month === month);
             const mayoristaMonth = mayorista.find(m => m.month === month);
+
+            // Sumar todos los valores de sameDay para este mes
+            const sameDayTotal = sameDayMonths.reduce((acc, curr) => ({
+                pollo: acc.pollo + curr.pollo,
+                vaca: acc.vaca + curr.vaca,
+                cerdo: acc.cerdo + curr.cerdo,
+                cordero: acc.cordero + curr.cordero,
+                bigDogPollo: acc.bigDogPollo + curr.bigDogPollo,
+                bigDogVaca: acc.bigDogVaca + curr.bigDogVaca,
+                totalPerro: acc.totalPerro + curr.totalPerro,
+                gatoPollo: acc.gatoPollo + curr.gatoPollo,
+                gatoVaca: acc.gatoVaca + curr.gatoVaca,
+                gatoCordero: acc.gatoCordero + curr.gatoCordero,
+                totalGato: acc.totalGato + curr.totalGato,
+                huesosCarnosos: acc.huesosCarnosos + curr.huesosCarnosos,
+                totalMes: acc.totalMes + curr.totalMes,
+            }), {
+                pollo: 0, vaca: 0, cerdo: 0, cordero: 0,
+                bigDogPollo: 0, bigDogVaca: 0, totalPerro: 0,
+                gatoPollo: 0, gatoVaca: 0, gatoCordero: 0, totalGato: 0,
+                huesosCarnosos: 0, totalMes: 0
+            });
 
             return {
                 month,
                 // Productos Perro - sumar todos los tipos
-                pollo: (minoristaMonth?.pollo || 0) + (sameDayMonth?.pollo || 0) + (mayoristaMonth?.pollo || 0),
-                vaca: (minoristaMonth?.vaca || 0) + (sameDayMonth?.vaca || 0) + (mayoristaMonth?.vaca || 0),
-                cerdo: (minoristaMonth?.cerdo || 0) + (sameDayMonth?.cerdo || 0) + (mayoristaMonth?.cerdo || 0),
-                cordero: (minoristaMonth?.cordero || 0) + (sameDayMonth?.cordero || 0) + (mayoristaMonth?.cordero || 0),
-                bigDogPollo: (minoristaMonth?.bigDogPollo || 0) + (sameDayMonth?.bigDogPollo || 0) + (mayoristaMonth?.bigDogPollo || 0),
-                bigDogVaca: (minoristaMonth?.bigDogVaca || 0) + (sameDayMonth?.bigDogVaca || 0) + (mayoristaMonth?.bigDogVaca || 0),
-                totalPerro: (minoristaMonth?.totalPerro || 0) + (sameDayMonth?.totalPerro || 0) + (mayoristaMonth?.totalPerro || 0),
+                pollo: (minoristaMonth?.pollo || 0) + sameDayTotal.pollo + (mayoristaMonth?.pollo || 0),
+                vaca: (minoristaMonth?.vaca || 0) + sameDayTotal.vaca + (mayoristaMonth?.vaca || 0),
+                cerdo: (minoristaMonth?.cerdo || 0) + sameDayTotal.cerdo + (mayoristaMonth?.cerdo || 0),
+                cordero: (minoristaMonth?.cordero || 0) + sameDayTotal.cordero + (mayoristaMonth?.cordero || 0),
+                bigDogPollo: (minoristaMonth?.bigDogPollo || 0) + sameDayTotal.bigDogPollo + (mayoristaMonth?.bigDogPollo || 0),
+                bigDogVaca: (minoristaMonth?.bigDogVaca || 0) + sameDayTotal.bigDogVaca + (mayoristaMonth?.bigDogVaca || 0),
+                totalPerro: (minoristaMonth?.totalPerro || 0) + sameDayTotal.totalPerro + (mayoristaMonth?.totalPerro || 0),
                 // Productos Gato - sumar todos los tipos
-                gatoPollo: (minoristaMonth?.gatoPollo || 0) + (sameDayMonth?.gatoPollo || 0) + (mayoristaMonth?.gatoPollo || 0),
-                gatoVaca: (minoristaMonth?.gatoVaca || 0) + (sameDayMonth?.gatoVaca || 0) + (mayoristaMonth?.gatoVaca || 0),
-                gatoCordero: (minoristaMonth?.gatoCordero || 0) + (sameDayMonth?.gatoCordero || 0) + (mayoristaMonth?.gatoCordero || 0),
-                totalGato: (minoristaMonth?.totalGato || 0) + (sameDayMonth?.totalGato || 0) + (mayoristaMonth?.totalGato || 0),
+                gatoPollo: (minoristaMonth?.gatoPollo || 0) + sameDayTotal.gatoPollo + (mayoristaMonth?.gatoPollo || 0),
+                gatoVaca: (minoristaMonth?.gatoVaca || 0) + sameDayTotal.gatoVaca + (mayoristaMonth?.gatoVaca || 0),
+                gatoCordero: (minoristaMonth?.gatoCordero || 0) + sameDayTotal.gatoCordero + (mayoristaMonth?.gatoCordero || 0),
+                totalGato: (minoristaMonth?.totalGato || 0) + sameDayTotal.totalGato + (mayoristaMonth?.totalGato || 0),
                 // Otros - sumar todos los tipos
-                huesosCarnosos: (minoristaMonth?.huesosCarnosos || 0) + (sameDayMonth?.huesosCarnosos || 0) + (mayoristaMonth?.huesosCarnosos || 0),
+                huesosCarnosos: (minoristaMonth?.huesosCarnosos || 0) + sameDayTotal.huesosCarnosos + (mayoristaMonth?.huesosCarnosos || 0),
                 // Total del mes - sumar todos los tipos
-                totalMes: (minoristaMonth?.totalMes || 0) + (sameDayMonth?.totalMes || 0) + (mayoristaMonth?.totalMes || 0)
+                totalMes: (minoristaMonth?.totalMes || 0) + sameDayTotal.totalMes + (mayoristaMonth?.totalMes || 0)
             };
         });
     };
@@ -163,7 +216,7 @@ export function QuantityAnalyticsClient({
 
             {/* Tabla de Envíos en el Día */}
             <QuantityTable
-                data={quantityStats?.sameDay || []}
+                data={consolidateByMonth(quantityStats?.sameDay || [])}
                 title="Envíos en el Día"
                 description="Cantidad total en KG por mes para envíos en el día"
             />
@@ -200,7 +253,7 @@ export function QuantityAnalyticsClient({
 
                     {/* Tabla de comparación - Envíos en el Día */}
                     <QuantityTable
-                        data={compareQuantityStats.sameDay || []}
+                        data={consolidateByMonth(compareQuantityStats.sameDay || [])}
                         title="Envíos en el Día (Comparación)"
                         description="Cantidad total en KG por mes para envíos en el día - Período de comparación"
                     />

@@ -24,7 +24,9 @@ const getCategoryColor = (category: ClientBehaviorCategory | ClientSpendingCateg
             'active': 'bg-emerald-100 text-emerald-800 border-emerald-200',
             'recovered': 'bg-purple-100 text-purple-800 border-purple-200',
             'lost': 'bg-red-100 text-red-800 border-red-200',
-            'tracking': 'bg-indigo-100 text-indigo-800 border-indigo-200'
+            'tracking': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+            'recompra': 'bg-teal-100 text-teal-800 border-teal-200',
+            'no-recompra': 'bg-orange-100 text-orange-800 border-orange-200'
         };
         return behaviorColors[category as ClientBehaviorCategory];
     } else {
@@ -45,7 +47,9 @@ const getCategoryIcon = (category: ClientBehaviorCategory | ClientSpendingCatego
             'active': <TrendingUp className="h-4 w-4" />,
             'recovered': <TrendingUp className="h-4 w-4" />,
             'lost': <Users className="h-4 w-4" />,
-            'tracking': <Clock className="h-4 w-4" />
+            'tracking': <Clock className="h-4 w-4" />,
+            'recompra': <TrendingUp className="h-4 w-4" />,
+            'no-recompra': <Clock className="h-4 w-4" />
         };
         return icons[category as ClientBehaviorCategory];
     } else {
@@ -64,6 +68,8 @@ const getCategoryTitle = (category: ClientBehaviorCategory | ClientSpendingCateg
         'recovered': categoriesDict.recovered || 'Cliente Recuperado',
         'lost': categoriesDict.lost || 'Cliente Perdido',
         'tracking': categoriesDict.tracking || 'En Seguimiento',
+        'recompra': categoriesDict.recompra || 'Recompra',
+        'no-recompra': categoriesDict['no-recompra'] || 'No Recompra',
         'premium': categoriesDict.premium || 'Premium (A)',
         'standard': categoriesDict.standard || 'Estándar (B)',
         'basic': categoriesDict.basic || 'Básico (C)'
@@ -74,11 +80,13 @@ const getCategoryTitle = (category: ClientBehaviorCategory | ClientSpendingCateg
 const getCategoryDescription = (category: ClientBehaviorCategory | ClientSpendingCategory, type: 'behavior' | 'spending'): string => {
     const descriptions: Record<string, string> = {
         'new': 'Cliente con 1 sola compra, realizada en la última semana.',
-        'tracking': 'Cliente con 1 sola compra, realizada entre 8 y 30 días.',
-        'active': 'Cliente con al menos una compra en los últimos 90 días.',
-        'possible-inactive': 'Última compra entre 90 y 120 días.',
-        'recovered': 'Volvió a comprar en los últimos 90 días después de +120 días de inactividad.',
-        'lost': 'No ha comprado en más de 120 días.',
+        'tracking': 'Cliente con 1 sola compra, realizada hace más de una semana.',
+        'recompra': 'Cliente que realizó su segunda compra en la última semana.',
+        'no-recompra': 'Cliente con 1 sola compra hace más de 60 días.',
+        'active': 'Cliente con +2 compras, realizada en los últimos 45 días.',
+        'possible-inactive': 'Última compra realizada entre 45 y 60 días.',
+        'recovered': 'Volvió a comprar después de +60 días de inactividad.',
+        'lost': 'No ha comprado en más de 60 días.',
         'premium': 'Ha comprado más de 15 kg en el último mes.',
         'standard': 'Ha comprado entre 5 y 15 kg en el último mes.',
         'basic': 'Ha comprado menos de 5 kg en el último mes.'

@@ -191,7 +191,9 @@ export type ClientBehaviorCategory =
     | 'possible-inactive'
     | 'lost'
     | 'recovered'
-    | 'tracking';
+    | 'tracking'
+    | 'recompra'
+    | 'no-recompra';
 
 export type ClientSpendingCategory = 'premium' | 'standard' | 'basic';
 
