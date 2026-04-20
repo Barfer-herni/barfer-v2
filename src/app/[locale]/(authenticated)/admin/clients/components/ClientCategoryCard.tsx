@@ -61,10 +61,8 @@ const getCategoryTitle = (category: ClientBehaviorCategory | ClientSpendingCateg
     const categoriesDict = dictionary.app.admin?.clients?.categories || {};
     const titles: Record<string, string> = {
         'new': categoriesDict.new || 'Cliente Nuevo',
-        'possible-active': categoriesDict.possibleActive || 'Posible Activo',
         'possible-inactive': categoriesDict.possibleInactive || 'Posible Inactivo',
         'active': categoriesDict.active || 'Cliente Activo',
-        'inactive': categoriesDict.inactive || 'Cliente Inactivo',
         'recovered': categoriesDict.recovered || 'Cliente Recuperado',
         'lost': categoriesDict.lost || 'Cliente Perdido',
         'tracking': categoriesDict.tracking || 'En Seguimiento',
