@@ -328,7 +328,7 @@ export async function getClientsForWhatsapp(params?: {
         id: string;
         email: string;
         name: string;
-        phoneNumber: string | null;
+        phone: string | null;
         orderCount: number;
         lastOrderDate: string | null;
         behaviorCategory: string;
