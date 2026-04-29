@@ -8,13 +8,15 @@ export async function getExpressOrders(
     from?: string,
     to?: string,
     page: number = 1,
-    limit: number = 2000 // Aumentamos el límite por defecto para el front actual
+    limit: number = 2000, // Aumentamos el límite por defecto para el front actual
+    search?: string
 ) {
     try {
         const params = new URLSearchParams();
         if (puntoEnvio) params.append('puntoEnvio', puntoEnvio);
         if (from) params.append('from', from);
         if (to) params.append('to', to);
+        if (search) params.append('search', search);
         params.append('page', page.toString());
         params.append('limit', limit.toString());
 

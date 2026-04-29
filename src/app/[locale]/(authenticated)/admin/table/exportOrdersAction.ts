@@ -1,6 +1,6 @@
 'use server';
 
-import { getOrders } from '@/lib/services/services/barfer';
+import { getOrders, getExpressOrders } from '@/lib/services/services/barfer';
 import * as XLSX from 'xlsx';
 import { mapDBProductToSelectOption, normalizeScheduleTime, formatPhoneNumber } from './helpers';
 
@@ -9,6 +9,10 @@ interface ExportParams {
     from?: string;
     to?: string;
     orderType?: string;
+    isExpress?: boolean;
+    puntoEnvio?: string;
+    estadosEnvio?: string;
+    orderIds?: string[];
 }
 
 export async function exportOrdersAction({
@@ -16,20 +20,56 @@ export async function exportOrdersAction({
     from = '',
     to = '',
     orderType = '',
+    isExpress = false,
+    puntoEnvio = '',
+    estadosEnvio = '',
+    orderIds = [],
 }: ExportParams): Promise<{ success: boolean; data?: string; error?: string }> {
     try {
-        const { orders } = await getOrders({
-            pageIndex: 0,
-            pageSize: 10000,
-            search: search || '',
-            sorting: [{ id: 'deliveryDay', desc: true }],
-            from: from && from.trim() !== '' ? from : undefined,
-            to: to && to.trim() !== '' ? to : undefined,
-            orderType:
-                orderType && orderType.trim() !== '' && orderType !== 'all'
-                    ? orderType
-                    : undefined,
-        });
+        let orders: any[] = [];
+
+        if (isExpress) {
+            // Si hay IDs específicos, ignoramos filtros de fecha y búsqueda para asegurar que los encontramos
+            const result = await getExpressOrders(
+                puntoEnvio && puntoEnvio !== 'all' ? puntoEnvio : undefined,
+                orderIds.length > 0 ? undefined : (from || undefined),
+                orderIds.length > 0 ? undefined : (to || undefined),
+                1,
+                10000,
+                orderIds.length > 0 ? undefined : (search || undefined)
+            );
+            if (result.success) {
+                orders = result.orders;
+
+                // Filtrado manual por estadosEnvio si se proporcionó y no hay IDs específicos
+                if (estadosEnvio && estadosEnvio !== 'all' && orderIds.length === 0) {
+                    const selectedEstados = estadosEnvio.split(',');
+                    orders = orders.filter(order => {
+                        const estadoEnvio = order.estadoEnvio || 'pendiente';
+                        return selectedEstados.includes(estadoEnvio);
+                    });
+                }
+            }
+        } else {
+            const result = await getOrders({
+                pageIndex: 0,
+                pageSize: 10000,
+                search: orderIds.length > 0 ? '' : (search || ''),
+                sorting: [{ id: 'deliveryDay', desc: true }],
+                from: orderIds.length > 0 ? undefined : (from && from.trim() !== '' ? from : undefined),
+                to: orderIds.length > 0 ? undefined : (to && to.trim() !== '' ? to : undefined),
+                orderType:
+                    orderType && orderType.trim() !== '' && orderType !== 'all'
+                        ? orderType
+                        : undefined,
+            });
+            orders = result.orders;
+        }
+
+        // Si se proporcionaron IDs específicos, filtrar por ellos
+        if (orderIds.length > 0) {
+            orders = orders.filter(order => orderIds.includes(String(order._id)));
+        }
 
         if (orders.length === 0) {
             return {
@@ -111,6 +151,7 @@ export async function exportOrdersAction({
             'Medio de Pago': order.paymentMethod || '',
             'Telefono': formatPhoneNumber(order.address?.phone || ''),
             'Email': order.user?.email || '',
+            'Estado Envío': order.estadoEnvio || 'pendiente',
         }));
 
         // Crear libro de trabajo
@@ -129,6 +170,7 @@ export async function exportOrdersAction({
             { wch: 20 }, // Medio de Pago
             { wch: 15 }, // Telefono
             { wch: 30 }, // Email
+            { wch: 15 }, // Estado Envío
         ];
 
         // Aplicar formato de celdas (alineación y wrap)

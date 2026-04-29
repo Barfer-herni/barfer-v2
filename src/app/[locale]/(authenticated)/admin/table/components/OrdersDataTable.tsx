@@ -910,12 +910,19 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             const to = searchParams.get('to');
             const search = searchParams.get('search');
             const orderType = searchParams.get('orderType');
+            const puntoEnvio = searchParams.get('puntoId');
+            const estadosEnvio = searchParams.get('estadosEnvio');
+            const selectedIds = Object.keys(rowSelection).filter(id => rowSelection[id]);
 
             const result = await exportOrdersAction({
                 search: search || '',
                 from: from || '',
                 to: to || '',
                 orderType: orderType && orderType !== 'all' ? orderType : '',
+                isExpress: isExpressContext,
+                puntoEnvio: puntoEnvio || '',
+                estadosEnvio: estadosEnvio || '',
+                orderIds: selectedIds,
             });
 
             if (result.success && result.data) {
