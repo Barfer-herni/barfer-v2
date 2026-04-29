@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, TrendingUp, Clock, Mail, MessageCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import type { ClientCategoryStats, ClientBehaviorCategory, ClientSpendingCategory } from '@/lib/services';
 import type { Dictionary } from '@/config/i18n';
 
@@ -118,6 +119,8 @@ export function ClientCategoryCard({
     canSendWhatsApp = false
 }: ClientCategoryCardProps) {
     const router = useRouter();
+    const params = useParams();
+    const locale = params.locale as string;
     const colorClasses = getCategoryColor(category.category, type);
     const icon = getCategoryIcon(category.category, type);
     const title = getCategoryTitle(category.category, dictionary);
@@ -125,11 +128,11 @@ export function ClientCategoryCard({
     const kgRange = type === 'spending' ? getCategoryKgRange(category.category as ClientSpendingCategory) : null;
 
     const handleEmailClick = () => {
-        router.push(`/admin/clients/email?category=${category.category}&type=${type}`);
+        router.push(`/${locale}/admin/clients/email?category=${category.category}&type=${type}`);
     };
 
     const handleWhatsAppClick = () => {
-        router.push(`/admin/clients/whatsapp?category=${category.category}&type=${type}`);
+        router.push(`/${locale}/admin/clients/whatsapp?category=${category.category}&type=${type}`);
     };
 
     return (
@@ -179,22 +182,26 @@ export function ClientCategoryCard({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={handleEmailClick}
+                                asChild
                                 className="flex-1 h-8 text-xs"
                             >
-                                <Mail className="h-3 w-3 mr-1" />
-                                Email
+                                <Link href={`/${locale}/admin/clients/email?category=${category.category}&type=${type}`}>
+                                    <Mail className="h-3 w-3 mr-1" />
+                                    Email
+                                </Link>
                             </Button>
                         )}
                         {canSendWhatsApp && (
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={handleWhatsAppClick}
+                                asChild
                                 className="flex-1 h-8 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
                             >
-                                <MessageCircle className="h-3 w-3 mr-1" />
-                                WhatsApp
+                                <Link href={`/${locale}/admin/clients/whatsapp?category=${category.category}&type=${type}`}>
+                                    <MessageCircle className="h-3 w-3 mr-1" />
+                                    WhatsApp
+                                </Link>
                             </Button>
                         )}
                     </div>

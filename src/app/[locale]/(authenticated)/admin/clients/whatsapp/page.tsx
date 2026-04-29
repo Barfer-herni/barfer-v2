@@ -31,12 +31,19 @@ export default async function WhatsAppPage({ params, searchParams }: WhatsAppPag
         hasMore: false,
     };
 
+    let error: string | null = null;
     try {
         const result = await getClientsForWhatsapp({ category, type, page, limit: 50 });
-        clients = result.clients;
-        paginationInfo = result.pagination;
-    } catch (error) {
-        console.error('[WhatsAppPage] Error fetching clients:', error);
+        if (result && result.clients) {
+            clients = result.clients;
+            paginationInfo = result.pagination;
+        } else {
+            error = 'La respuesta del servidor no tiene el formato esperado.';
+            console.error('[WhatsAppPage] Invalid API result structure:', result);
+        }
+    } catch (err) {
+        error = err instanceof Error ? err.message : 'Error desconocido al cargar clientes';
+        console.error('[WhatsAppPage] Error fetching clients:', err);
     }
 
     const whatsappTemplates: any[] = [];
@@ -52,6 +59,12 @@ export default async function WhatsAppPage({ params, searchParams }: WhatsAppPag
                 </div>
             }
         >
+            {error && (
+                <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    ⚠️ <strong>Error al cargar clientes:</strong> {error}
+                </div>
+            )}
+
             <WhatsAppClientsViewServer
                 category={category}
                 type={type}
