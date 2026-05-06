@@ -95,7 +95,9 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
 
     // Volver a «hoy» en el rango de fechas (preserva punto, tab, etc.)
     const setDateRangeToToday = useCallback(() => {
-        const today = format(new Date(), 'yyyy-MM-dd');
+        // Forzar la fecha actual de Argentina para que coincida con el negocio
+        const todayArg = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+        const today = format(todayArg, 'yyyy-MM-dd');
         const params = new URLSearchParams(searchParams.toString());
         params.set('from', today);
         params.set('to', today);
