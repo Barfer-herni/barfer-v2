@@ -2,6 +2,42 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* React Day Picker Styles */
+@layer base {
+  .rdp {
+    --rdp-cell-size: 40px;
+    --rdp-accent-color: hsl(var(--primary));
+    --rdp-background-color: hsl(var(--primary) / 0.1);
+    --rdp-accent-color-dark: hsl(var(--primary));
+    --rdp-background-color-dark: hsl(var(--primary) / 0.2);
+    --rdp-outline: 2px solid hsl(var(--primary));
+    --rdp-outline-selected: 2px solid hsl(var(--primary));
+    margin: 0;
+  }
+
+  .rdp-months {
+    display: flex;
+  }
+
+  .rdp-month {
+    margin: 0;
+  }
+
+  .rdp-table {
+    border-collapse: collapse;
+  }
+
+  .rdp-day_range_start,
+  .rdp-day_range_end {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .rdp-day_range_middle {
+    background-color: hsl(var(--primary) / 0.1);
+  }
+}
+
 /* Estilos personalizados básicos */
 @layer utilities {
   /* Animaciones personalizadas */

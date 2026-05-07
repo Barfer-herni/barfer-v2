@@ -1,42 +1,46 @@
 'use client';
 
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { 
-  ChevronLeft, 
+import {
+  ChevronLeft,
   ChevronRight,
-  User, 
-  Calendar, 
+  User,
+  Calendar,
   BarChart3,
   Search,
-  ArrowUpDown
+  ArrowUpDown,
+  X
 } from 'lucide-react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Survey, SurveyResponse } from '@/types/surveys';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { DateRange } from 'react-day-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { getSurveyResponses } from '@/lib/services/services/barfer/surveys/surveys';
 
 interface ResponsesViewClientProps {
   survey: Survey;
@@ -44,13 +48,37 @@ interface ResponsesViewClientProps {
   locale: string;
 }
 
-export function ResponsesViewClient({ survey, responses, locale }: ResponsesViewClientProps) {
+export function ResponsesViewClient({ survey, responses: initialResponses, locale }: ResponsesViewClientProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [responses, setResponses] = useState<SurveyResponse[]>(initialResponses);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Cargar respuestas cuando cambia el rango de fechas
+  const loadResponses = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const dateFrom = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined;
+      const dateTo = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined;
+      
+      const newResponses = await getSurveyResponses(survey._id, dateFrom, dateTo);
+      setResponses(newResponses);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('Error loading responses:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [survey._id, dateRange]);
+
+  useEffect(() => {
+    loadResponses();
+  }, [loadResponses]);
 
   const formatValue = (value: any) => {
     if (Array.isArray(value)) {
@@ -75,7 +103,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
     .map(question => {
       const counts: Record<string, number> = {};
       question.options?.forEach(opt => counts[opt] = 0);
-      
+
       responses.forEach(res => {
         const answer = res.answers.find(a => a.questionId === question.questionId);
         if (answer && answer.value) {
@@ -92,7 +120,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
           }
         }
       });
-      
+
       return {
         id: question.questionId,
         text: question.text,
@@ -105,13 +133,13 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
     if (searchQuery && !userString.includes(searchQuery.toLowerCase())) {
       return false;
     }
-    
+
     for (const [questionId, value] of Object.entries(filters)) {
       if (!value || value === "all") continue;
-      
+
       const answer = res.answers.find(a => a.questionId === questionId);
       if (!answer) return false;
-      
+
       const answerVal = answer.value;
       if (Array.isArray(answerVal)) {
         if (!answerVal.map(String).includes(value)) return false;
@@ -119,6 +147,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
         if (String(answerVal) !== value) return false;
       }
     }
+
     return true;
   }).sort((a, b) => {
     const dateA = new Date(a.completedAt).getTime();
@@ -137,7 +166,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
     setFilters(prev => ({ ...prev, [statId]: val }));
     setCurrentPage(1);
   };
-  
+
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     setCurrentPage(1);
@@ -147,16 +176,21 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
     <div className="space-y-8 pb-10">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          size="icon" 
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => router.push(`/${locale}/admin/surveys`)}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div>
           <h2 className="text-2xl font-bold">{survey.title}</h2>
-          <p className="text-sm text-muted-foreground">{responses.length} respuestas recibidas</p>
+          <p className="text-sm text-muted-foreground">
+            {dateRange ? 
+              `${responses.length} respuestas en el período seleccionado` : 
+              `${responses.length} respuestas recibidas`
+            }
+          </p>
         </div>
       </div>
 
@@ -196,9 +230,9 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
           <CardTitle className="text-lg font-bold">Detalle de Respuestas</CardTitle>
           <div className="flex flex-col sm:flex-row gap-2 items-center">
             {stats.length > 0 && stats.map(stat => (
-              <Select 
-                key={stat.id} 
-                value={filters[stat.id] || "all"} 
+              <Select
+                key={stat.id}
+                value={filters[stat.id] || "all"}
                 onValueChange={(val) => handleFilterChange(stat.id, val)}
               >
                 <SelectTrigger className="w-[180px]">
@@ -212,6 +246,26 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                 </SelectContent>
               </Select>
             ))}
+
+            <div className="flex gap-2 items-center">
+              <DateRangePicker
+                date={dateRange}
+                onDateChange={setDateRange}
+                className="w-[280px]"
+                placeholder="Filtrar por fecha"
+              />
+              {dateRange && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDateRange(undefined)}
+                  title="Limpiar filtro de fecha"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -224,7 +278,11 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
           </div>
         </CardHeader>
         <CardContent className="px-0">
-          {responses.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground border rounded-lg bg-card">
+              <p>Cargando respuestas...</p>
+            </div>
+          ) : responses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-muted-foreground border rounded-lg bg-card">
               <p>Todavía no hay respuestas para esta encuesta.</p>
             </div>
@@ -237,8 +295,8 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                       <TableHead className="w-[200px]">Usuario</TableHead>
                       <TableHead className="w-[120px]">Envío</TableHead>
                       <TableHead className="w-[180px]">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
                           className="-ml-4 hover:bg-transparent flex items-center"
                         >
@@ -272,10 +330,9 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
                             </div>
                           </TableCell>
                           <TableCell>
-                            <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
-                              response.shippingType === 'Express' ? 'bg-amber-100 text-amber-800' : 
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${response.shippingType === 'Express' ? 'bg-amber-100 text-amber-800' :
                               response.shippingType === 'Programado' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                            }`}>
+                              }`}>
                               {response.shippingType || 'Desconocido'}
                             </span>
                           </TableCell>
@@ -301,7 +358,7 @@ export function ResponsesViewClient({ survey, responses, locale }: ResponsesView
               </div>
             </div>
           )}
-          
+
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-2 pt-4">
               <p className="text-sm text-muted-foreground">

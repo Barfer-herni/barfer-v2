@@ -46,9 +46,20 @@ export async function deleteSurvey(id: string): Promise<{ success: boolean; mess
 /**
  * Obtener respuestas de una encuesta
  */
-export async function getSurveyResponses(surveyId: string): Promise<SurveyResponse[]> {
+export async function getSurveyResponses(
+    surveyId: string,
+    dateFrom?: string,
+    dateTo?: string
+): Promise<SurveyResponse[]> {
     try {
-        const responses = await apiClient.get<SurveyResponse[]>(`/surveys/${surveyId}/responses`);
+        const params = new URLSearchParams();
+        if (dateFrom) params.append('dateFrom', dateFrom);
+        if (dateTo) params.append('dateTo', dateTo);
+        
+        const queryString = params.toString();
+        const url = `/surveys/${surveyId}/responses${queryString ? `?${queryString}` : ''}`;
+        
+        const responses = await apiClient.get<SurveyResponse[]>(url);
         return responses || [];
     } catch (error) {
         console.error(`Error fetching responses for survey ${surveyId}:`, error);
