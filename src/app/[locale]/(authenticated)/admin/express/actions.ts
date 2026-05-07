@@ -36,7 +36,9 @@ export async function getExpressOrdersAction(
     page?: number,
     limit?: number
 ) {
-    return await getExpressOrders(puntoEnvio, from, to, page, limit);
+    const result = await getExpressOrders(puntoEnvio, from, to, page, limit);
+    console.log('total devuelto:', result.total, 'orders length:', result.orders.length);
+    return result;
 }
 
 export async function getExpressOrdersMetricsAction(
