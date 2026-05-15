@@ -844,67 +844,68 @@ function renderEditableCell(cell: any, index: number, editValues: any, onEditVal
                         onChange={(e) => onProductSearchChange(e.target.value)}
                         className={`w-full p-1 ${fontSize}`}
                     />
-                    {editValues.items?.map((item: any, itemIndex: number) => (
-                        <div key={itemIndex} className="space-y-1">
-                            <div className="flex gap-1">
-                                <select
-                                    value={item.fullName || item.name || ''}
-                                    onChange={e => {
-                                        const newItems = [...editValues.items];
-                                        const selectedProductName = e.target.value;
+                                    {editValues.items?.map((item: any, itemIndex: number) => {
+                                        const currentItemValue = item.fullName || item.name || '';
+                                        const filteredProducts = availableProducts.filter(product => 
+                                            product.toLowerCase().includes(productSearchFilter.toLowerCase())
+                                        );
+                                        const isCurrentItemInFilteredList = filteredProducts.includes(currentItemValue);
+                                        
+                                        return (
+                                        <div key={itemIndex} className="space-y-1">
+                                            <div className="flex gap-1">
+                                                <select
+                                                    value={currentItemValue}
+                                                    onChange={e => {
+                                                        const newItems = [...editValues.items];
+                                                        const selectedProductName = e.target.value;
 
-                                        // Crear un item temporal para procesar
-                                        const tempItem = {
-                                            ...newItems[itemIndex],
-                                            name: selectedProductName,
-                                            fullName: selectedProductName,
-                                            // Resetear las options para que no contengan peso del item anterior
-                                            options: [{ name: 'Default', price: 0, quantity: newItems[itemIndex].options?.[0]?.quantity || 1 }]
-                                        };
+                                                        // Crear un item temporal para procesar
+                                                        const tempItem = {
+                                                            ...newItems[itemIndex],
+                                                            name: selectedProductName,
+                                                            fullName: selectedProductName,
+                                                            // Resetear las options para que no contengan peso del item anterior
+                                                            options: [{ name: 'Default', price: 0, quantity: newItems[itemIndex].options?.[0]?.quantity || 1 }]
+                                                        };
 
-                                        // Procesar solo este item
-                                        const processedItem = processSingleItem(tempItem);
-                                        newItems[itemIndex] = processedItem;
+                                                        // Procesar solo este item
+                                                        const processedItem = processSingleItem(tempItem);
+                                                        newItems[itemIndex] = processedItem;
 
-                                        onEditValueChange('items', newItems);
-                                    }}
-                                    className={`flex-1 p-1 ${fontSize} border border-gray-300 rounded-md text-left bg-white cursor-pointer`}
-                                    disabled={productsLoading}
-                                    style={{
-                                        minHeight: '32px',
-                                        appearance: 'auto',
-                                        WebkitAppearance: 'menulist',
-                                        MozAppearance: 'menulist'
-                                    }}
-                                >
-                                    <option value="">
-                                        {productsLoading ? 'Cargando productos...' : `Seleccionar producto (${availableProducts.length} disponibles)`}
-                                    </option>
-                                    {/* Mostrar el producto actual como primera opción si no está en la lista */}
-                                    {(item.fullName || item.name) && !availableProducts.includes(item.fullName || item.name) && (
-                                        <option key="current-product" value={item.fullName || item.name}>
-                                            {(() => {
-                                                // Construir el nombre completo con el peso
-                                                const baseName = item.fullName || item.name;
-                                                const weight = item.options?.[0]?.name;
-
-                                                // Si el peso existe y no está ya incluido en el nombre, agregarlo
-                                                if (weight && weight !== 'Default' && !baseName.includes(weight)) {
-                                                    return `${baseName} - ${weight}`;
-                                                }
-
-                                                return baseName;
-                                            })()}
-                                        </option>
-                                    )}
-                                    {availableProducts
-                                        .filter(product => product.toLowerCase().includes(productSearchFilter.toLowerCase()))
-                                        .map(product => (
-                                            <option key={product} value={product}>
-                                                {product}
-                                            </option>
-                                        ))}
-                                </select>
+                                                        onEditValueChange('items', newItems);
+                                                    }}
+                                                    className={`flex-1 p-1 ${fontSize} border border-gray-300 rounded-md text-left bg-white cursor-pointer`}
+                                                    disabled={productsLoading}
+                                                    style={{
+                                                        minHeight: '32px',
+                                                        appearance: 'auto',
+                                                        WebkitAppearance: 'menulist',
+                                                        MozAppearance: 'menulist'
+                                                    }}
+                                                >
+                                                    <option value="">
+                                                        {productsLoading ? 'Cargando productos...' : `Seleccionar producto (${filteredProducts.length} disponibles)`}
+                                                    </option>
+                                                    {/* SIEMPRE mostrar el producto actualmente seleccionado como primera opción si tiene valor */}
+                                                    {currentItemValue && !isCurrentItemInFilteredList && (
+                                                        <option key="current-product" value={currentItemValue}>
+                                                            {(() => {
+                                                                const baseName = currentItemValue;
+                                                                const weight = item.options?.[0]?.name;
+                                                                if (weight && weight !== 'Default' && !baseName.includes(weight)) {
+                                                                    return `${baseName} - ${weight}`;
+                                                                }
+                                                                return baseName;
+                                                            })()}
+                                                        </option>
+                                                    )}
+                                                    {filteredProducts.map(product => (
+                                                        <option key={product} value={product}>
+                                                            {product}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                 <Input
                                     type="number"
                                     value={item.options?.[0]?.quantity || 1}
@@ -947,7 +948,8 @@ function renderEditableCell(cell: any, index: number, editValues: any, onEditVal
                                 </Button>
                             </div>
                         </div>
-                    ))}
+                    );
+                    })}
                     <Button
                         size="sm"
                         variant="outline"
