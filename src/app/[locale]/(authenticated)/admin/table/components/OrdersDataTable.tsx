@@ -72,6 +72,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
     const [isExporting, setIsExporting] = useState(false);
     const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
     const [productSearchFilter, setProductSearchFilter] = useState('');
+    const [createProductSearch, setCreateProductSearch] = useState('');
     const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '');
     const [isPending, startTransition] = useTransition();
     const [backupsCount, setBackupsCount] = useState(0);
@@ -682,6 +683,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
 
             setShowCreateModal(false);
             setCreateFormData(createDefaultOrderData());
+            setCreateProductSearch('');
             setSelectedMayorista(null); // Limpiar mayorista seleccionado
             setItemPrices([]); // Limpiar precios
 
@@ -1274,6 +1276,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                         <Label className="text-base font-semibold">Pago y Estado</Label>
                                     </div>
 
+                                    {createFormData.orderType !== 'mayorista' && (
                                     <div className="space-y-2">
                                         <Label>Punto de Envío *</Label>
                                         <select
@@ -1281,7 +1284,6 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                             onChange={(e) => {
                                                 const selectedPuntoEnvio = e.target.value;
                                                 handleCreateFormChange('puntoEnvio', selectedPuntoEnvio);
-                                                // Si se selecciona un punto de envío, establecer automáticamente mercado-pago
                                                 if (selectedPuntoEnvio) {
                                                     handleCreateFormChange('paymentMethod', 'mercado-pago');
                                                 }
@@ -1297,6 +1299,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                             ))}
                                         </select>
                                     </div>
+                                    )}
                                     <div className="space-y-2">
                                         <Label>Medio de Pago</Label>
                                         <select
@@ -1443,6 +1446,12 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                     <div className="space-y-2 col-span-2 mt-4">
                                         <Label className="text-base font-semibold">Productos</Label>
                                         <div className="space-y-2">
+                                            <Input
+                                                placeholder="Buscar producto..."
+                                                value={createProductSearch}
+                                                onChange={(e) => setCreateProductSearch(e.target.value)}
+                                                className="w-full"
+                                            />
                                             {createFormData.items?.map((item: any, index: number) => {
                                                 const itemName = item.fullName || item.name;
 
@@ -1458,6 +1467,10 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                                     typeof itemPrice.subtotal === 'number' &&
                                                     !isNaN(itemPrice.subtotal);
 
+                                                const filteredCreateProducts = availableProducts.filter(p =>
+                                                    p.toLowerCase().includes(createProductSearch.toLowerCase())
+                                                );
+
                                                 return (
                                                     <div key={index} className="flex flex-col gap-2">
                                                         <div className="flex gap-2">
@@ -1467,16 +1480,13 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                                                     const newItems = [...createFormData.items];
                                                                     const selectedProductName = e.target.value;
 
-                                                                    // Crear un item temporal para procesar
                                                                     const tempItem = {
                                                                         ...newItems[index],
                                                                         name: selectedProductName,
                                                                         fullName: selectedProductName,
-                                                                        // Resetear las options para que no contengan peso del item anterior
                                                                         options: [{ name: 'Default', price: 0, quantity: newItems[index].options?.[0]?.quantity || 1 }]
                                                                     };
 
-                                                                    // Procesar solo este item
                                                                     const processedItem = processSingleItem(tempItem);
                                                                     newItems[index] = processedItem;
 
@@ -1486,9 +1496,9 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                                                 disabled={productsLoading}
                                                             >
                                                                 <option value="">
-                                                                    {productsLoading ? 'Cargando productos...' : 'Seleccionar producto'}
+                                                                    {productsLoading ? 'Cargando productos...' : `Seleccionar producto (${filteredCreateProducts.length} disponibles)`}
                                                                 </option>
-                                                                {availableProducts.map(product => (
+                                                                {filteredCreateProducts.map(product => (
                                                                     <option key={product} value={product}>
                                                                         {product}
                                                                     </option>
@@ -1607,6 +1617,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                         variant="outline"
                                         onClick={() => {
                                             setShowCreateModal(false);
+                                            setCreateProductSearch('');
                                             setSelectedMayorista(null); // Limpiar mayorista seleccionado
                                         }}
                                     >
