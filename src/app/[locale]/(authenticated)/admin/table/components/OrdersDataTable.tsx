@@ -421,7 +421,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             });
 
             const cleanedItems = processedItems.map(item => {
-                const { fullName, ...cleanItem } = item;
+                const { fullName, _searchFilter, ...cleanItem } = item;
                 return cleanItem;
             });
 
@@ -637,8 +637,8 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                     };
                 }
 
-                // Limpiar fullName antes de enviar al backend (no existe en el DTO)
-                const { fullName, ...cleanItem } = processedItem;
+                // Limpiar propiedades temporales antes de enviar al backend (no existen en el DTO)
+                const { fullName, _searchFilter, ...cleanItem } = processedItem;
                 return cleanItem;
             });
 

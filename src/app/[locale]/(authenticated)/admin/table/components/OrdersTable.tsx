@@ -43,6 +43,7 @@ import {
 } from '../helpers';
 import type { DataTableProps } from '../types';
 import { generateMayoristaPDF } from '../generateMayoristaPDF';
+import { ProductCombobox } from './ProductCombobox';
 
 interface OrdersTableProps<TData extends { _id: string }, TValue> extends DataTableProps<TData, TValue> {
     editingRowId: string | null;
@@ -838,34 +839,37 @@ function renderEditableCell(cell: any, index: number, editValues: any, onEditVal
         return (
             <TableCell key={cell.id} className="px-0 py-1 border-r border-border">
                 <div className="space-y-1">
-                    <Input
-                        placeholder="Buscar producto..."
-                        value={productSearchFilter}
-                        onChange={(e) => onProductSearchChange(e.target.value)}
-                        className={`w-full p-1 ${fontSize}`}
-                    />
                                     {editValues.items?.map((item: any, itemIndex: number) => {
                                         const currentItemValue = item.fullName || item.name || '';
-                                        const filteredProducts = availableProducts.filter(product => 
-                                            product.toLowerCase().includes(productSearchFilter.toLowerCase())
-                                        );
-                                        const isCurrentItemInFilteredList = filteredProducts.includes(currentItemValue);
+                                        
+                                        // Construir el valor de display con peso si es necesario
+                                        const displayValue = (() => {
+                                            if (!currentItemValue) return '';
+                                            const weight = item.options?.[0]?.name;
+                                            if (weight && weight !== 'Default' && !currentItemValue.includes(weight)) {
+                                                return `${currentItemValue} - ${weight}`;
+                                            }
+                                            return currentItemValue;
+                                        })();
+
+                                        // Lista de productos incluyendo el actual si no está en la lista
+                                        const productsToShow = currentItemValue && !availableProducts.includes(currentItemValue)
+                                            ? [displayValue, ...availableProducts]
+                                            : availableProducts;
                                         
                                         return (
                                         <div key={itemIndex} className="space-y-1">
                                             <div className="flex gap-1">
-                                                <select
-                                                    value={currentItemValue}
-                                                    onChange={e => {
+                                                <ProductCombobox
+                                                    value={displayValue}
+                                                    onChange={(selectedProductName) => {
                                                         const newItems = [...editValues.items];
-                                                        const selectedProductName = e.target.value;
 
                                                         // Crear un item temporal para procesar
                                                         const tempItem = {
                                                             ...newItems[itemIndex],
                                                             name: selectedProductName,
                                                             fullName: selectedProductName,
-                                                            // Resetear las options para que no contengan peso del item anterior
                                                             options: [{ name: 'Default', price: 0, quantity: newItems[itemIndex].options?.[0]?.quantity || 1 }]
                                                         };
 
@@ -875,37 +879,12 @@ function renderEditableCell(cell: any, index: number, editValues: any, onEditVal
 
                                                         onEditValueChange('items', newItems);
                                                     }}
-                                                    className={`flex-1 p-1 ${fontSize} border border-gray-300 rounded-md text-left bg-white cursor-pointer`}
+                                                    products={productsToShow}
                                                     disabled={productsLoading}
-                                                    style={{
-                                                        minHeight: '32px',
-                                                        appearance: 'auto',
-                                                        WebkitAppearance: 'menulist',
-                                                        MozAppearance: 'menulist'
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        {productsLoading ? 'Cargando productos...' : `Seleccionar producto (${filteredProducts.length} disponibles)`}
-                                                    </option>
-                                                    {/* SIEMPRE mostrar el producto actualmente seleccionado como primera opción si tiene valor */}
-                                                    {currentItemValue && !isCurrentItemInFilteredList && (
-                                                        <option key="current-product" value={currentItemValue}>
-                                                            {(() => {
-                                                                const baseName = currentItemValue;
-                                                                const weight = item.options?.[0]?.name;
-                                                                if (weight && weight !== 'Default' && !baseName.includes(weight)) {
-                                                                    return `${baseName} - ${weight}`;
-                                                                }
-                                                                return baseName;
-                                                            })()}
-                                                        </option>
-                                                    )}
-                                                    {filteredProducts.map(product => (
-                                                        <option key={product} value={product}>
-                                                            {product}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    placeholder={productsLoading ? 'Cargando...' : 'Seleccionar producto...'}
+                                                    className="flex-1"
+                                                    fontSize={fontSize}
+                                                />
                                 <Input
                                     type="number"
                                     value={item.options?.[0]?.quantity || 1}
