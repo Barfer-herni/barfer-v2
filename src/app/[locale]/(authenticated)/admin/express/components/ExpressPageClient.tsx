@@ -1338,8 +1338,8 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 {/* Filtros: Punto de Envío */}
                 <div className="mb-6 space-y-4">
                     {/* Selector de punto de envío */}
-                    <div className="flex items-center gap-4">
-                        <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                        <div className="w-full sm:w-auto sm:min-w-[280px] sm:max-w-md">
                             <label className="text-sm font-medium mb-2 block">
                                 📍 Seleccionar Punto de Envío
                             </label>
@@ -1348,7 +1348,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                 onValueChange={handlePuntoEnvioChange}
                                 disabled={!isAdmin && initialPuntosEnvio.length <= 1}
                             >
-                                <SelectTrigger className="w-full max-w-md">
+                                <SelectTrigger className="w-full sm:max-w-md">
                                     <SelectValue placeholder={puntosEnvio.length === 0 ? "No hay puntos de envío disponibles" : "Selecciona un punto de envío..."} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1372,7 +1372,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                             </Select>
                         </div>
                         {(isAdmin || canDelete) && (
-                            <div className="flex gap-2 mt-6">
+                            <div className="flex flex-wrap gap-2">
                                 {isAdmin && (
                                     <>
                                         <Button onClick={() => setShowCreatePuntoEnvioModal(true)} variant="outline">
@@ -1419,22 +1419,24 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                     <div className="space-y-4">
                         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                             <TabsList className={isAdmin ? "grid w-full grid-cols-4" : "grid w-full grid-cols-3"}>
-                                <TabsTrigger value="orders" className="flex items-center gap-2">
-                                    <ShoppingCart className="h-4 w-4" />
-                                    Órdenes ({filteredAndSortedOrders.length})
+                                <TabsTrigger value="orders" className="flex items-center gap-1 px-1 sm:gap-2 sm:px-3">
+                                    <ShoppingCart className="h-4 w-4 shrink-0" />
+                                    <span className="hidden xs:inline sm:inline truncate">Órdenes</span>
+                                    <span className="text-xs">({filteredAndSortedOrders.length})</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="stock" className="flex items-center gap-2">
-                                    <Package className="h-4 w-4" />
-                                    Stock ({stock.length})
+                                <TabsTrigger value="stock" className="flex items-center gap-1 px-1 sm:gap-2 sm:px-3">
+                                    <Package className="h-4 w-4 shrink-0" />
+                                    <span className="hidden xs:inline sm:inline truncate">Stock</span>
+                                    <span className="text-xs">({stock.length})</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="metrics" className="flex items-center gap-2">
-                                    <BarChart3 className="h-4 w-4" />
-                                    Métricas
+                                <TabsTrigger value="metrics" className="flex items-center gap-1 px-1 sm:gap-2 sm:px-3">
+                                    <BarChart3 className="h-4 w-4 shrink-0" />
+                                    <span className="hidden sm:inline truncate">Métricas</span>
                                 </TabsTrigger>
                                 {isAdmin && (
-                                    <TabsTrigger value="detalle" className="flex items-center gap-2">
-                                        <Edit2 className="h-4 w-4" />
-                                        kg vendidos x sabor
+                                    <TabsTrigger value="detalle" className="flex items-center gap-1 px-1 sm:gap-2 sm:px-3">
+                                        <Edit2 className="h-4 w-4 shrink-0" />
+                                        <span className="hidden sm:inline truncate">kg x sabor</span>
                                     </TabsTrigger>
                                 )}
                             </TabsList>
