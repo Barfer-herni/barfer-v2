@@ -35,6 +35,13 @@ export function ShippingPriceCell({ orderId, currentPrice, onUpdate, onOrderUpda
     const handleBlur = async () => {
         if (isSaving) return;
 
+        // Si el campo quedó vacío, restaurar el valor anterior sin guardar
+        if (value === '' || value === null) {
+            setValue(optimisticPrice.toString());
+            setIsEditing(false);
+            return;
+        }
+
         const numValue = Number(value);
         const currentNumValue = optimisticPrice;
 
@@ -91,13 +98,14 @@ export function ShippingPriceCell({ orderId, currentPrice, onUpdate, onOrderUpda
         if (e.key === 'Enter') {
             e.currentTarget.blur();
         } else if (e.key === 'Escape') {
-            setValue(optimisticPrice.toString());
+            setValue(optimisticPrice === 0 ? '0' : optimisticPrice.toString());
             setIsEditing(false);
         }
     };
 
     const handleFocus = () => {
         setIsEditing(true);
+        if (value === '0') setValue('');
     };
 
     if (isEditing) {
