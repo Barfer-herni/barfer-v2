@@ -152,13 +152,14 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
                                 <th className="text-center p-3 font-medium text-muted-foreground">Pedidos Totales</th>
                                 <th className="text-center p-3 font-medium text-muted-foreground">Kilos Vendidos</th>
                                 <th className="text-center p-3 font-medium text-muted-foreground">Ingresos Totales</th>
+                                <th className="text-center p-3 font-medium text-muted-foreground">Costo Envío Total</th>
                                 <th className="text-center p-3 font-medium text-muted-foreground">Costo Envío Promedio</th>
                             </tr>
                         </thead>
                         <tbody>
                             {monthlyData.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="p-4 text-center text-muted-foreground">
+                                    <td colSpan={6} className="p-4 text-center text-muted-foreground">
                                         No hay datos disponibles para el periodo seleccionado
                                     </td>
                                 </tr>
@@ -172,6 +173,9 @@ export function MonthlyMetricsTable({ orders, puntoEnvioName }: MonthlyMetricsTa
                                             {backendStats && <span className="ml-1 text-[10px] text-green-600" title="Verificado desde el backend">✓</span>}
                                         </td>
                                         <td className="p-3 text-center font-medium text-green-600">{formatCurrency(row.totalRevenue)}</td>
+                                        <td className="p-3 text-center font-medium text-orange-700">
+                                            {formatCurrency(row.totalShipping)}
+                                        </td>
                                         <td className="p-3 text-center text-orange-600">
                                             {formatCurrency(row.totalOrders > 0 ? row.totalShipping / row.totalOrders : 0)}
                                         </td>

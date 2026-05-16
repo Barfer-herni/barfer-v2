@@ -501,7 +501,8 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
                                     <th className="text-center p-3 font-medium text-muted-foreground">Pedidos Totales</th>
                                     <th className="text-center p-3 font-medium text-muted-foreground">Kilos Vendidos</th>
                                     <th className="text-center p-3 font-medium text-muted-foreground">Ingresos Totales</th>
-                                    <th className="text-center p-3 font-medium text-muted-foreground">Costos de Envío</th>
+                                    <th className="text-center p-3 font-medium text-muted-foreground">Costo Envío Total</th>
+                                    <th className="text-center p-3 font-medium text-muted-foreground">Costo Envío Promedio</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -511,7 +512,10 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
                                         <td className="p-3 text-center">{row.totalOrders}</td>
                                         <td className="p-3 text-center font-bold text-blue-600">{formatNumber(row.totalKilos)} kg</td>
                                         <td className="p-3 text-center font-medium text-green-600">{formatCurrency(row.totalRevenue)}</td>
-                                        <td className="p-3 text-center text-orange-600">{formatCurrency(row.totalShippingCost)}</td>
+                                        <td className="p-3 text-center font-medium text-orange-700">{formatCurrency(row.totalShippingCost)}</td>
+                                        <td className="p-3 text-center text-orange-600">
+                                            {formatCurrency(row.totalOrders > 0 ? row.totalShippingCost / row.totalOrders : 0)}
+                                        </td>
                                     </tr>
                                 ))}
                                 <tr className="bg-muted/30 font-bold border-t-2">
@@ -520,6 +524,9 @@ export function ResumenGeneralTables({ orders, puntosEnvio, productsForStock }: 
                                     <td className="p-3 text-center text-blue-700">{formatNumber(totals.totalKilos)} kg</td>
                                     <td className="p-3 text-center text-green-700">{formatCurrency(totals.totalRevenue)}</td>
                                     <td className="p-3 text-center text-orange-700">{formatCurrency(totals.totalShippingCost)}</td>
+                                    <td className="p-3 text-center text-orange-700">
+                                        {formatCurrency(totals.totalOrders > 0 ? totals.totalShippingCost / totals.totalOrders : 0)}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

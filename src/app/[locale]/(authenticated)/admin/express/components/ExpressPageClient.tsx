@@ -1336,10 +1336,10 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
 
             <div className="px-5">
                 {/* Filtros: Punto de Envío */}
-                <div className="mb-6 space-y-4">
-                    {/* Selector de punto de envío */}
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-                        <div className="w-full sm:w-auto sm:min-w-[280px] sm:max-w-md">
+                <div className="mb-6">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+                        {/* Selector de punto de envío */}
+                        <div className="w-full lg:flex-1 lg:max-w-md">
                             <label className="text-sm font-medium mb-2 block">
                                 📍 Seleccionar Punto de Envío
                             </label>
@@ -1348,7 +1348,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                 onValueChange={handlePuntoEnvioChange}
                                 disabled={!isAdmin && initialPuntosEnvio.length <= 1}
                             >
-                                <SelectTrigger className="w-full sm:max-w-md">
+                                <SelectTrigger className="w-full">
                                     <SelectValue placeholder={puntosEnvio.length === 0 ? "No hay puntos de envío disponibles" : "Selecciona un punto de envío..."} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1372,10 +1372,14 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                             </Select>
                         </div>
                         {(isAdmin || canDelete) && (
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:shrink-0">
                                 {isAdmin && (
                                     <>
-                                        <Button onClick={() => setShowCreatePuntoEnvioModal(true)} variant="outline">
+                                        <Button
+                                            onClick={() => setShowCreatePuntoEnvioModal(true)}
+                                            variant="outline"
+                                            className="shrink-0"
+                                        >
                                             <Plus className="mr-2 h-4 w-4" />
                                             Nuevo Punto
                                         </Button>
@@ -1383,6 +1387,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                             onClick={() => setShowUpdatePuntoEnvioModal(true)}
                                             variant="outline"
                                             disabled={!selectedPuntoEnvio || selectedPuntoEnvio === 'all'}
+                                            className="shrink-0"
                                         >
                                             <Edit2 className="mr-2 h-4 w-4" />
                                             Editar
@@ -1394,7 +1399,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                         onClick={() => setShowDeletePuntoEnvioModal(true)}
                                         variant="outline"
                                         disabled={!selectedPuntoEnvio || selectedPuntoEnvio === 'all'}
-                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                                     >
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Eliminar
