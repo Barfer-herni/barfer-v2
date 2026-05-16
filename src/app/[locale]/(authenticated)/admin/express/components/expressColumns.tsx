@@ -194,13 +194,13 @@ export const createExpressColumns = (
         },
         {
             accessorKey: 'user.name',
-            header: 'Cliente',
+            header: () => <div className="w-full text-center">Cliente</div>,
             cell: ({ row }: CellContext<Order, unknown>) => {
                 const user = row.original.user;
                 const display = [user?.name, user?.lastName].filter(Boolean).join(' ').trim();
                 const textToCopy = display;
                 return (
-                    <CopyableCell textToCopy={textToCopy} copyable={!!textToCopy} className="min-w-[120px] text-sm whitespace-normal break-words">
+                    <CopyableCell textToCopy={textToCopy} copyable={!!textToCopy} className="min-w-[120px] w-full justify-center text-center text-sm whitespace-normal break-words">
                         {display || '—'}
                     </CopyableCell>
                 );
@@ -208,14 +208,14 @@ export const createExpressColumns = (
         },
         {
             accessorKey: 'address.address',
-            header: 'Dirección',
+            header: () => <div className="w-full text-center">Dirección</div>,
             cell: ({ row }: CellContext<Order, unknown>) => {
                 const address = row.original.address as Order['address'];
                 const parts = address ? [address.address, address.city].filter(Boolean) : [];
                 const textToCopy = parts.join(', ');
                 const display = textToCopy || 'N/A';
                 return (
-                    <CopyableCell textToCopy={textToCopy} copyable={!!textToCopy} className="min-w-[180px] text-sm whitespace-normal break-words">
+                    <CopyableCell textToCopy={textToCopy} copyable={!!textToCopy} className="min-w-[180px] w-full justify-center text-center text-sm whitespace-normal break-words">
                         {display}
                     </CopyableCell>
                 );
@@ -223,14 +223,14 @@ export const createExpressColumns = (
         },
         {
             accessorKey: 'address.phone',
-            header: 'Teléfono',
+            header: () => <div className="w-full text-center">Teléfono</div>,
             cell: ({ row }: CellContext<Order, unknown>) => {
                 const address = row.original.address as Order['address'];
                 const rawPhone = address?.phone || '';
                 const formattedPhone = formatPhoneNumber(rawPhone);
                 const display = formattedPhone !== 'N/A' ? formattedPhone : '—';
                 return (
-                    <CopyableCell textToCopy={rawPhone} copyable={!!rawPhone} className="min-w-[100px] text-sm">
+                    <CopyableCell textToCopy={rawPhone} copyable={!!rawPhone} className="min-w-[100px] w-full justify-center text-center text-sm">
                         {display}
                     </CopyableCell>
                 );

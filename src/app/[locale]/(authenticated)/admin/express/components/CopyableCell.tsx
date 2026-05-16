@@ -67,10 +67,10 @@ export function CopyableCell({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       title="Click para copiar"
-      className={`group flex items-center gap-1.5 cursor-pointer rounded px-1 -mx-1 hover:bg-muted/60 transition-colors select-none ${className}`}
+      className={`group relative flex items-center cursor-pointer rounded px-1 -mx-1 hover:bg-muted/60 transition-colors select-none ${className}`}
     >
-      {children}
-      <Copy className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" aria-hidden />
+      <span className="w-full min-w-0">{children}</span>
+      <Copy className="absolute right-1 h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" aria-hidden />
     </div>
   );
 }
