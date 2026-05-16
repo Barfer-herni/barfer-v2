@@ -220,85 +220,76 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         return ordered;
     }, [orderPriorityFromDB]);
 
-    // Procesar órdenes: Filtrar -> Ordenar -> Paginar
-    // 1. Filtrar y Ordenar
-    const filteredAndSortedOrders = useMemo(() => {
-        let result = [...orders];
+    // Cuando hay un punto específico, el server ya hizo todo el filtrado/orden/paginado.
+    // Solo necesitamos aplicar el "orden guardado" (drag & drop) sobre la página actual.
+    // Cuando es 'all' (vista resumen), seguimos haciendo procesamiento client-side
+    // porque ResumenGeneralTables consume orders para calcular sabores.
+    const isServerPaginated = Boolean(selectedPuntoEnvio && selectedPuntoEnvio !== 'all');
 
-        // A0. Filtrar por Punto de Envío (cuando se cargaron todos los puntos)
-        if (selectedPuntoEnvio && selectedPuntoEnvio !== 'all') {
-            result = result.filter(order => order.puntoEnvio === selectedPuntoEnvio);
+    // Procesar órdenes: Filtrar -> Ordenar (solo en modo "all")
+    const filteredAndSortedOrders = useMemo(() => {
+        // Modo punto específico: el server ya filtró/ordenó. Aplicar saved order si corresponde.
+        if (isServerPaginated) {
+            // Solo aplicamos saved order si:
+            // - El usuario no tiene un sort activo (server ordenó por createdAt desc)
+            // - Hay una fecha seleccionada (saved order es por día)
+            // - Hay órdenes guardadas para ese día
+            if (!sortFromUrl && fromFromUrl && orderPriorityFromDB.length > 0) {
+                return applySavedOrder([...orders]);
+            }
+            return orders;
         }
 
-        // A. Filtrar por Búsqueda
+        // Modo "all": filtrado/orden client-side (legacy, ResumenGeneralTables lo necesita)
+        let result = [...orders];
+
         if (searchFromUrl) {
             const searchLower = searchFromUrl.toLowerCase();
-            // Normalizar búsqueda de teléfono: remover espacios, guiones y paréntesis
             const searchNormalized = searchFromUrl.replace(/[\s\-()]/g, '');
 
             result = result.filter(order => {
-                // Construir nombre completo para búsqueda
                 const fullName = `${order.user?.name || ''} ${order.user?.lastName || ''}`.toLowerCase().trim();
-
-                // Normalizar teléfono para búsqueda
                 const phoneNormalized = (order.address?.phone || '').toString().replace(/[\s\-()]/g, '');
                 const userPhoneNormalized = (order.user?.phoneNumber || '').toString().replace(/[\s\-()]/g, '');
 
                 return (
-                    // Búsqueda por nombre completo (nombre + apellido)
                     fullName.includes(searchLower) ||
-                    // Búsqueda por nombre individual
                     (order.user?.name || '').toLowerCase().includes(searchLower) ||
-                    // Búsqueda por apellido individual
                     (order.user?.lastName || '').toLowerCase().includes(searchLower) ||
-                    // Búsqueda por email
                     (order.user?.email || '').toLowerCase().includes(searchLower) ||
-                    // Búsqueda por teléfono (normalizado sin espacios ni guiones)
                     phoneNormalized.includes(searchNormalized) ||
                     userPhoneNormalized.includes(searchNormalized) ||
-                    // Búsqueda por teléfono (formato original)
                     (order.address?.phone || '').toString().toLowerCase().includes(searchLower) ||
                     (order.user?.phoneNumber || '').toString().toLowerCase().includes(searchLower) ||
-                    // Búsqueda por total
                     (order.total?.toString() || '').includes(searchLower) ||
-                    // Búsqueda por ID
                     (typeof order._id === 'string' && order._id.includes(searchLower)) ||
-                    // Búsqueda por items
                     (order.items || []).some((item: any) =>
                         (item.name || '').toLowerCase().includes(searchLower) ||
                         (item.fullName || '').toLowerCase().includes(searchLower)
                     ) ||
-                    // Búsqueda por dirección
                     (order.address?.address || '').toLowerCase().includes(searchLower) ||
                     (order.address?.city || '').toLowerCase().includes(searchLower)
                 );
             });
         }
 
-        // B. Filtrar por Rango de Fechas
         if (fromFromUrl || toFromUrl) {
             result = result.filter(order => {
                 let orderDateStr: string;
-
                 if (order.deliveryDay) {
-                    // deliveryDay viene como Date de MongoDB, extraer fecha UTC
                     const deliveryDate = new Date(order.deliveryDay);
                     orderDateStr = deliveryDate.toISOString().substring(0, 10);
                 } else {
-                    // Convertir UTC a hora Argentina (UTC-3)
                     const orderDate = new Date(order.createdAt);
                     const argDate = new Date(orderDate.getTime() - (3 * 60 * 60 * 1000));
                     orderDateStr = argDate.toISOString().substring(0, 10);
                 }
-
                 const passesFrom = !fromFromUrl || orderDateStr >= fromFromUrl;
                 const passesTo = !toFromUrl || orderDateStr <= toFromUrl;
                 return passesFrom && passesTo;
             });
-
         }
 
-        // C. Filtrar por Estado de Envío
         if (estadosEnvioFromUrl && estadosEnvioFromUrl !== 'all') {
             const selectedEstados = estadosEnvioFromUrl.split(',');
             result = result.filter(order => {
@@ -307,20 +298,14 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
             });
         }
 
-        // D. Ordenar
-        // Si el usuario eligió ordenar por columna, eso tiene prioridad sobre el orden guardado
-        // Solo usar el orden guardado en BD si no hay sort de columna activo
         if (sortFromUrl) {
-            // Solo aplicar ordenamiento de columnas si no hay punto específico
             const [sortId, sortDesc] = sortFromUrl.split('.');
             const isDesc = sortDesc === 'desc';
 
             result.sort((a: any, b: any) => {
-                // Obtener valor para ordenar
                 let valA = a[sortId];
                 let valB = b[sortId];
 
-                // Manejar casos especiales (objetos anidados)
                 if (sortId === 'user.name') {
                     valA = `${a.user?.name || ''} ${a.user?.lastName || ''}`.trim();
                     valB = `${b.user?.name || ''} ${b.user?.lastName || ''}`.trim();
@@ -338,34 +323,28 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                     valB = ESTADO_ORDER[b.estadoEnvio ?? 'pendiente'] ?? 3;
                 }
 
-                // Comparación nula segura
                 if (valA === valB) return 0;
                 if (valA === null || valA === undefined) return 1;
                 if (valB === null || valB === undefined) return -1;
-
                 if (valA < valB) return isDesc ? 1 : -1;
                 if (valA > valB) return isDesc ? -1 : 1;
                 return 0;
             });
-        } else if (selectedPuntoEnvio && selectedPuntoEnvio !== 'all') {
-            result = applySavedOrder(result);
-            if (orderPriorityFromDB.length === 0) {
-                result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            }
         } else {
-            // Default sort: createdAt desc
             result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         }
 
-
         return result;
-    }, [orders, searchFromUrl, fromFromUrl, toFromUrl, estadosEnvioFromUrl, sortFromUrl, selectedPuntoEnvio, applySavedOrder, orderPriorityFromDB, orderPriorityVersion]);
+    }, [orders, isServerPaginated, searchFromUrl, fromFromUrl, toFromUrl, estadosEnvioFromUrl, sortFromUrl, applySavedOrder, orderPriorityFromDB, orderPriorityVersion]);
 
-    // 2. Paginar
+    // Paginar: en modo punto específico el server ya paginó; en "all" se hace client-side
     const paginatedOrders = useMemo(() => {
+        if (isServerPaginated) {
+            return filteredAndSortedOrders;
+        }
         const startIndex = (pageFromUrl - 1) * pageSizeFromUrl;
         return filteredAndSortedOrders.slice(startIndex, startIndex + pageSizeFromUrl);
-    }, [filteredAndSortedOrders, pageFromUrl, pageSizeFromUrl]);
+    }, [filteredAndSortedOrders, pageFromUrl, pageSizeFromUrl, isServerPaginated]);
 
     // Función para manejar el fin del drag and drop
     const handleDragEnd = useCallback(async (event: DragEndEvent) => {
@@ -534,6 +513,13 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         }
     }, [fromFromUrl, selectedPuntoEnvio, filteredAndSortedOrders, loadOrderPriorityFromDB, toast]);
 
+    // Memoizar columnas para evitar que tanstack-table invalide su modelo en cada render del padre.
+    const isDragEnabledMemo = Boolean(selectedPuntoEnvio && selectedPuntoEnvio !== 'all' && fromFromUrl);
+    const expressColumns = useMemo(
+        () => createExpressColumns(undefined, moveOrder, isDragEnabledMemo, handleOrderUpdate),
+        [moveOrder, isDragEnabledMemo, handleOrderUpdate],
+    );
+
     // Cargar productos para stock al montar el componente
     useEffect(() => {
         const loadProductsForStock = async () => {
@@ -600,16 +586,6 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         }
     }, [isAdmin, puntosEnvio, selectedPuntoEnvio]);
 
-    // Cargar datos cuando se selecciona un punto de envío (con o sin fecha)
-    useEffect(() => {
-        if (selectedPuntoEnvio) {
-            loadTablasData(selectedPuntoEnvio);
-        } else {
-            setOrders([]);
-            setStock([]);
-        }
-    }, [selectedPuntoEnvio, fromFromUrl, toFromUrl]);
-
     // Cargar orden de prioridad cuando cambia la fecha o el punto de envío
     useEffect(() => {
         if (selectedPuntoEnvio && selectedPuntoEnvio !== 'all' && fromFromUrl) {
@@ -620,51 +596,88 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         }
     }, [selectedPuntoEnvio, fromFromUrl, loadOrderPriorityFromDB]);
 
-    const loadTablasData = async (puntoEnvio: string, options: { skipLocalUpdate?: boolean; silent?: boolean } = {}) => {
+    // Cargar SOLO órdenes (con paginación/filtros server-side cuando hay punto específico).
+    // Reacciona a cambios de URL (page, pageSize, search, sort, estados) sin recargar stock ni stats.
+    const loadOrdersOnly = useCallback(async (options: { silent?: boolean } = {}) => {
+        if (!selectedPuntoEnvio) {
+            setOrders([]);
+            setTotalOrders(0);
+            return;
+        }
+
+        const { silent = false } = options;
+        if (!silent) setIsLoading(true);
+        try {
+            const isAll = selectedPuntoEnvio === 'all';
+            // Para 'all' (vista resumen) traemos un dataset más grande porque
+            // ResumenGeneralTables hace cálculos client-side por sabores.
+            const limit = isAll ? 1000 : pageSizeFromUrl;
+            const result = await getExpressOrdersAction(
+                isAll ? undefined : selectedPuntoEnvio,
+                fromFromUrl || undefined,
+                toFromUrl || undefined,
+                isAll ? 1 : pageFromUrl,
+                limit,
+                isAll ? undefined : (searchFromUrl || undefined),
+                isAll ? undefined : (sortFromUrl || undefined),
+                isAll ? undefined : (estadosEnvioFromUrl || undefined),
+            );
+            if (result.success) {
+                setOrders(result.orders || []);
+                setTotalOrders(result.total || (result.orders?.length || 0));
+            }
+        } catch (error) {
+            console.error('Error loading orders:', error);
+        } finally {
+            if (!silent) setIsLoading(false);
+        }
+    }, [selectedPuntoEnvio, fromFromUrl, toFromUrl, pageFromUrl, pageSizeFromUrl, searchFromUrl, sortFromUrl, estadosEnvioFromUrl]);
+
+    // Cargar stock + estadísticas anuales. Solo cambia con punto/fecha (no con búsquedas/sort).
+    const loadStockAndStats = useCallback(async (puntoEnvio: string, options: { skipLocalUpdate?: boolean; silent?: boolean } = {}) => {
         const { skipLocalUpdate = false, silent = false } = options;
         if (!silent) setIsLoading(true);
         try {
-            // Si es 'all', traemos todas las órdenes sin filtro de punto
-            const ordersPromise = getExpressOrdersAction(
-                puntoEnvio === 'all' ? undefined : puntoEnvio,
-                fromFromUrl || undefined,
-                toFromUrl || undefined
-            );
+            const isAll = puntoEnvio === 'all';
 
-            // Si hay fecha y punto seleccionado, intentar inicializar stock del día (rollover)
-            if (puntoEnvio !== 'all' && fromFromUrl && !silent) {
-                // No esperamos result para no bloquear UI, pero necesitamos recargar si hubo cambios
-                // Mejor hacer: await init, luego getStock.
-                // Optimización: getStock primero, si vacío -> init -> getStock.
-                // En este caso, lo hacemos simple: intentar init antes de getStock
-                await initializeStockForDateAction(puntoEnvio, fromFromUrl);
+            // Inicializar stock del día (rollover) en background para no bloquear el render.
+            // Si efectivamente se inicializó stock, recargamos sólo el stock al final.
+            let initPromise: Promise<{ success: boolean; initialized?: boolean } | null> = Promise.resolve(null);
+            if (!isAll && fromFromUrl && !silent) {
+                initPromise = initializeStockForDateAction(puntoEnvio, fromFromUrl).catch(() => null);
             }
 
-            // Si es 'all', no traemos stock ni detalle específico por ahora (o podríamos adaptarlo luego)
-            const stockPromise = puntoEnvio === 'all' ? Promise.resolve({ success: true, stock: [] }) : getStockByPuntoEnvioAction(puntoEnvio);
+            const stockPromise = isAll
+                ? Promise.resolve({ success: true, stock: [] as Stock[] })
+                : getStockByPuntoEnvioAction(puntoEnvio);
 
-            // Cargar estadísticas de cantidad por kilo (mismo que Analytics)
+            // Estadísticas anuales (mismo que Analytics)
             const currentYear = new Date().getFullYear();
             const yearStart = new Date(Date.UTC(currentYear, 0, 1, 0, 0, 0, 0)).toISOString();
             const yearEnd = new Date(Date.UTC(currentYear, 11, 31, 23, 59, 59, 999)).toISOString();
-            const quantityStatsPromise = getQuantityStatsByMonthAction(yearStart, yearEnd, puntoEnvio === 'all' ? undefined : puntoEnvio);
+            const quantityStatsPromise = getQuantityStatsByMonthAction(yearStart, yearEnd, isAll ? undefined : puntoEnvio);
 
-            const [ordersResult, stockResult, quantityStatsResult] = await Promise.all([
-                ordersPromise,
+            const [stockResult, quantityStatsResult, initResult] = await Promise.all([
                 stockPromise,
                 quantityStatsPromise,
+                initPromise,
             ]);
 
-            if (ordersResult.success) {
-                setOrders(ordersResult.orders || []);
-                setTotalOrders(ordersResult.total || (ordersResult.orders?.length || 0));
+            // Si la inicialización efectivamente creó registros nuevos, recargamos el stock
+            let finalStockResult = stockResult;
+            if (initResult && initResult.success && (initResult as any).initialized && !isAll) {
+                try {
+                    finalStockResult = await getStockByPuntoEnvioAction(puntoEnvio);
+                } catch {
+                    // ignore, keep stockResult
+                }
             }
-            if (stockResult.success && stockResult.stock) {
-                setStock(stockResult.stock);
-                // Inicializar valores locales con los datos del servidor
+
+            if (finalStockResult.success && finalStockResult.stock) {
+                setStock(finalStockResult.stock);
                 if (!skipLocalUpdate) {
                     const initialValues: Record<string, { stockInicial: number; llevamos: number; ajuste: number }> = {};
-                    stockResult.stock.forEach(s => {
+                    finalStockResult.stock.forEach(s => {
                         const key = String(s._id);
                         initialValues[key] = {
                             stockInicial: s.stockInicial,
@@ -680,11 +693,37 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 setQuantityStats(quantityStatsResult.data);
             }
         } catch (error) {
-            console.error('Error loading tablas data:', error);
+            console.error('Error loading stock and stats:', error);
         } finally {
             if (!silent) setIsLoading(false);
         }
-    };
+    }, [fromFromUrl]);
+
+    // Wrapper: usado por handlers (duplicar, recalcular stock, agregar producto) que esperan
+    // refrescar todo. Mantiene la firma original para compatibilidad.
+    const loadTablasData = useCallback(async (puntoEnvio: string, options: { skipLocalUpdate?: boolean; silent?: boolean } = {}) => {
+        await Promise.all([
+            loadOrdersOnly({ silent: options.silent }),
+            loadStockAndStats(puntoEnvio, options),
+        ]);
+    }, [loadOrdersOnly, loadStockAndStats]);
+
+    // Effect 1: recargar órdenes cuando cambian los filtros/paginación (URL params)
+    useEffect(() => {
+        loadOrdersOnly();
+    }, [loadOrdersOnly]);
+
+    // Effect 2: recargar stock y stats SOLO cuando cambia el punto o la fecha
+    useEffect(() => {
+        if (!selectedPuntoEnvio) {
+            setStock([]);
+            return;
+        }
+        loadStockAndStats(selectedPuntoEnvio);
+        // No incluimos loadStockAndStats en deps para evitar re-ejecución por cambios
+        // de URL params (search, sort, page, etc). Solo nos importa punto + fecha.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedPuntoEnvio, fromFromUrl]);
 
     // Función para manejar duplicación de pedidos
     const handleDuplicate = useCallback(async (row: any) => {
@@ -1427,7 +1466,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                 <TabsTrigger value="orders" className="flex items-center gap-1 px-1 sm:gap-2 sm:px-3">
                                     <ShoppingCart className="h-4 w-4 shrink-0" />
                                     <span className="hidden xs:inline sm:inline truncate">Órdenes</span>
-                                    <span className="text-xs">({filteredAndSortedOrders.length})</span>
+                                    <span className="text-xs">({isServerPaginated ? totalOrders : filteredAndSortedOrders.length})</span>
                                 </TabsTrigger>
                                 <TabsTrigger value="stock" className="flex items-center gap-1 px-1 sm:gap-2 sm:px-3">
                                     <Package className="h-4 w-4 shrink-0" />
@@ -1509,21 +1548,16 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                     // SIEMPRE habilitar drag cuando hay un punto de envío específico seleccionado Y una fecha seleccionada
                                     const isDragEnabled = Boolean(selectedPuntoEnvio && selectedPuntoEnvio !== 'all' && fromFromUrl);
 
-                                    // Crear array de IDs para SortableContext usando la lista COMPLETA filtrada
-                                    // Esto permite que el drag and drop funcione correctamente con paginación
-                                    const itemIds = filteredAndSortedOrders.map((order) => String(order._id));
+                                    // Para drag-and-drop usamos sólo los IDs de la página visible (más liviano).
+                                    // El saved order ya viene aplicado por filteredAndSortedOrders cuando corresponde.
+                                    const itemIds = paginatedOrders.map((order) => String(order._id));
 
                                     const tableComponent = (
                                         <>
                                             <OrdersDataTable
                                                 isExpressContext={true}
                                                 fontSize="text-sm"
-                                                columns={createExpressColumns(
-                                                    undefined, // No recargar datos al actualizar
-                                                    moveOrder,
-                                                    isDragEnabled, // Pasar flag para ocultar columna de flechas si drag está habilitado
-                                                    handleOrderUpdate // Pasar callback para actualizar orden
-                                                )}
+                                                columns={expressColumns}
                                                 data={paginatedOrders}
                                                 pageCount={Math.ceil((totalOrders || filteredAndSortedOrders.length) / pageSizeFromUrl)}
                                                 total={totalOrders || filteredAndSortedOrders.length}
@@ -1919,12 +1953,16 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                 isAdmin && (
                                     <TabsContent value="detalle" className="mt-6">
                                         {(() => {
-                                            // Calcular totales
-                                            const totalEnvios = orders.length;
-                                            const totalIngresos = orders.reduce((sum, order) => sum + (order.total || 0), 0);
-                                            const totalCostoEnvio = orders.reduce((sum, order) => sum + (order.shippingPrice || 0), 0);
+                                            // Si es punto específico, las órdenes vienen paginadas del server, así que
+                                            // los totales se calculan a partir de filteredAndSortedOrders (en modo "all")
+                                            // o a partir de totalOrders + extrapolación de la página (en modo punto).
+                                            // Para evitar valores erróneos, mostramos sólo totalEnvios desde el server
+                                            // y los importes desde la página actual (con leyenda implícita).
+                                            const totalEnvios = isServerPaginated ? totalOrders : filteredAndSortedOrders.length;
+                                            const totalIngresos = filteredAndSortedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+                                            const totalCostoEnvio = filteredAndSortedOrders.reduce((sum, order) => sum + (order.shippingPrice || 0), 0);
                                             const porcentajeCosto = totalIngresos > 0 ? ((totalCostoEnvio / totalIngresos) * 100).toFixed(1) : '0';
-                                            const costoEnvioPromedio = totalEnvios > 0 ? totalCostoEnvio / totalEnvios : 0;
+                                            const costoEnvioPromedio = filteredAndSortedOrders.length > 0 ? totalCostoEnvio / filteredAndSortedOrders.length : 0;
 
                                             return (
                                                 <>

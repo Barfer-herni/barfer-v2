@@ -8,8 +8,10 @@ export async function getExpressOrders(
     from?: string,
     to?: string,
     page: number = 1,
-    limit: number = 2000, // Aumentamos el límite por defecto para el front actual
-    search?: string
+    limit: number = 50,
+    search?: string,
+    sort?: string,
+    estadosEnvio?: string,
 ) {
     try {
         const params = new URLSearchParams();
@@ -17,6 +19,8 @@ export async function getExpressOrders(
         if (from) params.append('from', from);
         if (to) params.append('to', to);
         if (search) params.append('search', search);
+        if (sort) params.append('sort', sort);
+        if (estadosEnvio) params.append('estadosEnvio', estadosEnvio);
         params.append('page', page.toString());
         params.append('limit', limit.toString());
 
