@@ -138,6 +138,17 @@ export const createExpressColumns = (
         {
             accessorKey: 'estadoEnvio',
             header: 'Est. Envío',
+            sortingFn: (rowA, rowB) => {
+                const ORDER: Record<string, number> = {
+                    'listo': 0,
+                    'en-viaje': 1,
+                    'pidiendo': 2,
+                    'pendiente': 3,
+                };
+                const a = ORDER[rowA.original.estadoEnvio ?? 'pendiente'] ?? 3;
+                const b = ORDER[rowB.original.estadoEnvio ?? 'pendiente'] ?? 3;
+                return a - b;
+            },
             cell: ({ row }: CellContext<Order, unknown>) => {
                 const orderId = row.original._id;
                 const estadoEnvio = row.original.estadoEnvio;

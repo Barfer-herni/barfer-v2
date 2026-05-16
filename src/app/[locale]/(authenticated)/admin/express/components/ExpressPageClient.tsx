@@ -225,6 +225,11 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
     const filteredAndSortedOrders = useMemo(() => {
         let result = [...orders];
 
+        // A0. Filtrar por Punto de Envío (cuando se cargaron todos los puntos)
+        if (selectedPuntoEnvio && selectedPuntoEnvio !== 'all') {
+            result = result.filter(order => order.puntoEnvio === selectedPuntoEnvio);
+        }
+
         // A. Filtrar por Búsqueda
         if (searchFromUrl) {
             const searchLower = searchFromUrl.toLowerCase();
@@ -303,15 +308,9 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         }
 
         // D. Ordenar
-        // SIEMPRE aplicar el orden guardado en BD si hay punto seleccionado
-        // El orden manual tiene prioridad sobre el ordenamiento de columnas
-        if (selectedPuntoEnvio && selectedPuntoEnvio !== 'all') {
-            result = applySavedOrder(result);
-            // Si no hay orden guardado, usar orden por defecto
-            if (orderPriorityFromDB.length === 0) {
-                result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            }
-        } else if (sortFromUrl) {
+        // Si el usuario eligió ordenar por columna, eso tiene prioridad sobre el orden guardado
+        // Solo usar el orden guardado en BD si no hay sort de columna activo
+        if (sortFromUrl) {
             // Solo aplicar ordenamiento de columnas si no hay punto específico
             const [sortId, sortDesc] = sortFromUrl.split('.');
             const isDesc = sortDesc === 'desc';
@@ -328,6 +327,15 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 } else if (sortId === 'total' || sortId === 'shippingPrice') {
                     valA = Number(valA || 0);
                     valB = Number(valB || 0);
+                } else if (sortId === 'estadoEnvio') {
+                    const ESTADO_ORDER: Record<string, number> = {
+                        'listo': 0,
+                        'en-viaje': 1,
+                        'pidiendo': 2,
+                        'pendiente': 3,
+                    };
+                    valA = ESTADO_ORDER[a.estadoEnvio ?? 'pendiente'] ?? 3;
+                    valB = ESTADO_ORDER[b.estadoEnvio ?? 'pendiente'] ?? 3;
                 }
 
                 // Comparación nula segura
@@ -339,6 +347,11 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 if (valA > valB) return isDesc ? -1 : 1;
                 return 0;
             });
+        } else if (selectedPuntoEnvio && selectedPuntoEnvio !== 'all') {
+            result = applySavedOrder(result);
+            if (orderPriorityFromDB.length === 0) {
+                result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            }
         } else {
             // Default sort: createdAt desc
             result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
