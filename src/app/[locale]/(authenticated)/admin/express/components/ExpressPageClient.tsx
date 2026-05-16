@@ -1421,7 +1421,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                 {isAdmin && (
                                     <TabsTrigger value="detalle" className="flex items-center gap-2">
                                         <Edit2 className="h-4 w-4" />
-                                        Detalle
+                                        kg vendidos x sabor
                                     </TabsTrigger>
                                 )}
                             </TabsList>
