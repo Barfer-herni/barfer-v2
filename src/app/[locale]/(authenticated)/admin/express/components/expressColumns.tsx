@@ -181,13 +181,27 @@ export const createExpressColumns = (
             enableSorting: false,
             cell: ({ row }: CellContext<Order, unknown>) => {
                 const orderId = row.original._id;
-                const assignedTo = row.original.assignedTo;
-                const currentValue = assignedTo?._id || 'unassigned';
+                const assignedTo = row.original.assignedTo as any;
+                
+                // Extraer el ID asignado, manejando si es un string o un objeto con _id
+                const assignedToId = typeof assignedTo === 'string'
+                    ? assignedTo
+                    : (assignedTo && typeof assignedTo === 'object' ? assignedTo._id : null);
+                
+                // Resolver el nombre del trabajador desde la lista expressWorkers
+                const matchedWorker = expressWorkers?.find(w => String(w._id) === String(assignedToId));
+                const displayName = matchedWorker
+                    ? `${matchedWorker.name} ${matchedWorker.lastName}`
+                    : (assignedTo && typeof assignedTo === 'object' && assignedTo.name
+                        ? `${assignedTo.name} ${assignedTo.lastName}`
+                        : null);
+
+                const currentValue = assignedToId || 'unassigned';
                 
                 if (!expressWorkers || !onAssignOrder) {
                     return (
                         <div className="min-w-[120px] text-center text-sm">
-                            {assignedTo ? `${assignedTo.name} ${assignedTo.lastName}` : '—'}
+                            {displayName || '—'}
                         </div>
                     );
                 }
@@ -203,7 +217,7 @@ export const createExpressColumns = (
                         >
                             <SelectTrigger className="h-8 text-xs">
                                 <SelectValue>
-                                    {assignedTo ? `${assignedTo.name} ${assignedTo.lastName}` : 'Sin asignar'}
+                                    {displayName || 'Sin asignar'}
                                 </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
