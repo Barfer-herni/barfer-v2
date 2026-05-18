@@ -42,6 +42,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
         role: 'user' as UserRole,
         permissions: [] as string[],
         puntoEnvio: [] as string[],
+        worksInExpress: false,
     });
 
     // Cargar puntos de envío
@@ -87,6 +88,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                 'surveys:view',        // Ver encuestas
             ], // Permisos básicos por defecto para usuarios normales
             puntoEnvio: [],
+            worksInExpress: false,
         });
         setIsUserDialogOpen(true);
     };
@@ -106,6 +108,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
             role: user.role as UserRole,
             permissions: user.permissions || [],
             puntoEnvio: puntoEnvioArray,
+            worksInExpress: Boolean(user.worksInExpress),
         });
         setIsUserDialogOpen(true);
     };
@@ -139,6 +142,7 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                 if (userForm.puntoEnvio && userForm.puntoEnvio.length > 0) {
                     formData.append('puntoEnvio', JSON.stringify(userForm.puntoEnvio));
                 }
+                formData.append('worksInExpress', userForm.worksInExpress ? 'true' : 'false');
 
                 const result = editingUser
                     ? await updateUser(editingUser.id, formData)
@@ -250,6 +254,11 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                                 >
                                                     {user.permissions.length > 0 ? `✓ ${user.permissions.length} permisos` : '✗ Sin permisos'}
                                                 </Badge>
+                                                {user.worksInExpress && (
+                                                    <Badge variant="outline" className="w-fit text-xs">
+                                                        Express
+                                                    </Badge>
+                                                )}
                                             </div>
                                             <p className="text-xs text-muted-foreground">
                                                 Creado: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES') : 'N/A'}
@@ -403,6 +412,24 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                             <p className="text-xs text-muted-foreground">
                                 Selecciona uno o más puntos de envío. Si no se selecciona ninguno, el usuario verá todos los puntos (solo admins).
                             </p>
+                        </div>
+                        <div className="space-y-2 rounded-lg border p-3">
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="user-worksInExpress">Trabaja en Express</Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Aparece en el selector de asignación de órdenes express.
+                                    </p>
+                                </div>
+                                <Switch
+                                    id="user-worksInExpress"
+                                    checked={userForm.worksInExpress}
+                                    onCheckedChange={(checked) =>
+                                        setUserForm(prev => ({ ...prev, worksInExpress: checked }))
+                                    }
+                                    disabled={isPending}
+                                />
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label>Permisos del Usuario</Label>

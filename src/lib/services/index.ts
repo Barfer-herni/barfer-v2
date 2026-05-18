@@ -12,6 +12,7 @@ export type {
     Order,
     OrderItem,
     User,
+    ExpressWorker,
     Address,
     DeliveryArea,
     Coupon,

@@ -12,7 +12,9 @@ import {
     getExpressOrdersMetrics,
     duplicateExpressOrder,
     saveOrderPriority,
-    getProductsForStock
+    getProductsForStock,
+    assignExpressOrder,
+    getExpressWorkers
 } from '@/lib/services';
 import { getCurrentUserWithPermissions } from '@/lib/auth/server-permissions';
 
@@ -38,6 +40,7 @@ export async function getExpressOrdersAction(
     search?: string,
     sort?: string,
     estadosEnvio?: string,
+    assignedTo?: string,
 ) {
     return await getExpressOrders(
         puntoEnvio,
@@ -48,6 +51,7 @@ export async function getExpressOrdersAction(
         search,
         sort,
         estadosEnvio,
+        assignedTo,
     );
 }
 
@@ -349,3 +353,32 @@ export async function recalculateStockChainAction(puntoEnvio: string, startDate:
     }
 }
 
+export async function assignExpressOrderAction(orderId: string, gestorId: string | null) {
+    try {
+        const result = await assignExpressOrder(orderId, gestorId);
+
+        if (result.success) {
+            revalidatePath('/admin/express');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Error assigning express order:', error);
+        return {
+            success: false,
+            message: 'Error al asignar la orden',
+        };
+    }
+}
+
+export async function getExpressWorkersAction() {
+    try {
+        return await getExpressWorkers();
+    } catch (error) {
+        console.error('Error getting express workers:', error);
+        return {
+            success: false,
+            workers: [],
+        };
+    }
+}

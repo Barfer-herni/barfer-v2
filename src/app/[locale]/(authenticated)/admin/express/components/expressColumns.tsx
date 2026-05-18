@@ -1,10 +1,17 @@
 'use client';
 
 import { type ColumnDef, type CellContext } from '@tanstack/react-table';
-import type { Order } from '@/lib/services/types/barfer';
+import type { Order, ExpressWorker } from '@/lib/services/types/barfer';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { STATUS_TRANSLATIONS, PAYMENT_METHOD_TRANSLATIONS } from '../../table/constants';
 import { createLocalDate, formatPhoneNumber } from '../../table/helpers';
 import { EstadoEnvioCell } from './EstadoEnvioCell';
@@ -17,7 +24,9 @@ export const createExpressColumns = (
     onOrderUpdated?: () => void | Promise<void>,
     onMoveOrder?: (orderId: string, direction: 'up' | 'down') => void,
     isDragEnabled?: boolean,
-    onOrderUpdate?: (updatedOrder: Order) => void
+    onOrderUpdate?: (updatedOrder: Order) => void,
+    expressWorkers?: ExpressWorker[],
+    onAssignOrder?: (orderId: string, gestorId: string | null) => Promise<void>
 ): ColumnDef<Order>[] => [
         // Columna de prioridad: muestra flechas si NO está habilitado el drag
         // Si el drag está habilitado, esta columna se oculta porque el drag handle se renderiza en OrdersTable
@@ -165,6 +174,52 @@ export const createExpressColumns = (
             },
             size: 80,
             minSize: 80,
+        },
+        {
+            accessorKey: 'assignedTo',
+            header: 'Asignado a',
+            enableSorting: false,
+            cell: ({ row }: CellContext<Order, unknown>) => {
+                const orderId = row.original._id;
+                const assignedTo = row.original.assignedTo;
+                const currentValue = assignedTo?._id || 'unassigned';
+                
+                if (!expressWorkers || !onAssignOrder) {
+                    return (
+                        <div className="min-w-[120px] text-center text-sm">
+                            {assignedTo ? `${assignedTo.name} ${assignedTo.lastName}` : '—'}
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className="min-w-[120px]">
+                        <Select
+                            value={currentValue}
+                            onValueChange={async (value) => {
+                                const gestorId = value === 'unassigned' ? null : value;
+                                await onAssignOrder(orderId, gestorId);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 text-xs">
+                                <SelectValue>
+                                    {assignedTo ? `${assignedTo.name} ${assignedTo.lastName}` : 'Sin asignar'}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="unassigned">Desasignar</SelectItem>
+                                {expressWorkers.map((worker) => (
+                                    <SelectItem key={worker._id} value={worker._id}>
+                                        {worker.name} {worker.lastName}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                );
+            },
+            size: 120,
+            minSize: 120,
         },
         {
             accessorKey: 'shippingPrice',

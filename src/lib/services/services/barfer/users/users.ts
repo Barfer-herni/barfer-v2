@@ -15,6 +15,7 @@ export interface UserGestor {
     password?: string;
     permissions: string[];
     puntoEnvio?: string | string[];
+    worksInExpress?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
 }
@@ -27,6 +28,7 @@ export interface UserGestorCreateInput {
     password: string;
     permissions?: string[];
     puntoEnvio?: string | string[];
+    worksInExpress?: boolean;
 }
 
 export interface UserGestorUpdateInput {
@@ -37,6 +39,7 @@ export interface UserGestorUpdateInput {
     password?: string;
     permissions?: string[];
     puntoEnvio?: string | string[];
+    worksInExpress?: boolean;
 }
 
 // Re-export types for compatibility if needed
@@ -75,6 +78,7 @@ export async function createUserGestor(data: UserGestorCreateInput): Promise<{
                 role: user.role,
                 permissions: Array.isArray(user.permissions) ? user.permissions : [],
                 puntoEnvio: user.puntoEnvio || undefined,
+                worksInExpress: Boolean(user.worksInExpress),
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
             },
@@ -106,6 +110,7 @@ export async function getUserGestorById(userId: string): Promise<UserGestor | nu
             role: user.role,
             permissions: Array.isArray(user.permissions) ? user.permissions : [],
             puntoEnvio: user.puntoEnvio || undefined,
+            worksInExpress: Boolean(user.worksInExpress),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };
@@ -131,6 +136,7 @@ export async function getAllUsersGestor(excludeUserId?: string): Promise<UserGes
             role: user.role,
             permissions: Array.isArray(user.permissions) ? user.permissions : [],
             puntoEnvio: user.puntoEnvio || undefined,
+            worksInExpress: Boolean(user.worksInExpress),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         }));
@@ -160,6 +166,7 @@ export async function updateUserGestor(
             role: user.role,
             permissions: Array.isArray(user.permissions) ? user.permissions : [],
             puntoEnvio: user.puntoEnvio || undefined,
+            worksInExpress: Boolean(user.worksInExpress),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };

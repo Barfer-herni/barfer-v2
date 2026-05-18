@@ -38,6 +38,7 @@ const userSchema = z.object({
     role: z.enum(['admin', 'user']),
     permissions: z.array(z.string()),
     puntoEnvio: z.union([z.string(), z.array(z.string())]).optional(), // Acepta string (retrocompatibilidad) o array
+    worksInExpress: z.boolean().optional().default(false),
 });
 
 export async function updateProfile(userId: string, formData: FormData) {
@@ -117,6 +118,7 @@ export async function createUser(formData: FormData) {
             role: formData.get('role'),
             permissions: JSON.parse(formData.get('permissions') as string || '[]'),
             puntoEnvio: puntoEnvio,
+            worksInExpress: formData.get('worksInExpress') === 'true',
         };
 
         const validated = userSchema.safeParse(data);
@@ -131,7 +133,8 @@ export async function createUser(formData: FormData) {
             ...validated.data,
             role: validated.data.role as UserRole,
             password: validated.data.password,
-            puntoEnvio: validated.data.puntoEnvio || undefined
+            puntoEnvio: validated.data.puntoEnvio || undefined,
+            worksInExpress: validated.data.worksInExpress ?? false,
         });
 
         if (!result.success) {
@@ -172,6 +175,7 @@ export async function updateUser(userId: string, formData: FormData) {
             role: formData.get('role'),
             permissions: JSON.parse(formData.get('permissions') as string || '[]'),
             puntoEnvio: puntoEnvio,
+            worksInExpress: formData.get('worksInExpress') === 'true',
         };
 
         const validated = userSchema.safeParse(data);
@@ -185,6 +189,7 @@ export async function updateUser(userId: string, formData: FormData) {
             email: validated.data.email,
             role: validated.data.role as UserRole,
             permissions: validated.data.permissions,
+            worksInExpress: validated.data.worksInExpress ?? false,
             ...(validated.data.password ? { password: validated.data.password } : {}),
             ...(validated.data.puntoEnvio ? { puntoEnvio: validated.data.puntoEnvio } : {}),
         } as Parameters<typeof updateUserService>[1]);

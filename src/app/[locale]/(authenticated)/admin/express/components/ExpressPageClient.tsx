@@ -35,8 +35,10 @@ import {
     saveOrderPriorityAction,
     initializeStockForDateAction,
     recalculateStockChainAction,
+    getExpressWorkersAction,
 } from '../actions';
 import type { Order, Stock, PuntoEnvio } from '@/lib/services';
+import type { ExpressWorker } from '@/lib/services/types/barfer';
 type ProductForStock = any;
 import { OrdersDataTable } from '../../table/components/OrdersDataTable';
 import { DateRangeFilter } from '../../table/components/DateRangeFilter';
@@ -125,11 +127,26 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         }
     }, [initialPuntoIdFromUrl]);
 
+    useEffect(() => {
+        const loadExpressWorkers = async () => {
+            try {
+                const result = await getExpressWorkersAction();
+                if (result.success && result.workers) {
+                    setExpressWorkers(result.workers);
+                }
+            } catch (error) {
+                console.error('Error loading express workers:', error);
+            }
+        };
+        loadExpressWorkers();
+    }, []);
+
     // Datos de las tablas
     const [orders, setOrders] = useState<Order[]>([]);
     const [totalOrders, setTotalOrders] = useState(0);
     const [stock, setStock] = useState<Stock[]>([]);
     const [productsForStock, setProductsForStock] = useState<ProductForStock[]>([]);
+    const [expressWorkers, setExpressWorkers] = useState<ExpressWorker[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     // Estado para el orden de prioridad desde la base de datos
     const [orderPriorityFromDB, setOrderPriorityFromDB] = useState<string[]>([]);
@@ -163,6 +180,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
     const fromFromUrl = searchParams.get('from');
     const toFromUrl = searchParams.get('to');
     const estadosEnvioFromUrl = searchParams.get('estadosEnvio');
+    const assignedToFromUrl = searchParams.get('assignedTo');
     const sortFromUrl = searchParams.get('sort');
 
     // Función para cargar el orden de prioridad desde la base de datos
@@ -436,6 +454,25 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         );
     }, []);
 
+    const handleAssignOrder = useCallback(async (orderId: string, gestorId: string | null) => {
+        const { assignExpressOrderAction } = await import('../actions');
+        const result = await assignExpressOrderAction(orderId, gestorId);
+        
+        if (result.success && result.order) {
+            handleOrderUpdate(result.order as Order);
+            toast({
+                title: 'Orden asignada',
+                description: 'La orden se asignó exitosamente',
+            });
+        } else {
+            toast({
+                title: 'Error',
+                description: result.message || 'Error al asignar la orden',
+                variant: 'destructive',
+            });
+        }
+    }, [handleOrderUpdate]);
+
     // Función para mover un pedido arriba o abajo en el orden (mantener para compatibilidad con flechas)
     const moveOrder = useCallback(async (orderId: string, direction: 'up' | 'down') => {
         if (!selectedPuntoEnvio || selectedPuntoEnvio === 'all') {
@@ -516,8 +553,8 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
     // Memoizar columnas para evitar que tanstack-table invalide su modelo en cada render del padre.
     const isDragEnabledMemo = Boolean(selectedPuntoEnvio && selectedPuntoEnvio !== 'all' && fromFromUrl);
     const expressColumns = useMemo(
-        () => createExpressColumns(undefined, moveOrder, isDragEnabledMemo, handleOrderUpdate),
-        [moveOrder, isDragEnabledMemo, handleOrderUpdate],
+        () => createExpressColumns(undefined, moveOrder, isDragEnabledMemo, handleOrderUpdate, expressWorkers, handleAssignOrder),
+        [moveOrder, isDragEnabledMemo, handleOrderUpdate, expressWorkers, handleAssignOrder],
     );
 
     // Cargar productos para stock al montar el componente
@@ -621,6 +658,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                 isAll ? undefined : (searchFromUrl || undefined),
                 isAll ? undefined : (sortFromUrl || undefined),
                 isAll ? undefined : (estadosEnvioFromUrl || undefined),
+                isAll ? undefined : (assignedToFromUrl || undefined),
             );
             if (result.success) {
                 setOrders(result.orders || []);
@@ -631,7 +669,7 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
         } finally {
             if (!silent) setIsLoading(false);
         }
-    }, [selectedPuntoEnvio, fromFromUrl, toFromUrl, pageFromUrl, pageSizeFromUrl, searchFromUrl, sortFromUrl, estadosEnvioFromUrl]);
+    }, [selectedPuntoEnvio, fromFromUrl, toFromUrl, pageFromUrl, pageSizeFromUrl, searchFromUrl, sortFromUrl, estadosEnvioFromUrl, assignedToFromUrl]);
 
     // Cargar stock + estadísticas anuales. Solo cambia con punto/fecha (no con búsquedas/sort).
     const loadStockAndStats = useCallback(async (puntoEnvio: string, options: { skipLocalUpdate?: boolean; silent?: boolean } = {}) => {
@@ -1489,6 +1527,35 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                             <div className="sticky top-0 z-10 mt-4 flex flex-col sm:flex-row gap-4 py-3 bg-background border-b border-border/50">
                                 <DateRangeFilter />
                                 {activeTab === 'orders' && <EstadoEnvioFilter />}
+                                {activeTab === 'orders' && selectedPuntoEnvio && selectedPuntoEnvio !== 'all' && (
+                                    <Select
+                                        value={assignedToFromUrl || 'all'}
+                                        onValueChange={(value) => {
+                                            const params = new URLSearchParams(searchParams.toString());
+                                            if (value === 'all') {
+                                                params.delete('assignedTo');
+                                            } else {
+                                                params.set('assignedTo', value);
+                                            }
+                                            params.set('page', '1');
+                                            router.replace(`${pathname}?${params.toString()}`);
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-[200px]">
+                                            <SelectValue placeholder="Asignación" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todos</SelectItem>
+                                            <SelectItem value="unassigned">No asignados</SelectItem>
+                                            <SelectItem value="assigned">Asignados</SelectItem>
+                                            {expressWorkers.map((worker) => (
+                                                <SelectItem key={worker._id} value={worker._id}>
+                                                    {worker.name} {worker.lastName}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
 
                             <TabsContent value="metrics" className="mt-6">

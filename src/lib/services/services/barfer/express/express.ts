@@ -1,6 +1,6 @@
 import 'server-only';
 import { apiClient } from '@/lib/api';
-import type { Stock, CreateStockData, UpdateStockData, OrderPriority, CreateOrderPriorityData, UpdateOrderPriorityData, Order } from '../../../types/barfer';
+import type { Stock, CreateStockData, UpdateStockData, OrderPriority, CreateOrderPriorityData, UpdateOrderPriorityData, Order, ExpressWorker } from '../../../types/barfer';
 
 
 export async function getExpressOrders(
@@ -12,6 +12,7 @@ export async function getExpressOrders(
     search?: string,
     sort?: string,
     estadosEnvio?: string,
+    assignedTo?: string,
 ) {
     try {
         const params = new URLSearchParams();
@@ -21,6 +22,7 @@ export async function getExpressOrders(
         if (search) params.append('search', search);
         if (sort) params.append('sort', sort);
         if (estadosEnvio) params.append('estadosEnvio', estadosEnvio);
+        if (assignedTo) params.append('assignedTo', assignedTo);
         params.append('page', page.toString());
         params.append('limit', limit.toString());
 
@@ -440,6 +442,53 @@ export async function recalculateStockChain(puntoEnvio: string, startDate: strin
     }
 }
 
+/**
+ * Asignar un gestor a una orden express
+ */
+export async function assignExpressOrder(
+    orderId: string,
+    gestorId: string | null
+): Promise<{
+    success: boolean;
+    order?: Order;
+    message?: string;
+    error?: string;
+}> {
+    try {
+        const result = await apiClient.patch(`/orders/${orderId}/express-assign`, { gestorId });
+        return {
+            success: true,
+            order: result.order || result,
+            message: 'Orden asignada exitosamente',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error al asignar la orden',
+            error: 'ASSIGN_EXPRESS_ORDER_ERROR',
+        };
+    }
+}
 
-
-
+/**
+ * Obtener la lista de trabajadores de express
+ */
+export async function getExpressWorkers(): Promise<{
+    success: boolean;
+    workers: ExpressWorker[];
+    error?: string;
+}> {
+    try {
+        const result = await apiClient.get('/users-gestor/express-workers');
+        return {
+            success: true,
+            workers: result || [],
+        };
+    } catch (error) {
+        return {
+            success: false,
+            workers: [],
+            error: 'GET_EXPRESS_WORKERS_ERROR',
+        };
+    }
+}

@@ -53,6 +53,7 @@ export interface Order {
     deliveryDay: string;
     puntoEnvio?: string; // Nombre del punto de envío express (conecta con DeliveryArea.puntoEnvio)
     estadoEnvio?: 'pendiente' | 'pidiendo' | 'en-viaje' | 'listo'; // Estado de envío express
+    assignedTo?: ExpressWorker; // Usuario gestor asignado para envío express
     whatsappContactedAt?: string;
     createdAt: string;
     updatedAt: string;
@@ -80,6 +81,12 @@ export interface User {
     resetPasswordToken?: string | null;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface ExpressWorker {
+    _id: string;
+    name: string;
+    lastName: string;
 }
 
 export interface Address {
