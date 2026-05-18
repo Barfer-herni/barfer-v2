@@ -218,6 +218,7 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
             onRowSelectionChange(newRowSelection);
         },
         enableRowSelection: true,
+        enableSortingRemoval: false,
     });
 
     const headerCheckboxRef = useRef<HTMLInputElement>(null);
@@ -304,8 +305,8 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
                                         >
                                             {flexRender(header.column.columnDef.header, header.getContext())}
                                             {{
-                                                asc: ' 🔽',
-                                                desc: ' 🔼',
+                                                asc: ' 🔼',
+                                                desc: ' 🔽',
                                             }[header.column.getIsSorted() as string] ?? null}
                                         </Button>
                                     )}

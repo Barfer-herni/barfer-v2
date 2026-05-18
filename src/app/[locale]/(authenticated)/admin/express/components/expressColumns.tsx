@@ -140,13 +140,13 @@ export const createExpressColumns = (
             header: 'Est. Envío',
             sortingFn: (rowA, rowB) => {
                 const ORDER: Record<string, number> = {
-                    'listo': 0,
-                    'en-viaje': 1,
-                    'pidiendo': 2,
-                    'pendiente': 3,
+                    'en-viaje': 0,
+                    'pidiendo': 1,
+                    'pendiente': 2,
+                    'listo': 3,
                 };
-                const a = ORDER[rowA.original.estadoEnvio ?? 'pendiente'] ?? 3;
-                const b = ORDER[rowB.original.estadoEnvio ?? 'pendiente'] ?? 3;
+                const a = ORDER[rowA.original.estadoEnvio ?? 'pendiente'] ?? 2;
+                const b = ORDER[rowB.original.estadoEnvio ?? 'pendiente'] ?? 2;
                 return a - b;
             },
             cell: ({ row }: CellContext<Order, unknown>) => {

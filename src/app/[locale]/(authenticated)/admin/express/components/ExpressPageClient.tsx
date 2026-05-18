@@ -314,13 +314,13 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                     valB = Number(valB || 0);
                 } else if (sortId === 'estadoEnvio') {
                     const ESTADO_ORDER: Record<string, number> = {
-                        'listo': 0,
-                        'en-viaje': 1,
-                        'pidiendo': 2,
-                        'pendiente': 3,
+                        'en-viaje': 0,
+                        'pidiendo': 1,
+                        'pendiente': 2,
+                        'listo': 3,
                     };
-                    valA = ESTADO_ORDER[a.estadoEnvio ?? 'pendiente'] ?? 3;
-                    valB = ESTADO_ORDER[b.estadoEnvio ?? 'pendiente'] ?? 3;
+                    valA = ESTADO_ORDER[a.estadoEnvio ?? 'pendiente'] ?? 2;
+                    valB = ESTADO_ORDER[b.estadoEnvio ?? 'pendiente'] ?? 2;
                 }
 
                 if (valA === valB) return 0;
