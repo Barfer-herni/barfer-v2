@@ -527,11 +527,34 @@ export interface UpdateStockData {
     fecha?: string;
 }
 
+export interface DaySchedule {
+    isOpen: boolean;
+    cutoffTime: string;
+}
+
+export interface WeeklySchedule {
+    monday: DaySchedule;
+    tuesday: DaySchedule;
+    wednesday: DaySchedule;
+    thursday: DaySchedule;
+    friday: DaySchedule;
+    saturday: DaySchedule;
+    sunday: DaySchedule;
+}
+
+export interface DateException {
+    date: string;
+    isOpen: boolean;
+    cutoffTime?: string;
+}
+
 // ===== PUNTO DE ENVÍO =====
 export interface PuntoEnvio {
     _id: string;
     nombre: string;
     cutoffTime?: string; // Hora de corte (HH:mm)
+    weeklySchedule?: WeeklySchedule;
+    exceptions?: DateException[];
     createdAt: string;
     updatedAt: string;
 }
@@ -539,11 +562,15 @@ export interface PuntoEnvio {
 export interface CreatePuntoEnvioData {
     nombre: string;
     cutoffTime?: string;
+    weeklySchedule?: WeeklySchedule;
+    exceptions?: DateException[];
 }
 
 export interface UpdatePuntoEnvioData {
     nombre?: string;
     cutoffTime?: string;
+    weeklySchedule?: WeeklySchedule;
+    exceptions?: DateException[];
 }
 
 // ===== ORDEN DE PRIORIDAD DE PEDIDOS =====

@@ -105,7 +105,7 @@ export async function getStockByPuntoEnvioAction(puntoEnvio: string) {
 }
 
 
-export async function createPuntoEnvioAction(data: { nombre: string; cutoffTime?: string }) {
+export async function createPuntoEnvioAction(data: import('@/lib/services/types/barfer').CreatePuntoEnvioData) {
     try {
         const result = await createPuntoEnvioMongo(data);
 
@@ -123,7 +123,7 @@ export async function createPuntoEnvioAction(data: { nombre: string; cutoffTime?
     }
 }
 
-export async function updatePuntoEnvioAction(id: string, data: { nombre?: string; cutoffTime?: string }) {
+export async function updatePuntoEnvioAction(id: string, data: import('@/lib/services/types/barfer').UpdatePuntoEnvioData) {
     try {
         const { updatePuntoEnvioMongo } = await import('@/lib/services');
         const result = await updatePuntoEnvioMongo(id, data);
