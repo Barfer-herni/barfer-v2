@@ -175,6 +175,7 @@ export const createExpressColumns = (
             size: 80,
             minSize: 80,
         },
+        /*
         {
             accessorKey: 'assignedTo',
             header: 'Asignado a',
@@ -235,6 +236,7 @@ export const createExpressColumns = (
             size: 120,
             minSize: 120,
         },
+        */
         {
             accessorKey: 'shippingPrice',
             header: () => <div className="w-full text-center text-sm">Envío</div>,
