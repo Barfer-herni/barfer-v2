@@ -18,6 +18,8 @@ export interface DataTableProps<TData extends { _id: string }, TValue> {
     hideDateRangeFilter?: boolean;
     /** Indica si la tabla se está mostrando en el contexto de la página de Express */
     isExpressContext?: boolean;
+    /** Acción personalizada para selección múltiple (bulk actions) */
+    customBulkActions?: (selectedIds: string[], setRowSelection: (sel: any) => void) => React.ReactNode;
 }
 
 export interface EditValues {

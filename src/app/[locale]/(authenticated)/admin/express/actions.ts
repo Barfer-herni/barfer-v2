@@ -371,6 +371,29 @@ export async function assignExpressOrderAction(orderId: string, gestorId: string
     }
 }
 
+export async function assignExpressOrdersBulkAction(orderIds: string[], gestorId: string | null) {
+    try {
+        const results = await Promise.all(orderIds.map(id => assignExpressOrder(id, gestorId)));
+        
+        const hasError = results.some(r => !r.success);
+        
+        if (!hasError) {
+            revalidatePath('/admin/express');
+        }
+        
+        return {
+            success: !hasError,
+            message: hasError ? 'Error al asignar algunas órdenes' : 'Órdenes asignadas correctamente',
+        };
+    } catch (error) {
+        console.error('Error assigning express orders in bulk:', error);
+        return {
+            success: false,
+            message: 'Error al asignar las órdenes',
+        };
+    }
+}
+
 export async function getExpressWorkersAction() {
     try {
         return await getExpressWorkers();

@@ -58,6 +58,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
     hideOrderTypeFilter = false,
     hideDateRangeFilter = false,
     isExpressContext = false,
+    customBulkActions,
 }: DataTableProps<TData, TValue>) {
     const router = useRouter();
     const pathname = usePathname();
@@ -1692,6 +1693,14 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                             >
                                 Marcar como Entregado ({Object.keys(rowSelection).length})
                             </Button>
+                        )}
+                        
+                        {/* Custom Bulk Actions */}
+                        {Object.keys(rowSelection).length > 0 && customBulkActions && (
+                            customBulkActions(
+                                Object.keys(rowSelection).filter((id) => rowSelection[id]),
+                                setRowSelection
+                            )
                         )}
                     </div>
                 </div>

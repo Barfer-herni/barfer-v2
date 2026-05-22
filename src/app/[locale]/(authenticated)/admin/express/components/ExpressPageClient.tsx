@@ -36,6 +36,7 @@ import {
     initializeStockForDateAction,
     recalculateStockChainAction,
     getExpressWorkersAction,
+    assignExpressOrdersBulkAction,
 } from '../actions';
 import type { Order, Stock, PuntoEnvio } from '@/lib/services';
 import type { ExpressWorker } from '@/lib/services/types/barfer';
@@ -1648,6 +1649,37 @@ export function ExpressPageClient({ dictionary, initialPuntosEnvio, userPuntosEn
                                                 isDragEnabled={isDragEnabled}
                                                 hideOrderTypeFilter={true}
                                                 hideDateRangeFilter={true}
+                                                customBulkActions={(selectedIds, setRowSelection) => (
+                                                    <div className="flex-1 sm:flex-none lg:flex-none min-w-[150px]">
+                                                        <Select
+                                                            value=""
+                                                            onValueChange={async (value) => {
+                                                                if (!value) return;
+                                                                const gestorId = value === 'unassigned' ? null : value;
+                                                                const result = await assignExpressOrdersBulkAction(selectedIds, gestorId);
+                                                                if (result.success) {
+                                                                    setRowSelection({});
+                                                                    await loadTablasData(selectedPuntoEnvio || '', { silent: true });
+                                                                    toast({ title: 'Éxito', description: result.message || 'Órdenes asignadas' });
+                                                                } else {
+                                                                    toast({ title: 'Error', description: result.message, variant: 'destructive' });
+                                                                }
+                                                            }}
+                                                        >
+                                                            <SelectTrigger className="h-10">
+                                                                <SelectValue placeholder={`Asignar a...`} />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="unassigned">Desasignar</SelectItem>
+                                                                {expressWorkers.map((worker) => (
+                                                                    <SelectItem key={worker._id} value={worker._id}>
+                                                                        {worker.name} {worker.lastName}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
                                             />
                                         </>
                                     );
