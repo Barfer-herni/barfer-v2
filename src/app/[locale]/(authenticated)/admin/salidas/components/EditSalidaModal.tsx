@@ -602,6 +602,16 @@ export function EditSalidaModal({
                                             }
                                             initialFocus
                                         />
+                                        <div className="border-t p-2 flex justify-start">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleInputChange('fechaFactura', new Date())}
+                                            >
+                                                Hoy
+                                            </Button>
+                                        </div>
                                     </PopoverContent>
                                 </Popover>
                                 {errors.fechaFactura && (
@@ -635,6 +645,16 @@ export function EditSalidaModal({
                                             onSelect={(date) => handleInputChange('fechaPago', date)}
                                             initialFocus
                                         />
+                                        <div className="border-t p-2 flex justify-start">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleInputChange('fechaPago', new Date())}
+                                            >
+                                                Hoy
+                                            </Button>
+                                        </div>
                                     </PopoverContent>
                                 </Popover>
                             </div>

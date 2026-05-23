@@ -44,6 +44,7 @@ export interface ProveedorData {
         _id: string;
         nombre: string;
     };
+    notas: string;
     activo: boolean;
     createdAt: string;
     updatedAt: string;
@@ -68,6 +69,7 @@ const mockProveedores: ProveedorData[] = [
             _id: '1',
             nombre: 'EFECTIVO'
         },
+        notas: '{"notas": "2025-01-01T00:00:00Z"}',
         activo: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z'
@@ -89,13 +91,14 @@ const mockProveedores: ProveedorData[] = [
             _id: '2',
             nombre: 'TRANSFERENCIA'
         },
+        notas: '{"notas": "2025-01-01T00:00:00Z"}',
         activo: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z'
     }
 ];
 
-type SortField = 'nombre' | 'detalle' | 'telefono' | 'personaContacto' | 'registro' | 'categoria' | 'metodoPago';
+type SortField = 'nombre' | 'detalle' | 'telefono' | 'personaContacto' | 'registro' | 'categoria' | 'metodoPago' | 'notas';
 type SortDirection = 'asc' | 'desc';
 
 interface ProveedoresManagerProps {
@@ -157,6 +160,7 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
                     categoria: proveedor.categoria,
                     metodoPago: proveedor.metodoPago,
                     activo: proveedor.isActive,
+                    notas: proveedor.notas,
                     createdAt: proveedor.createdAt.toString(),
                     updatedAt: proveedor.updatedAt.toString()
                 }));
@@ -237,6 +241,10 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
                 case 'metodoPago':
                     aValue = (a.metodoPago?.nombre || '').toLowerCase();
                     bValue = (b.metodoPago?.nombre || '').toLowerCase();
+                    break;
+                case 'notas':
+                    aValue = (a.notas || '').toLowerCase();
+                    bValue = (b.notas || '').toLowerCase();
                     break;
                 default:
                     return 0;
@@ -467,6 +475,15 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
                                         {getSortIcon('registro')}
                                     </div>
                                 </TableHead>
+                                <TableHead
+                                    className="font-semibold w-[120px] text-center cursor-pointer hover:bg-muted/70 select-none"
+                                    onClick={() => handleSort('notas')}
+                                >
+                                    <div className="flex items-center justify-center gap-1">
+                                        Notas
+                                        {getSortIcon('notas')}
+                                    </div>
+                                </TableHead>
                                 <TableHead className="font-semibold w-[100px] text-center">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -531,6 +548,14 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
                                                 className={`${getPagoTipoColor(proveedor.registro)} text-xs`}
                                             >
                                                 {proveedor.registro}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="w-[120px] text-center">
+                                            <Badge
+                                                variant="outline"
+                                                className={`text-xs`}
+                                            >
+                                                {(proveedor.notas ?? '').length > 10 ? proveedor.notas!.substring(0, 10) + '...' : (proveedor.notas ?? '-')}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="w-[100px]">

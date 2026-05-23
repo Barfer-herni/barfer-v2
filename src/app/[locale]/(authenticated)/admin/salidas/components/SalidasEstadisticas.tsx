@@ -113,6 +113,7 @@ export function SalidasEstadisticas() {
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
     const [selectedYear, setSelectedYear] = useState<string>('all');
     const [isLoading, setIsLoading] = useState(true);
+    const [showAllCategories, setShowAllCategories] = useState(false);
 
     // Generar años disponibles (últimos 5 años desde el año actual)
     const currentYear = new Date().getFullYear();
@@ -259,6 +260,7 @@ export function SalidasEstadisticas() {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
             currency: 'ARS',
+            maximumFractionDigits: 0,
         }).format(amount);
     };
 
@@ -268,13 +270,13 @@ export function SalidasEstadisticas() {
         label,
     }: {
         active?: boolean;
-        payload?: Array<{ 
-            value: number; 
-            payload: { 
+        payload?: Array<{
+            value: number;
+            payload: {
                 cantidad?: number;
                 name?: string;
                 porcentaje?: number;
-            } 
+            }
         }>;
         label?: string;
     }) => {
@@ -550,7 +552,7 @@ export function SalidasEstadisticas() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                {categoryStats.map((item, index) => (
+                                {categoryStats.slice(0, showAllCategories ? undefined : 10).map((item, index) => (
                                     <div
                                         key={item.categoriaId}
                                         className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
@@ -577,6 +579,17 @@ export function SalidasEstadisticas() {
                                     </div>
                                 ))}
                             </div>
+                            {categoryStats.length > 10 && (
+                                <div className="mt-4 flex justify-center">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowAllCategories(!showAllCategories)}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {showAllCategories ? 'Ver Menos' : `Ver Más (${categoryStats.length - 10} restantes)`}
+                                    </Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>

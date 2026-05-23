@@ -10,6 +10,8 @@ import {
     deleteSalidaMongo,
     // getSalidasByDateRangeMongo, no quiero usar mas esta api
     getAllCategoriasMongo,
+    getAllCategoriasUnactiveMongo,
+    activateCategoriaMongo,
     getAllMetodosPagoMongo,
     createCategoriaMongo,
     deleteCategoriaMongo,
@@ -161,6 +163,39 @@ export async function getAllCategoriasAction() {
 // Crear una nueva categoría
 export async function createCategoriaAction(nombre: string) {
     const result = await createCategoriaMongo({ nombre });
+    if (result.success) {
+        revalidatePath('/admin/salidas');
+    }
+    return result;
+}
+
+// Actualizar una categoría
+export async function updateCategoriaAction(categoriaId: string, nombre: string) {
+    // Verificar permisos
+    if (!await hasPermission('outputs:edit')) {
+        return { success: false, error: 'No tienes permisos para editar categorías' };
+    }
+
+    const { updateCategoriaMongo } = await import('@/lib/services');
+    const result = await updateCategoriaMongo(categoriaId, { nombre });
+    if (result.success) {
+        revalidatePath('/admin/salidas');
+    }
+    return result;
+}
+
+// Obtener categorías inactivas
+export async function getAllCategoriasUnactiveAction() {
+    return await getAllCategoriasUnactiveMongo();
+}
+
+// Activar una categoría
+export async function activateCategoriaAction(categoriaId: string) {
+    if (!await hasPermission('outputs:edit')) {
+        return { success: false, error: 'No tienes permisos para activar categorías' };
+    }
+
+    const result = await activateCategoriaMongo(categoriaId);
     if (result.success) {
         revalidatePath('/admin/salidas');
     }

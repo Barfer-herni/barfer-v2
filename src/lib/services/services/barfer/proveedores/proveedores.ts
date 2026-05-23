@@ -7,6 +7,7 @@ export interface ProveedorMongoData {
     detalle: string;
     telefono: string;
     personaContacto: string;
+    notas?: string | null;
     registro: 'BLANCO' | 'NEGRO';
     categoriaId?: string | null;
     metodoPagoId?: string | null;
@@ -28,6 +29,7 @@ export interface CreateProveedorMongoInput {
     detalle: string;
     telefono: string;
     personaContacto: string;
+    notas?: string;
     registro: 'BLANCO' | 'NEGRO';
     categoriaId?: string;
     metodoPagoId?: string;
@@ -39,6 +41,7 @@ export interface UpdateProveedorMongoInput {
     detalle?: string;
     telefono?: string;
     personaContacto?: string;
+    notas?: string;
     registro?: 'BLANCO' | 'NEGRO';
     categoriaId?: string;
     metodoPagoId?: string;

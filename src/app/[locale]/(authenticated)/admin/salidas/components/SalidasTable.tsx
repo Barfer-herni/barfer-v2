@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Filter, Search, X, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AddSalidaModal } from './AddSalidaModal';
 import { EditSalidaModal } from './EditSalidaModal';
 import { DeleteSalidaDialog } from './DeleteSalidaDialog';
@@ -96,7 +97,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
 
     // Estados para los filtros (inicializados desde el servidor)
     const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm || '');
-    const [selectedCategoria, setSelectedCategoria] = useState(initialFilters.categoriaId || '');
+    const [selectedCategorias, setSelectedCategorias] = useState<string[]>(initialFilters.categoriaId ? initialFilters.categoriaId.split(',') : []);
     const [selectedMetodoPago, setSelectedMetodoPago] = useState(initialFilters.metodoPagoId || '');
     const [selectedTipo, setSelectedTipo] = useState(initialFilters.tipo || '');
     const [selectedTipoRegistro, setSelectedTipoRegistro] = useState(initialFilters.tipoRegistro || '');
@@ -130,7 +131,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
 
             // Agregar filtros no vacíos
             if (searchTerm && searchTerm.trim() !== '') params.set('searchTerm', searchTerm);
-            if (selectedCategoria) params.set('categoriaId', selectedCategoria);
+            if (selectedCategorias.length > 0) params.set('categoriaId', selectedCategorias.join(','));
             if (selectedMetodoPago) params.set('metodoPagoId', selectedMetodoPago);
             if (selectedTipo) params.set('tipo', selectedTipo);
             if (selectedTipoRegistro) params.set('tipoRegistro', selectedTipoRegistro);
@@ -149,7 +150,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
                 clearTimeout(searchDebounceRef.current);
             }
         };
-    }, [searchTerm, selectedCategoria, selectedMetodoPago, selectedTipo, selectedTipoRegistro, router, pathname, pagination.pageSize]);
+    }, [searchTerm, selectedCategorias, selectedMetodoPago, selectedTipo, selectedTipoRegistro, router, pathname, pagination.pageSize]);
 
     const formatDate = (date: Date | string) => {
         // Asegurar que tenemos un objeto Date válido
@@ -334,7 +335,7 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
 
     const clearFilters = () => {
         setSearchTerm('');
-        setSelectedCategoria('');
+        setSelectedCategorias([]);
         setSelectedMetodoPago('');
         setSelectedTipo('');
         setSelectedTipoRegistro('');
@@ -448,26 +449,45 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
                     <div className="space-y-3">
                         {/* Primera fila: Filtros principales */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                            {/* Categoría */}
-                            <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Categoría" />
-                                </SelectTrigger>
-                                <SelectContent>
+                            {/* Categorías (Múltiple) */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-between font-normal px-3">
+                                        <span className="truncate">
+                                            {selectedCategorias.length === 0 
+                                                ? "Categorías" 
+                                                : selectedCategorias.length === 1 
+                                                ? uniqueCategorias.find(c => c._id === selectedCategorias[0])?.nombre || "1 seleccionada"
+                                                : `${selectedCategorias.length} seleccionadas`}
+                                        </span>
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto">
                                     {uniqueCategorias.map(categoria => (
-                                        <SelectItem key={categoria._id} value={categoria._id}>
+                                        <DropdownMenuCheckboxItem
+                                            key={categoria._id}
+                                            checked={selectedCategorias.includes(categoria._id)}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setSelectedCategorias([...selectedCategorias, categoria._id]);
+                                                } else {
+                                                    setSelectedCategorias(selectedCategorias.filter(id => id !== categoria._id));
+                                                }
+                                            }}
+                                        >
                                             {categoria.nombre}
-                                        </SelectItem>
+                                        </DropdownMenuCheckboxItem>
                                     ))}
-                                </SelectContent>
-                            </Select>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
 
                             {/* Método de pago */}
                             <Select value={selectedMetodoPago} onValueChange={setSelectedMetodoPago}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Forma de pago" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="max-h-60">
                                     {uniqueMetodosPago.map(metodo => (
                                         <SelectItem key={metodo._id} value={metodo._id}>
                                             {getFormaPagoLabel(metodo.nombre)}

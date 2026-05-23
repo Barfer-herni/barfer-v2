@@ -65,7 +65,36 @@ export async function createCategoriaMongo(data: CreateCategoriaMongoInput) {
         const result = await apiClient.post('/categorias-gestor', data);
         return { success: true, categoria: result.categoria || result, message: 'Categoría creada exitosamente' };
     } catch (error: any) {
-        return { success: false, message: 'Error al crear la categoría' };
+        const errorMsg = error?.message || '';
+
+        const jsonMatch = errorMsg.match(/(\{[\s\S]*\})/);
+        if (jsonMatch) {
+            try {
+                const parsed = JSON.parse(jsonMatch[1]);
+                if (parsed.code === 'CATEGORY_INACTIVE') {
+                    return {
+                        success: false,
+                        code: 'CATEGORY_INACTIVE' as const,
+                        message: parsed.message || 'La categoría ya existe pero está desactivada',
+                        categoriaId: parsed.categoriaId,
+                        nombre: parsed.nombre,
+                    };
+                }
+                if (parsed.code === 'CATEGORY_EXISTS') {
+                    return {
+                        success: false,
+                        code: 'CATEGORY_EXISTS' as const,
+                        message: parsed.message || 'La categoría ya existe',
+                        nombre: parsed.nombre,
+                    };
+                }
+            } catch {
+                // Not a structured error, fall through
+            }
+        }
+
+        const apiMessage = errorMsg.includes(': ') ? errorMsg.split(': ').slice(1).join(': ') : errorMsg;
+        return { success: false, message: apiMessage || 'Error al crear la categoría' };
     }
 }
 
@@ -80,7 +109,7 @@ export async function updateCategoriaMongo(id: string, data: UpdateCategoriaMong
 
 export async function deleteCategoriaMongo(id: string) {
     try {
-        await apiClient.delete(`/categorias-gestor/${id}`);
+        await apiClient.delete(`/categorias-gestor/${id}/soft`);
         return { success: true, message: 'Categoría desactivada exitosamente' };
     } catch (error) {
         return { success: false, message: 'Error al desactivar la categoría' };
@@ -133,6 +162,32 @@ export async function getCategoriasStatsMongo() {
         return { success: true, stats: result.stats || result };
     } catch (error) {
         return { success: false, message: 'Error al obtener estadísticas de categorías' };
+    }
+}
+
+export async function getAllCategoriasUnactiveMongo() {
+    try {
+        const result = await apiClient.get('/categorias-gestor/unactive');
+        return {
+            success: true,
+            categorias: result.categorias || result || [],
+            total: result.total || (result.categorias || result || []).length
+        };
+    } catch (error) {
+        return { success: false, message: 'Error al obtener las categorías inactivas' };
+    }
+}
+
+export async function activateCategoriaMongo(id: string) {
+    try {
+        const result = await apiClient.patch(`/categorias-gestor/${id}/activate`);
+        return {
+            success: true,
+            categoria: result.categoria || result,
+            message: result.message || 'Categoría activada exitosamente'
+        };
+    } catch (error) {
+        return { success: false, message: 'Error al activar la categoría' };
     }
 }
 

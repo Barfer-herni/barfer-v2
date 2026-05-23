@@ -141,7 +141,10 @@ async function request<T = any>(
         let errorBody: string;
         try {
             const errorJson = await response.json();
-            errorBody = errorJson.message || JSON.stringify(errorJson);
+            const message = errorJson.message;
+            errorBody = typeof message === 'string'
+                ? message
+                : JSON.stringify(message ?? errorJson);
         } catch {
             errorBody = await response.text();
         }

@@ -230,7 +230,7 @@ export function AnalyticsDateFilter({ compact = false, showCompare = true }: Ana
     };
 
     const handleApply = () => {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams(searchParams.toString());
 
         // Función auxiliar para formatear fecha en zona horaria local
         const formatLocalDate = (date: Date): string => {
@@ -264,7 +264,13 @@ export function AnalyticsDateFilter({ compact = false, showCompare = true }: Ana
     };
 
     const handleReset = () => {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('from');
+        params.delete('to');
+        params.delete('preset');
+        params.delete('compare');
+        params.delete('compareFrom');
+        params.delete('compareTo');
         router.push(`?${params.toString()}`);
     };
 

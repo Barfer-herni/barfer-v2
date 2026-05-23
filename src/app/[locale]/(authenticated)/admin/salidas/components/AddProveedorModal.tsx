@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -27,6 +28,7 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
         detalle: '',
         telefono: '',
         personaContacto: '',
+        notas: '',
         registro: 'BLANCO' as 'BLANCO' | 'NEGRO',
         categoriaId: '',
         metodoPagoId: ''
@@ -105,6 +107,7 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
                 detalle: formData.detalle.trim(),
                 telefono: formData.telefono.trim(),
                 personaContacto: formData.personaContacto.trim(),
+                notas: formData.notas.trim() || undefined,
                 registro: formData.registro,
                 categoriaId: formData.categoriaId === 'none' ? undefined : formData.categoriaId,
                 metodoPagoId: formData.metodoPagoId === 'none' ? undefined : formData.metodoPagoId,
@@ -125,6 +128,7 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
                     detalle: '',
                     telefono: '',
                     personaContacto: '',
+                    notas: '',
                     registro: 'BLANCO',
                     categoriaId: '',
                     metodoPagoId: ''
@@ -202,6 +206,18 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
                             value={formData.personaContacto}
                             onChange={(e) => handleInputChange('personaContacto', e.target.value)}
                             placeholder="Ej: Juan Pérez"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="notas">Notas / Información Adicional</Label>
+                        <Textarea
+                            id="notas"
+                            value={formData.notas}
+                            onChange={(e) => handleInputChange('notas', e.target.value)}
+                            placeholder="Ej: Solo atiende de mañana..."
+                            className="resize-none"
+                            rows={3}
                         />
                     </div>
 
