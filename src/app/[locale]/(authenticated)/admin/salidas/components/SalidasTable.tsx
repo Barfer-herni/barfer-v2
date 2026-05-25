@@ -24,7 +24,7 @@ import { EditSalidaModal } from './EditSalidaModal';
 import { DeleteSalidaDialog } from './DeleteSalidaDialog';
 import { SalidaMongoData } from '@/lib/services';
 import type { PaginationState } from '@tanstack/react-table';
-import { duplicateSalidaAction } from '../actions';
+import { duplicateSalidaAction, getAllCategoriasAction } from '../actions';
 import { Copy } from 'lucide-react';
 
 // Funciones de permisos del cliente (definidas localmente)
@@ -106,9 +106,30 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
     const [sortField, setSortField] = useState<SortField>('fechaFactura');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+    // Todas las categorías activas (independiente del filtro/página actual)
+    const [allCategorias, setAllCategorias] = useState<Array<{ _id: string; nombre: string }>>([]);
+
     // Debounce para el searchTerm
     const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
     const isInitialMount = useRef(true);
+
+    useEffect(() => {
+        const loadCategorias = async () => {
+            try {
+                const result = await getAllCategoriasAction();
+                if (result.success && result.categorias) {
+                    const activas = result.categorias
+                        .filter((c: { isActive?: boolean }) => c.isActive !== false)
+                        .map((c: { _id: string; nombre: string }) => ({ _id: c._id, nombre: c.nombre }))
+                        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+                    setAllCategorias(activas);
+                }
+            } catch (error) {
+                console.error('Error loading categorias for filter:', error);
+            }
+        };
+        loadCategorias();
+    }, []);
 
     // Aplicar filtros cuando cambien (con debounce para searchTerm)
     useEffect(() => {
@@ -225,17 +246,6 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
         };
         return labels[metodoPago] || metodoPago;
     };
-
-    // Obtener opciones únicas para los filtros (desde todas las salidas, no solo la página actual)
-    // NOTA: Idealmente estos deberían venir del servidor como opciones disponibles
-    const uniqueCategorias = useMemo(() => {
-        const categorias = salidas
-            .map(s => s.categoria)
-            .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined && cat !== null && !!cat._id)
-            .filter((cat, index, array) => array.findIndex(c => c._id === cat._id) === index)
-            .sort((a, b) => a.nombre.localeCompare(b.nombre));
-        return categorias;
-    }, [salidas]);
 
     const uniqueMetodosPago = useMemo(() => {
         const metodos = salidas
@@ -457,14 +467,14 @@ export function SalidasTable({ salidas = [], onRefreshSalidas, userPermissions =
                                             {selectedCategorias.length === 0 
                                                 ? "Categorías" 
                                                 : selectedCategorias.length === 1 
-                                                ? uniqueCategorias.find(c => c._id === selectedCategorias[0])?.nombre || "1 seleccionada"
+                                                ? allCategorias.find(c => c._id === selectedCategorias[0])?.nombre || "1 seleccionada"
                                                 : `${selectedCategorias.length} seleccionadas`}
                                         </span>
                                         <ChevronDown className="h-4 w-4 opacity-50" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto">
-                                    {uniqueCategorias.map(categoria => (
+                                    {allCategorias.map(categoria => (
                                         <DropdownMenuCheckboxItem
                                             key={categoria._id}
                                             checked={selectedCategorias.includes(categoria._id)}

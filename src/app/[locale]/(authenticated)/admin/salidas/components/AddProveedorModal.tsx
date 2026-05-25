@@ -210,18 +210,6 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="notas">Notas / Información Adicional</Label>
-                        <Textarea
-                            id="notas"
-                            value={formData.notas}
-                            onChange={(e) => handleInputChange('notas', e.target.value)}
-                            placeholder="Ej: Solo atiende de mañana..."
-                            className="resize-none"
-                            rows={3}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
                         <Label htmlFor="registro">Registro</Label>
                         <Select value={formData.registro} onValueChange={(value) => handleInputChange('registro', value)}>
                             <SelectTrigger>
@@ -266,6 +254,18 @@ export function AddProveedorModal({ open, onOpenChange, onProveedorCreated }: Ad
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="notas">Notas / Información Adicional</Label>
+                        <Textarea
+                            id="notas"
+                            value={formData.notas}
+                            onChange={(e) => handleInputChange('notas', e.target.value)}
+                            placeholder="Ej: Solo atiende de mañana..."
+                            className="resize-none"
+                            rows={3}
+                        />
                     </div>
 
                     <div className="flex justify-end gap-2 pt-4">

@@ -14,12 +14,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, Edit, Trash2, Search, X, ChevronUp, ChevronDown, ChevronsUpDown, Users } from 'lucide-react';
 import { AddProveedorModal } from './AddProveedorModal';
 import { EditProveedorModal } from './EditProveedorModal';
 import { DeleteProveedorDialog } from './DeleteProveedorDialog';
 import {
     getAllProveedoresAction,
+    getAllCategoriasAction,
     createProveedorAction,
     updateProveedorAction,
     deleteProveedorAction
@@ -101,6 +103,16 @@ const mockProveedores: ProveedorData[] = [
 type SortField = 'nombre' | 'detalle' | 'telefono' | 'personaContacto' | 'registro' | 'categoria' | 'metodoPago' | 'notas';
 type SortDirection = 'asc' | 'desc';
 
+type CategoriaOption = { _id: string; nombre: string };
+
+function normalizeCategoriaOption(c: Record<string, unknown>): CategoriaOption | null {
+    const rawId = c._id ?? c.id;
+    const id = rawId != null ? String(rawId) : '';
+    const nombre = String(c.nombre ?? '').trim();
+    if (!id || !nombre) return null;
+    return { _id: id, nombre };
+}
+
 interface ProveedoresManagerProps {
     onProveedorChanged?: () => void;
 }
@@ -115,7 +127,9 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
 
     // Estados para los filtros
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedPagoTipo, setSelectedPagoTipo] = useState<string>('');
+    const [selectedCategorias, setSelectedCategorias] = useState<string[]>([]);
+    const [selectedPagoTipo, setSelectedPagoTipo] = useState('');
+    const [allCategorias, setAllCategorias] = useState<CategoriaOption[]>([]);
 
     // Estados para el ordenamiento
     const [sortField, setSortField] = useState<SortField>('nombre');
@@ -177,9 +191,45 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
         }
     };
 
+    const loadCategorias = async () => {
+        try {
+            const result = await getAllCategoriasAction();
+            if (result.success && result.categorias) {
+                const raw = Array.isArray(result.categorias) ? result.categorias : [];
+                const activas = raw
+                    .filter((c: { isActive?: boolean }) => c.isActive !== false)
+                    .map((c: Record<string, unknown>) => normalizeCategoriaOption(c))
+                    .filter((c): c is CategoriaOption => c !== null)
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+                setAllCategorias(activas);
+            }
+        } catch (error) {
+            console.error('Error loading categorias for filter:', error);
+        }
+    };
+
+    // Opciones de categoría: API + categorías presentes en proveedores cargados
+    const categoriasFilterOptions = useMemo(() => {
+        const map = new Map<string, string>();
+        for (const c of allCategorias) {
+            map.set(c._id, c.nombre);
+        }
+        for (const p of proveedores) {
+            const id = p.categoriaId || p.categoria?._id;
+            const nombre = p.categoria?.nombre;
+            if (id && nombre) {
+                map.set(String(id), nombre);
+            }
+        }
+        return Array.from(map.entries())
+            .map(([_id, nombre]) => ({ _id, nombre }))
+            .sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }, [allCategorias, proveedores]);
+
     // Cargar datos al montar el componente
     useEffect(() => {
         loadProveedores();
+        loadCategorias();
     }, []);
 
 
@@ -197,6 +247,25 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
 
                 if (!matchesNombre && !matchesDetalle && !matchesTelefono && !matchesPersona) {
                     return false;
+                }
+            }
+
+            // Filtro por categoría (múltiple, como en tabla de salidas)
+            if (selectedCategorias.length > 0) {
+                const wantsNone = selectedCategorias.includes('none');
+                const categoryIds = selectedCategorias.filter(id => id !== 'none');
+                const proveedorCategoriaId = proveedor.categoriaId ? String(proveedor.categoriaId) : null;
+
+                if (wantsNone && categoryIds.length === 0) {
+                    if (proveedorCategoriaId) return false;
+                } else if (wantsNone && categoryIds.length > 0) {
+                    const matchesNone = !proveedorCategoriaId;
+                    const matchesCategory = proveedorCategoriaId != null && categoryIds.includes(proveedorCategoriaId);
+                    if (!matchesNone && !matchesCategory) return false;
+                } else {
+                    if (!proveedorCategoriaId || !categoryIds.includes(proveedorCategoriaId)) {
+                        return false;
+                    }
                 }
             }
 
@@ -258,10 +327,11 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
             }
             return 0;
         });
-    }, [proveedores, searchTerm, selectedPagoTipo, sortField, sortDirection]);
+    }, [proveedores, searchTerm, selectedCategorias, selectedPagoTipo, sortField, sortDirection]);
 
     const clearFilters = () => {
         setSearchTerm('');
+        setSelectedCategorias([]);
         setSelectedPagoTipo('');
     };
 
@@ -382,12 +452,63 @@ export function ProveedoresManager({ onProveedorChanged }: ProveedoresManagerPro
 
                     {/* Filtros */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {/* Categorías (múltiple, igual que tabla de salidas) */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between font-normal px-3">
+                                    <span className="truncate">
+                                        {selectedCategorias.length === 0
+                                            ? 'Categorías'
+                                            : selectedCategorias.length === 1
+                                                ? (selectedCategorias[0] === 'none'
+                                                    ? 'Sin categoría'
+                                                    : categoriasFilterOptions.find(c => c._id === selectedCategorias[0])?.nombre || '1 seleccionada')
+                                                : `${selectedCategorias.length} seleccionadas`}
+                                    </span>
+                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto">
+                                <DropdownMenuCheckboxItem
+                                    checked={selectedCategorias.includes('none')}
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            setSelectedCategorias([...selectedCategorias, 'none']);
+                                        } else {
+                                            setSelectedCategorias(selectedCategorias.filter(id => id !== 'none'));
+                                        }
+                                    }}
+                                >
+                                    Sin categoría
+                                </DropdownMenuCheckboxItem>
+                                {categoriasFilterOptions.map(categoria => (
+                                    <DropdownMenuCheckboxItem
+                                        key={categoria._id}
+                                        checked={selectedCategorias.includes(categoria._id)}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                setSelectedCategorias([...selectedCategorias, categoria._id]);
+                                            } else {
+                                                setSelectedCategorias(selectedCategorias.filter(id => id !== categoria._id));
+                                            }
+                                        }}
+                                    >
+                                        {categoria.nombre}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         {/* Registro */}
-                        <Select value={selectedPagoTipo} onValueChange={setSelectedPagoTipo}>
+                        <Select
+                            value={selectedPagoTipo || 'all'}
+                            onValueChange={(value) => setSelectedPagoTipo(value === 'all' ? '' : value)}
+                        >
                             <SelectTrigger>
                                 <SelectValue placeholder="Registro" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Todos los registros</SelectItem>
                                 <SelectItem value="BLANCO">Blanco</SelectItem>
                                 <SelectItem value="NEGRO">Negro</SelectItem>
                             </SelectContent>
