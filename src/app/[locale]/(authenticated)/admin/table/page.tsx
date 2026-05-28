@@ -41,6 +41,7 @@ export default async function TablePage({
     const isAdmin = userWithPermissions?.isAdmin || false;
     const canEdit = isAdmin || userWithPermissions?.permissions.includes('table:edit') || false;
     const canDelete = isAdmin || userWithPermissions?.permissions.includes('table:delete') || false;
+    const canManageBlacklist = isAdmin || userWithPermissions?.permissions.includes('blacklist:edit') || false;
 
     const { orders, pageCount, total } = await getOrders({
         pageIndex: pagination.pageIndex,
@@ -80,6 +81,7 @@ export default async function TablePage({
                     sorting={sorting}
                     canEdit={canEdit}
                     canDelete={canDelete}
+                    canManageBlacklist={canManageBlacklist}
                 />
             </div>
         </div>

@@ -10,6 +10,8 @@ const API_URL = env.API_URL;
 
 // Tipos de permisos disponibles
 type Permission =
+    // Super Admin
+    | 'all'
     // Analytics
     | 'analytics:view'
     | 'analytics:export'
@@ -39,6 +41,9 @@ type Permission =
     | 'table:export'
     | 'table:delete'
     | 'table:edit'
+    // Blacklist
+    | 'blacklist:view'
+    | 'blacklist:edit'
     // Balance
     | 'balance:view'
     | 'balance:export'
@@ -97,6 +102,8 @@ const ADMIN_PERMISSIONS: Permission[] = [
     'table:export',
     'table:delete',
     'table:edit',
+    'blacklist:view',
+    'blacklist:edit',
     'balance:view',
     'balance:export',
     'prices:view',

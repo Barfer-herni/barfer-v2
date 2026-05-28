@@ -78,6 +78,8 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                 'table:view',          // Ver órdenes
                 'table:edit',          // Editar órdenes
                 'table:delete',        // Eliminar órdenes
+                'blacklist:view',      // Ver lista negra
+                'blacklist:edit',      // Editar lista negra
                 'prices:view',         // Ver precios
                 'balance:view',        // Ver balance
                 'outputs:view',        // Ver salidas
@@ -606,6 +608,38 @@ export function UsersSection({ users, currentUser, dictionary }: UsersSectionPro
                                                 disabled={isPending}
                                             />
                                             <Label className="text-sm">Notificar clientes (órdenes)</Label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Permisos de Lista Negra */}
+                                <div className={`space-y-3 ${userForm.permissions.includes('all') ? 'opacity-40 pointer-events-none' : ''}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-red-500"></div>
+                                        <Label className="text-sm font-medium text-red-700 dark:text-red-400">Permisos de Lista Negra</Label>
+                                    </div>
+                                    <div className="ml-4 space-y-2">
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('blacklist:view')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'blacklist:view'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'blacklist:view') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Ver lista negra</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={userForm.permissions.includes('blacklist:edit')}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setUserForm(prev => ({ ...prev, permissions: [...prev.permissions, 'blacklist:edit'] }));
+                                                    else setUserForm(prev => ({ ...prev, permissions: prev.permissions.filter(p => p !== 'blacklist:edit') }));
+                                                }}
+                                                disabled={isPending}
+                                            />
+                                            <Label className="text-sm">Editar lista negra</Label>
                                         </div>
                                     </div>
                                 </div>

@@ -9,6 +9,7 @@ export interface DataTableProps<TData extends { _id: string }, TValue> {
     sorting: SortingState;
     canEdit?: boolean;
     canDelete?: boolean;
+    canManageBlacklist?: boolean;
     onOrderUpdated?: () => void | Promise<void>;
     onDuplicate?: (row: any) => void | Promise<void>;
     fontSize?: 'text-xs' | 'text-sm';

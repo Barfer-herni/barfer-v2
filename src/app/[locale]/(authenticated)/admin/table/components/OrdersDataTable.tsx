@@ -52,6 +52,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
     sorting,
     canEdit = false,
     canDelete = false,
+    canManageBlacklist = false,
     onOrderUpdated,
     onDuplicate: customOnDuplicate,
     fontSize = 'text-xs',
@@ -1786,7 +1787,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                     </div>
                 </div>
             </div>
-            {!isExpressContext && selectedOrder && canEdit && (
+            {!isExpressContext && selectedOrder && canManageBlacklist && (
                 <div className="mb-3 flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-3">
                     <div className="flex-1 text-sm">
                         <span className="font-medium text-red-900 dark:text-red-100">Cliente seleccionado: </span>
@@ -1864,7 +1865,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 isDragEnabled={isDragEnabled}
                 isExpressContext={isExpressContext}
                 selectedRowId={!isExpressContext ? selectedRowId : null}
-                onRowSelect={!isExpressContext && canEdit ? setSelectedRowId : undefined}
+                onRowSelect={!isExpressContext && canManageBlacklist ? setSelectedRowId : undefined}
             />
         </div>
     );

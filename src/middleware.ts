@@ -23,6 +23,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/admin/clients/whatsapp': ['clients:send_whatsapp'],
   '/admin/account': ['account:view_own'],
   '/admin/table': ['table:view'],
+  '/admin/lista-negra': ['blacklist:view'],
   '/admin/balance': ['balance:view'],
   '/admin/outputs': ['outputs:view'],
   '/admin/salidas': ['outputs:view'],
@@ -42,6 +43,9 @@ const getDefaultRedirect = (
   userPermissions: string[]
 ): string => {
   if (userRole === ROLES.ADMIN) {
+    return '/admin/analytics';
+  }
+  if (userPermissions.includes('all')) {
     return '/admin/analytics';
   }
   if (userPermissions.includes('analytics:view')) {
@@ -92,6 +96,7 @@ const hasAccessToRoute = (
   userPermissions: string[] = []
 ): boolean => {
   if (userRole === ROLES.ADMIN) return true;
+  if (userPermissions.includes('all')) return true;
   const routePermissions = ROUTE_PERMISSIONS[pathname];
   if (routePermissions) {
     return routePermissions.some((permission) =>

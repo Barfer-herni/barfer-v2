@@ -37,6 +37,9 @@ export type Permission =
     | 'table:export'
     | 'table:delete'
     | 'table:edit'
+    // Blacklist
+    | 'blacklist:view'
+    | 'blacklist:edit'
     // Balance
     | 'balance:view'
     | 'balance:export'
@@ -103,6 +106,8 @@ export const ADMIN_PERMISSIONS: Permission[] = [
     'table:export',
     'table:delete',
     'table:edit',
+    'blacklist:view',
+    'blacklist:edit',
     'balance:view',
     'balance:export',
     'prices:view',
@@ -383,7 +388,7 @@ export const SIDEBAR_CONFIG: SidebarItem[] = [
         mobileLabel: 'blacklistMobile',
         href: '/admin/lista-negra',
         icon: 'ShieldBan',
-        requiredPermissions: ['table:view'],
+        requiredPermissions: ['blacklist:view'],
     },
     {
         label: 'balance',

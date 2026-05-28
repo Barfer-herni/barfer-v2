@@ -19,19 +19,22 @@ export default async function ListaNegraPage({
 
     const userWithPermissions = await getCurrentUserWithPermissions();
     const isAdmin = userWithPermissions?.isAdmin || false;
-    const canEdit = isAdmin || userWithPermissions?.permissions.includes('table:edit') || false;
+    const canView = isAdmin || userWithPermissions?.permissions.includes('blacklist:view') || false;
+    const canEdit = isAdmin || userWithPermissions?.permissions.includes('blacklist:edit') || false;
 
-    const { users, total, totalPages } = await getBlacklistedUsersAction({
-        page,
-        limit: 50,
-        search: search?.trim() || undefined,
-    });
+    const { users, total, totalPages } = canView
+        ? await getBlacklistedUsersAction({
+            page,
+            limit: 50,
+            search: search?.trim() || undefined,
+        })
+        : { users: [], total: 0, totalPages: 1 };
 
     const nav = dictionary.app.admin.navigation as Record<string, string>;
 
     return (
         <PermissionGate
-            permission="table:view"
+            permission="blacklist:view"
             fallback={
                 <div className="p-6 m-4 border rounded-lg bg-muted/50">
                     <p className="text-sm text-muted-foreground text-center">
