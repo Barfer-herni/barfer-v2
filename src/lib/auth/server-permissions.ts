@@ -379,6 +379,13 @@ export const SIDEBAR_CONFIG: SidebarItem[] = [
         requiredPermissions: ['table:view'],
     },
     {
+        label: 'blacklist',
+        mobileLabel: 'blacklistMobile',
+        href: '/admin/lista-negra',
+        icon: 'ShieldBan',
+        requiredPermissions: ['table:view'],
+    },
+    {
         label: 'balance',
         mobileLabel: 'balanceMobile',
         href: '/admin/balance',

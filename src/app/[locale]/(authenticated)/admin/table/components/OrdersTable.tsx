@@ -31,6 +31,7 @@ import { COLUMN_WIDTHS, STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, ORDER_TYPE_OPTIO
 import {
     getFilteredProducts,
     shouldHighlightRow,
+    getRowHighlightClassName,
     getDateCellBackgroundColor,
     getStatusCellBackgroundColor,
     createLocalDate,
@@ -76,10 +77,24 @@ interface OrdersTableProps<TData extends { _id: string }, TValue> extends DataTa
     fontSize?: 'text-xs' | 'text-sm';
     isDragEnabled?: boolean; // Nuevo prop para habilitar drag and drop
     isExpressContext?: boolean;
+    selectedRowId?: string | null;
+    onRowSelect?: (rowId: string | null) => void;
 }
 
 // Componente interno para filas draggables
-function DraggableTableRow({ row, children, isDragEnabled }: { row: any; children: React.ReactNode; isDragEnabled: boolean }) {
+function DraggableTableRow({
+    row,
+    children,
+    isDragEnabled,
+    selectedRowId,
+    onRowSelect,
+}: {
+    row: any;
+    children: React.ReactNode;
+    isDragEnabled: boolean;
+    selectedRowId?: string | null;
+    onRowSelect?: (rowId: string | null) => void;
+}) {
     const {
         attributes,
         listeners,
@@ -107,18 +122,23 @@ function DraggableTableRow({ row, children, isDragEnabled }: { row: any; childre
         willChange: isDragging ? 'transform' : undefined,
     };
 
-    const rowClassName = shouldHighlightRow(row) === 'green'
-        ? 'bg-green-100 dark:bg-green-900/40 hover:bg-green-100 dark:hover:bg-green-900/40'
-        : shouldHighlightRow(row) === 'orange'
-            ? 'bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-100 dark:hover:bg-orange-900/40'
-            : '';
+    const highlight = shouldHighlightRow(row);
+    const rowClassName = getRowHighlightClassName(highlight);
+    const isSelectedForBlacklist = selectedRowId === row.id;
+
+    const handleRowClick = (e: React.MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button, input, a, textarea, select, [data-no-row-select]')) return;
+        onRowSelect?.(isSelectedForBlacklist ? null : row.id);
+    };
 
     if (!isDragEnabled) {
         return (
             <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
-                className={rowClassName}
+                className={`${rowClassName} ${isSelectedForBlacklist ? 'ring-2 ring-red-500 ring-inset' : ''} ${onRowSelect ? 'cursor-pointer' : ''}`}
+                onClick={onRowSelect ? handleRowClick : undefined}
             >
                 {children}
             </TableRow>
@@ -131,7 +151,8 @@ function DraggableTableRow({ row, children, isDragEnabled }: { row: any; childre
             style={style}
             key={row.id}
             data-state={row.getIsSelected() && 'selected'}
-            className={`${rowClassName} ${isDragging ? 'relative z-50 shadow-lg' : ''}`}
+            className={`${rowClassName} ${isSelectedForBlacklist ? 'ring-2 ring-red-500 ring-inset' : ''} ${onRowSelect ? 'cursor-pointer' : ''} ${isDragging ? 'relative z-50 shadow-lg' : ''}`}
+            onClick={onRowSelect ? handleRowClick : undefined}
         >
             {/* Drag Handle Cell - solo si drag está habilitado */}
             <TableCell className="px-1 py-1 border-r border-border w-[50px] bg-gray-50">
@@ -189,6 +210,8 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
     fontSize = 'text-xs',
     isDragEnabled = false,
     isExpressContext = false,
+    selectedRowId = null,
+    onRowSelect,
 }: OrdersTableProps<TData, TValue>) {
     const table = useReactTable({
         data,
@@ -321,7 +344,13 @@ export function OrdersTable<TData extends { _id: string }, TValue>({
                 <TableBody>
                     {table.getRowModel().rows?.length ? (
                         table.getRowModel().rows.map((row) => (
-                            <DraggableTableRow key={row.id} row={row} isDragEnabled={isDragEnabled}>
+                            <DraggableTableRow
+                                key={row.id}
+                                row={row}
+                                isDragEnabled={isDragEnabled}
+                                selectedRowId={selectedRowId}
+                                onRowSelect={onRowSelect}
+                            >
                                 <TableCell className="px-0 py-1 border-r border-border">
                                     <div className="flex justify-center">
                                         <input

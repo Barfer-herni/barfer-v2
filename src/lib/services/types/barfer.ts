@@ -57,6 +57,20 @@ export interface Order {
     whatsappContactedAt?: string;
     createdAt: string;
     updatedAt: string;
+    userBlackListed?: boolean;
+    /** El usuario (email) de la orden tiene blackListed en true */
+    clientBlackListed?: boolean;
+}
+
+export interface BlacklistedClientUser {
+    _id: string;
+    email: string;
+    name: string;
+    lastName?: string;
+    phoneNumber?: string;
+    blackListed: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface OrderItem {
@@ -79,6 +93,7 @@ export interface User {
     phoneNumber?: string;
     role: number;
     resetPasswordToken?: string | null;
+    blackListed?: boolean;
     createdAt: string;
     updatedAt: string;
 }

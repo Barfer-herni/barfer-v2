@@ -15,6 +15,7 @@ import {
     Zap,
     Bike,
     ClipboardList,
+    ShieldBan,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -43,6 +44,7 @@ const ICON_MAP = {
     Zap,
     Bike,
     ClipboardList,
+    ShieldBan,
 } as const;
 
 type AdminSidebarClientProps = {

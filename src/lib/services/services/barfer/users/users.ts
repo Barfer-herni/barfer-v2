@@ -356,3 +356,55 @@ export async function getClientsForWhatsapp(params?: {
     const qs = queryParams.toString();
     return await apiClient.get(`/users/clients-for-whatsapp${qs ? `?${qs}` : ''}`);
 }
+
+export async function getBlacklistedUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+}): Promise<{
+    users: {
+        _id: string;
+        email: string;
+        name: string;
+        lastName?: string;
+        phoneNumber?: string;
+        blackListed: boolean;
+        updatedAt?: string;
+    }[];
+    total: number;
+    page: number;
+    totalPages: number;
+}> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.set('page', String(params.page));
+    if (params?.limit) queryParams.set('limit', String(params.limit));
+    if (params?.search) queryParams.set('search', params.search);
+    const qs = queryParams.toString();
+    return await apiClient.get(`/users/admin/blacklisted${qs ? `?${qs}` : ''}`);
+}
+
+export async function setUserBlackListed(
+    email: string,
+    blackListed: boolean,
+    orderAddress?: {
+        address?: string;
+        city?: string;
+        floorNumber?: string;
+        departmentNumber?: string;
+        betweenStreets?: string;
+    },
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        await apiClient.patch('/users/admin/blacklist', {
+            email,
+            blackListed,
+            ...(orderAddress ? { orderAddress } : {}),
+        });
+        return { success: true };
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Error al actualizar lista negra',
+        };
+    }
+}

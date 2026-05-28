@@ -132,6 +132,8 @@ export const getFilteredProducts = (clientType: 'minorista' | 'mayorista', searc
 
 // Función para determinar el color de la fila
 export const shouldHighlightRow = (row: any) => {
+    if (row.original.userBlackListed) return 'red';
+
     const status = row.original.status?.toLowerCase();
     const notesOwn = row.original.notesOwn || '';
 
@@ -142,6 +144,19 @@ export const shouldHighlightRow = (row: any) => {
     if (status === 'delivered') return 'green';
 
     return null;
+};
+
+export const getRowHighlightClassName = (highlight: ReturnType<typeof shouldHighlightRow>) => {
+    if (highlight === 'red') {
+        return 'bg-red-100 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/40 border-l-4 border-l-red-600';
+    }
+    if (highlight === 'green') {
+        return 'bg-green-100 dark:bg-green-900/40 hover:bg-green-100 dark:hover:bg-green-900/40';
+    }
+    if (highlight === 'orange') {
+        return 'bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-100 dark:hover:bg-orange-900/40';
+    }
+    return '';
 };
 
 // Función para determinar el color de fondo de la celda de fecha

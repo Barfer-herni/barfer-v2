@@ -17,7 +17,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { RotateCcw, Trash2, Search, Download } from 'lucide-react';
+import { RotateCcw, Trash2, Search, Download, ShieldBan, X } from 'lucide-react';
+import { setUserBlackListedAction } from '../blacklistActions';
 import { generateMayoristaPDF } from '../generateMayoristaPDF';
 
 // Imports de constantes y helpers
@@ -96,6 +97,86 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
         subtotal: number;
     }>>([]);
     const [puntosEnvio, setPuntosEnvio] = useState<Array<{ _id: string; nombre: string }>>([]);
+    const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+    const selectedOrder = selectedRowId
+        ? (data as Array<{
+            _id: string;
+            user?: { email?: string; name?: string; lastName?: string };
+            address?: {
+                address?: string;
+                city?: string;
+                floorNumber?: string;
+                departmentNumber?: string;
+                betweenStreets?: string;
+            };
+            userBlackListed?: boolean;
+            clientBlackListed?: boolean;
+        }>).find((o) => String(o._id) === selectedRowId)
+        : null;
+
+    const formatOrderAddress = (addr?: {
+        address?: string;
+        city?: string;
+        floorNumber?: string;
+        departmentNumber?: string;
+    }) => {
+        if (!addr?.address) return '';
+        const parts = [
+            addr.address,
+            addr.city,
+            addr.floorNumber ? `Piso ${addr.floorNumber}` : '',
+            addr.departmentNumber ? `Depto ${addr.departmentNumber}` : '',
+        ].filter(Boolean);
+        return parts.join(', ');
+    };
+
+    const handleBlacklistToggle = async () => {
+        const email = selectedOrder?.user?.email?.trim();
+        if (!email) {
+            alert('Esta orden no tiene un email de cliente válido.');
+            return;
+        }
+
+        const orderAddress = selectedOrder?.address;
+        const addressLabel = formatOrderAddress(orderAddress);
+        if (!addressLabel) {
+            alert('Esta orden no tiene una dirección válida para vincular a la lista negra.');
+            return;
+        }
+
+        const clientIsListed = Boolean(selectedOrder?.clientBlackListed);
+        const confirmMessage = clientIsListed
+            ? `¿Quitar a ${email} de la lista negra?\n\nSe dejarán de resaltar las órdenes vinculadas a sus direcciones:\n${addressLabel}`
+            : `¿Marcar a ${email} en lista negra?\n\nSe resaltarán en rojo todas las órdenes con esta dirección o una muy similar:\n${addressLabel}`;
+
+        if (!window.confirm(confirmMessage)) return;
+
+        setLoading(true);
+        try {
+            const filteredAddress = orderAddress ? {
+                address: orderAddress.address,
+                city: orderAddress.city,
+                floorNumber: orderAddress.floorNumber,
+                departmentNumber: orderAddress.departmentNumber,
+                betweenStreets: orderAddress.betweenStreets,
+            } : undefined;
+
+            const result = await setUserBlackListedAction(
+                email,
+                !clientIsListed,
+                filteredAddress,
+            );
+            if (result.success) {
+                setSelectedRowId(null);
+                startTransition(() => router.refresh());
+            } else {
+                alert(result.message || 'No se pudo actualizar la lista negra.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Ref para el timeout del debounce
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1705,6 +1786,52 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                     </div>
                 </div>
             </div>
+            {!isExpressContext && selectedOrder && canEdit && (
+                <div className="mb-3 flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-3">
+                    <div className="flex-1 text-sm">
+                        <span className="font-medium text-red-900 dark:text-red-100">Cliente seleccionado: </span>
+                        <span className="text-red-800 dark:text-red-200">
+                            {[selectedOrder.user?.name, selectedOrder.user?.lastName].filter(Boolean).join(' ') || 'Sin nombre'}
+                            {selectedOrder.user?.email ? ` (${selectedOrder.user.email})` : ''}
+                        </span>
+                        {selectedOrder.address?.address && (
+                            <span className="block text-xs text-red-700/90 mt-0.5">
+                                {formatOrderAddress(selectedOrder.address)}
+                            </span>
+                        )}
+                        {selectedOrder.userBlackListed && !selectedOrder.clientBlackListed && (
+                            <span className="ml-2 text-xs font-semibold uppercase text-red-700">· Dirección en lista negra (otro usuario)</span>
+                        )}
+                        {selectedOrder.clientBlackListed && (
+                            <span className="ml-2 text-xs font-semibold uppercase text-red-700">· Cliente en lista negra</span>
+                        )}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                        <Button
+                            type="button"
+                            variant={selectedOrder.clientBlackListed ? 'outline' : 'destructive'}
+                            size="sm"
+                            disabled={loading || !selectedOrder.user?.email}
+                            onClick={handleBlacklistToggle}
+                            className="gap-1"
+                        >
+                            <ShieldBan className="h-4 w-4" />
+                            {selectedOrder.clientBlackListed ? 'Quitar de lista negra' : 'Marcar en lista negra'}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setSelectedRowId(null)}
+                            title="Cerrar"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <OrdersTable
                 columns={columns}
                 data={data}
@@ -1735,6 +1862,9 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 isCalculatingPrice={isCalculatingPrice}
                 fontSize={fontSize}
                 isDragEnabled={isDragEnabled}
+                isExpressContext={isExpressContext}
+                selectedRowId={!isExpressContext ? selectedRowId : null}
+                onRowSelect={!isExpressContext && canEdit ? setSelectedRowId : undefined}
             />
         </div>
     );
