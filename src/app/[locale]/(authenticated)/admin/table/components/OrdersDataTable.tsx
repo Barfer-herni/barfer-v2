@@ -99,6 +99,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
     }>>([]);
     const [puntosEnvio, setPuntosEnvio] = useState<Array<{ _id: string; nombre: string }>>([]);
     const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+    const selectedOrderIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
 
     const selectedOrder = selectedRowId
         ? (data as Array<{
@@ -116,6 +117,11 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
         }>).find((o) => String(o._id) === selectedRowId)
         : null;
 
+    useEffect(() => {
+        const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
+        setSelectedRowId(selectedIds.length === 1 ? selectedIds[0] : null);
+    }, [rowSelection]);
+
     const formatOrderAddress = (addr?: {
         address?: string;
         city?: string;
@@ -130,6 +136,17 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
             addr.departmentNumber ? `Depto ${addr.departmentNumber}` : '',
         ].filter(Boolean);
         return parts.join(', ');
+    };
+
+    const clearSelectedBlacklistOrder = () => {
+        if (selectedRowId) {
+            setRowSelection((currentSelection) => {
+                const nextSelection = { ...currentSelection };
+                delete nextSelection[selectedRowId];
+                return nextSelection;
+            });
+        }
+        setSelectedRowId(null);
     };
 
     const handleBlacklistToggle = async () => {
@@ -169,7 +186,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 filteredAddress,
             );
             if (result.success) {
-                setSelectedRowId(null);
+                clearSelectedBlacklistOrder();
                 startTransition(() => router.refresh());
             } else {
                 alert(result.message || 'No se pudo actualizar la lista negra.');
@@ -1750,15 +1767,14 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                         )}
 
                         {/* Marcar como Entregado - Solo mostrar cuando hay selección */}
-                        {Object.keys(rowSelection).length > 0 && (
+                        {selectedOrderIds.length > 0 && (
                             <Button
                                 variant="default"
                                 disabled={loading}
                                 onClick={async () => {
-                                    const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
                                     setLoading(true);
                                     try {
-                                        const result = await updateOrdersStatusBulkAction(selectedIds, 'delivered');
+                                        const result = await updateOrdersStatusBulkAction(selectedOrderIds, 'delivered');
                                         if (result.success) {
                                             setRowSelection({});
                                             router.refresh();
@@ -1773,14 +1789,14 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                                 }}
                                 className="flex-1 sm:flex-none lg:flex-none"
                             >
-                                Marcar como Entregado ({Object.keys(rowSelection).length})
+                                Marcar como Entregado ({selectedOrderIds.length})
                             </Button>
                         )}
                         
                         {/* Custom Bulk Actions */}
-                        {Object.keys(rowSelection).length > 0 && customBulkActions && (
+                        {selectedOrderIds.length > 0 && customBulkActions && (
                             customBulkActions(
-                                Object.keys(rowSelection).filter((id) => rowSelection[id]),
+                                selectedOrderIds,
                                 setRowSelection
                             )
                         )}
@@ -1824,7 +1840,7 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => setSelectedRowId(null)}
+                            onClick={clearSelectedBlacklistOrder}
                             title="Cerrar"
                         >
                             <X className="h-4 w-4" />
@@ -1865,7 +1881,6 @@ export function OrdersDataTable<TData extends { _id: string }, TValue>({
                 isDragEnabled={isDragEnabled}
                 isExpressContext={isExpressContext}
                 selectedRowId={!isExpressContext ? selectedRowId : null}
-                onRowSelect={!isExpressContext && canManageBlacklist ? setSelectedRowId : undefined}
             />
         </div>
     );
